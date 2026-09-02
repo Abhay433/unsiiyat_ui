@@ -1,0 +1,41 @@
+<div class="poets-page unsiiyat-container animate-fade-in">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-icon">✒️</div>
+    <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('all_poets') }}</h1>
+    <p class="page-subtitle">Legendary Shayars across eras from Classical Delhi & Lucknow to Modern Pioneers</p>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="poets-filter-bar poetic-card">
+    <div class="filter-input-wrapper">
+      <input 
+        type="text" 
+        class="form-input search-input"
+        placeholder="Search poet by name or keywords..."
+        [ngModel]="searchFilter()"
+        (ngModelChange)="searchFilter.set($event)" />
+    </div>
+    <div class="filter-stats">
+      <span>Showing <strong>{{ filteredPoets.length }}</strong> poets</span>
+    </div>
+  </div>
+
+  <!-- Poets Grid -->
+  <div class="poets-directory-grid">
+    <a 
+      *ngFor="let poet of filteredPoets" 
+      [routerLink]="['/poet', poet.id]" 
+      class="poet-card poetic-card">
+      <div class="poet-avatar-wrapper">
+        <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" class="poet-avatar" />
+      </div>
+      <div class="poet-info">
+        <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
+        <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy' }}</span>
+        <p class="poet-bio-preview" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio }}</p>
+        <span class="read-more-btn">Explore Works &rarr;</span>
+      </div>
+    </a>
+  </div>
+</div>

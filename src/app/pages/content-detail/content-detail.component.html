@@ -1,0 +1,110 @@
+<div class="reader-view unsiiyat-container animate-fade-in" *ngIf="content()">
+  <!-- Reading Control Center (Sticky Bar) -->
+  <div class="reader-control-bar poetic-card">
+    <div class="control-left">
+      <!-- Back Navigation -->
+      <a routerLink="/" class="back-link">&larr; Back to Home</a>
+      <span class="divider-dot">•</span>
+      <!-- Genre Badge -->
+      <span class="badge">Ghazal</span>
+    </div>
+
+    <!-- Script Switcher Tabs -->
+    <div class="reader-script-tabs">
+      <button 
+        *ngFor="let s of scriptService.scripts"
+        class="reader-script-btn"
+        [class.active]="scriptService.activeScript() === s.code"
+        (click)="switchScript(s.code)">
+        {{ s.nativeName }}
+      </button>
+    </div>
+
+    <div class="control-right">
+      <!-- Font Resizer -->
+      <div class="font-resizer">
+        <button class="tool-btn" (click)="changeFontSize(-2)">A-</button>
+        <button class="tool-btn" (click)="changeFontSize(2)">A+</button>
+      </div>
+
+      <!-- Dictionary Lookup Trigger -->
+      <button class="tool-btn dict-btn" (click)="openDictionary()">
+        📖 {{ scriptService.translate('meaning_title') }}
+      </button>
+
+      <!-- Audio Button -->
+      <button class="tool-btn" [class.active]="isPlayingAudio()" (click)="isPlayingAudio.set(!isPlayingAudio())">
+        {{ isPlayingAudio() ? '🔊 Reciting' : '▶ Audio' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Ghazal Parchment Card -->
+  <article class="ghazal-parchment poetic-card">
+    <!-- Header Title & Poet Link -->
+    <header class="parchment-header">
+      <h1 class="ghazal-main-title" [ngClass]="scriptService.fontClass()">
+        {{ currentPoemText()?.title }}
+      </h1>
+      
+      <div class="parchment-poet-meta">
+        <span class="by-text">By:</span>
+        <a [routerLink]="['/poet', content().author?.id || 1]" class="poet-name-link" [ngClass]="scriptService.fontClass()">
+          {{ content().author?.primaryName || 'Legendary Poet' }}
+        </a>
+      </div>
+
+      <div class="poetic-divider">
+        <span>✒️ ✦ ✒️</span>
+      </div>
+    </header>
+
+    <!-- Couplet-by-Couplet Layout -->
+    <div class="couplets-stream" [ngClass]="scriptService.fontClass()" [style.font-size.px]="readerFontSize()">
+      <div *ngFor="let couplet of couplets; let idx = index" class="couplet-stanza">
+        <div class="couplet-lines">
+          <p class="couplet-line first-line">{{ couplet[0] }}</p>
+          <p class="couplet-line second-line">{{ couplet[1] }}</p>
+        </div>
+
+        <!-- Couplet Actions (Copy / Dictionary) -->
+        <div class="couplet-actions">
+          <button 
+            class="couplet-action-btn" 
+            (click)="copyCouplet(idx, couplet)"
+            [title]="scriptService.translate('copy_sher')">
+            {{ copiedIndex() === idx ? '✓ ' + scriptService.translate('copied') : '📋 ' + scriptService.translate('copy_sher') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parchment Footer with Author Bio Card -->
+    <footer class="parchment-footer">
+      <div class="poet-summary-card">
+        <div class="poet-card-avatar-wrapper">
+          <img [src]="content().author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'" [alt]="content().author?.primaryName" class="poet-card-avatar" />
+        </div>
+        <div class="poet-card-details">
+          <span class="poet-label font-display">ABOUT THE SHAYAR</span>
+          <h4 class="poet-name-sm" [ngClass]="scriptService.fontClass()">
+            {{ content().author?.primaryName }}
+          </h4>
+          <p class="poet-bio-sm" [ngClass]="scriptService.fontClass()">
+            {{ content().author?.primaryBio }}
+          </p>
+          <a [routerLink]="['/poet', content().author?.id || 1]" class="btn btn-outline-gold btn-sm">
+            View Complete Works &rarr;
+          </a>
+        </div>
+      </div>
+    </footer>
+  </article>
+
+  <!-- Dictionary Modal -->
+  <app-dictionary-modal 
+    *ngIf="showDict()"
+    [selectedWord]="dictWord()"
+    (close)="showDict.set(false)">
+  </app-dictionary-modal>
+</div>

@@ -1,0 +1,123 @@
+.unsiiyat-footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-gold);
+  margin-top: 60px;
+  padding-top: 20px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 40px;
+  padding-bottom: 40px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.footer-emblem {
+  font-size: 1.6rem;
+}
+
+.footer-logo {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.footer-tagline {
+  font-size: 1.1rem;
+  color: var(--accent-gold-light);
+  margin-bottom: 8px;
+}
+
+.footer-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.footer-heading {
+  color: var(--accent-gold);
+  font-size: 0.95rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color var(--transition-fast);
+}
+
+.footer-links a:hover {
+  color: var(--accent-gold-light);
+}
+
+.script-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.script-card {
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.script-card:hover, .script-card.active {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-glow);
+}
+
+.script-title {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.script-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.footer-bottom {
+  background: rgba(10, 8, 14, 0.98);
+  border-top: 1px solid rgba(201, 158, 88, 0.1);
+  padding: 16px 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.backend-status {
+  color: var(--accent-gold);
+  font-size: 0.75rem;
+  border: 1px solid var(--border-gold);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}

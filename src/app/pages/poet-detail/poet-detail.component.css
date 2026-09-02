@@ -1,0 +1,127 @@
+.poet-detail-view {
+  padding: 40px 24px;
+}
+
+.poet-banner {
+  padding: 36px 30px;
+  background: radial-gradient(circle at top, rgba(41, 33, 55, 0.95), rgba(15, 12, 19, 0.98));
+  margin-bottom: 30px;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.poet-banner-avatar-wrapper {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-full);
+  padding: 4px;
+  border: 2px solid var(--accent-gold);
+  flex-shrink: 0;
+  box-shadow: 0 0 20px var(--accent-gold-glow);
+}
+
+.poet-banner-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.poet-tag {
+  color: var(--accent-gold);
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.poet-banner-name {
+  font-size: 2.2rem;
+  color: var(--text-primary);
+  margin: 6px 0;
+}
+
+.poet-timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.poet-tabs-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.tab-pill {
+  padding: 10px 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tab-pill.active {
+  background: var(--accent-gold);
+  color: #0f0c13;
+  font-weight: 600;
+}
+
+.ghazals-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.ghazal-title {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.ghazal-snippet {
+  background: var(--bg-secondary);
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.bio-card {
+  padding: 32px;
+}
+
+.bio-heading {
+  font-size: 1.3rem;
+  color: var(--accent-gold-light);
+  margin-bottom: 16px;
+}
+
+.bio-body {
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  line-height: 2 !important;
+}
+
+@media (max-width: 700px) {
+  .banner-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  .poet-timeline {
+    justify-content: center;
+  }
+}

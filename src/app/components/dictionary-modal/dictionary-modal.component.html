@@ -1,0 +1,44 @@
+<div class="modal-backdrop" (click)="close.emit()">
+  <div class="modal-card animate-fade-in" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <span class="modal-emblem">📖</span>
+        <h3 class="modal-title font-display">
+          {{ scriptService.translate('meaning_title') }}
+        </h3>
+      </div>
+      <button class="modal-close-btn" (click)="close.emit()">✕</button>
+    </div>
+
+    <!-- Search input inside dictionary -->
+    <div class="dict-search-wrapper">
+      <input 
+        type="text" 
+        class="form-input"
+        placeholder="Search classical word (e.g. خلد, قفس, خودی)..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)" />
+    </div>
+
+    <!-- Dictionary Word Cards -->
+    <div class="dict-list">
+      <div *ngFor="let item of wordList" class="dict-item">
+        <div class="dict-word font-urdu">{{ item[0] }}</div>
+        <div class="dict-meanings">
+          <div class="meaning-row">
+            <span class="meaning-lang font-urdu">اردو:</span>
+            <span class="meaning-text font-urdu">{{ item[1].ur }}</span>
+          </div>
+          <div class="meaning-row">
+            <span class="meaning-lang font-hindi">हिन्दी:</span>
+            <span class="meaning-text font-hindi">{{ item[1].hi }}</span>
+          </div>
+          <div class="meaning-row">
+            <span class="meaning-lang font-english">English:</span>
+            <span class="meaning-text font-english">{{ item[1].en }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

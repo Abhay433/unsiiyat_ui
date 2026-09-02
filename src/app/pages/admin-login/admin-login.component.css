@@ -1,0 +1,339 @@
+/* Admin Login Portal Container */
+.admin-login-wrapper {
+  min-height: calc(100vh - 180px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient Background Lights */
+.ambient-glow {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  opacity: 0.18;
+  z-index: 0;
+}
+
+.glow-top-left {
+  top: -60px;
+  left: 10%;
+  background: radial-gradient(circle, var(--accent-gold) 0%, transparent 70%);
+}
+
+.glow-bottom-right {
+  bottom: -60px;
+  right: 10%;
+  background: radial-gradient(circle, var(--accent-ruby) 0%, transparent 70%);
+}
+
+/* Card Styling */
+.admin-login-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(201, 158, 88, 0.15);
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(16px);
+}
+
+.admin-login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-gold), var(--accent-gold-light), transparent);
+}
+
+/* Header Section */
+.card-header {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.emblem-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(201, 158, 88, 0.12);
+  border: 1px solid var(--accent-gold);
+  margin-bottom: 16px;
+}
+
+.royal-emblem {
+  font-size: 2rem;
+}
+
+.emblem-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-gold-glow) 0%, transparent 80%);
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.1); }
+}
+
+.security-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(135, 35, 65, 0.25);
+  color: #f1a5b8;
+  border: 1px solid rgba(220, 80, 110, 0.35);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ff5277;
+  box-shadow: 0 0 8px #ff5277;
+  animation: blinkDot 1.5s infinite ease-in-out;
+}
+
+@keyframes blinkDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.portal-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.portal-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.portal-description {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Alert Boxes */
+.alert-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.alert-error {
+  background: rgba(135, 35, 65, 0.35);
+  border: 1px solid rgba(220, 80, 110, 0.5);
+  color: #ffc4cf;
+}
+
+.alert-success {
+  background: rgba(46, 125, 50, 0.25);
+  border: 1px solid rgba(76, 175, 80, 0.45);
+  color: #c8e6c9;
+}
+
+/* Form Styling */
+.admin-form {
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.label-subtext {
+  font-size: 0.95rem;
+  color: var(--accent-gold-light);
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.custom-input {
+  padding-left: 44px;
+  padding-right: 44px;
+  height: 48px;
+  background: rgba(15, 12, 19, 0.6);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+}
+
+.custom-input:focus {
+  border-color: var(--accent-gold);
+  background: rgba(15, 12, 19, 0.85);
+  box-shadow: 0 0 0 3px var(--accent-gold-glow);
+}
+
+.toggle-pwd-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-pwd-btn:hover {
+  color: var(--accent-gold-light);
+}
+
+/* Submit Button */
+.submit-btn {
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.btn-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arrow-symbol {
+  font-size: 1.2rem;
+  transition: transform var(--transition-fast);
+}
+
+.submit-btn:hover .arrow-symbol {
+  transform: translateX(4px);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(15, 12, 19, 0.3);
+  border-top-color: #0f0c13;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Card Footer & Public Notice */
+.card-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 20px;
+  text-align: center;
+}
+
+.public-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(201, 158, 88, 0.05);
+  border: 1px dashed var(--border-gold);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.notice-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.public-notice p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.return-link-wrapper {
+  margin-top: 8px;
+}
+
+.return-home-link {
+  font-size: 0.88rem;
+  color: var(--accent-gold-light);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.return-home-link:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 540px) {
+  .admin-login-card {
+    padding: 28px 20px;
+  }
+
+  .portal-title {
+    font-size: 1.8rem;
+  }
+}

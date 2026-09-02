@@ -1,0 +1,44 @@
+<div class="genres-page unsiiyat-container animate-fade-in">
+  <div class="page-header">
+    <div class="header-icon">📜</div>
+    <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('explore_genres') }}</h1>
+    <p class="page-subtitle">From Ghazals & Nazms to classical Rubaiyat and Marsiya</p>
+  </div>
+
+  <!-- Genre Tabs -->
+  <div class="genre-pills-bar">
+    <button 
+      *ngFor="let g of genres()" 
+      class="genre-pill"
+      [class.active]="selectedGenreId() === g.id"
+      (click)="selectedGenreId.set(g.id!)">
+      {{ g.name }}
+    </button>
+  </div>
+
+  <!-- Content Grid for Selected Genre -->
+  <div class="genre-contents-grid">
+    <div *ngFor="let item of filteredContents" class="ghazal-card poetic-card">
+      <div class="ghazal-card-header flex-between">
+        <span class="poet-badge font-english">{{ item.author?.primaryName || 'Legendary Poet' }}</span>
+        <span class="badge">Poetic Form</span>
+      </div>
+
+      <h3 class="ghazal-title" [ngClass]="scriptService.fontClass()">
+        {{ item.primaryText?.title || item.title }}
+      </h3>
+
+      <div class="ghazal-snippet" [ngClass]="scriptService.fontClass()">
+        <p>{{ (item.primaryText?.body || '').split('\n')[0] }}</p>
+        <p>{{ (item.primaryText?.body || '').split('\n')[1] }}</p>
+      </div>
+
+      <div class="ghazal-footer flex-between">
+        <span class="read-hint">Complete Stanzas</span>
+        <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
+          {{ scriptService.translate('read_more') }} &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

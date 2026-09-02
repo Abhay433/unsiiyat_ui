@@ -1,0 +1,44 @@
+<div class="themes-page unsiiyat-container animate-fade-in">
+  <div class="page-header">
+    <div class="header-icon">✦</div>
+    <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('explore_themes') }}</h1>
+    <p class="page-subtitle">Poetic reflections on love, separation, existential void, and spirituality</p>
+  </div>
+
+  <!-- Theme Tabs -->
+  <div class="theme-pills-bar">
+    <button 
+      *ngFor="let t of themes()" 
+      class="theme-pill"
+      [class.active]="selectedThemeId() === t.id"
+      (click)="selectedThemeId.set(t.id!)">
+      {{ t.name }}
+    </button>
+  </div>
+
+  <!-- Content Grid for Selected Theme -->
+  <div class="themes-contents-grid">
+    <div *ngFor="let item of filteredContents" class="ghazal-card poetic-card">
+      <div class="ghazal-card-header flex-between">
+        <span class="poet-badge font-english">{{ item.author?.primaryName || 'Legendary Poet' }}</span>
+        <span class="badge">Couplets</span>
+      </div>
+
+      <h3 class="ghazal-title" [ngClass]="scriptService.fontClass()">
+        {{ item.primaryText?.title || item.title }}
+      </h3>
+
+      <div class="ghazal-snippet" [ngClass]="scriptService.fontClass()">
+        <p>{{ (item.primaryText?.body || '').split('\n')[0] }}</p>
+        <p>{{ (item.primaryText?.body || '').split('\n')[1] }}</p>
+      </div>
+
+      <div class="ghazal-footer flex-between">
+        <span class="read-hint">Thematic Verse</span>
+        <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
+          {{ scriptService.translate('read_more') }} &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

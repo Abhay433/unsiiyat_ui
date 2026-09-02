@@ -1,0 +1,233 @@
+<div class="studio-view unsiiyat-container animate-fade-in">
+  <div class="page-header">
+    <div class="header-icon">⚙️</div>
+    <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('studio') }}</h1>
+    <p class="page-subtitle">Content Administration, Multi-Script Management & Database Orchestration</p>
+  </div>
+
+  <!-- Admin Session Bar -->
+  <div class="admin-session-bar poetic-card">
+    <div class="admin-identity-info">
+      <span class="admin-badge-gold">👑 Administrator Session</span>
+      <span class="admin-user-detail">
+        Active as <strong>{{ authService.currentUser()?.name || authService.currentUser()?.email }}</strong> ({{ authService.currentUser()?.email }})
+      </span>
+    </div>
+    <div class="admin-session-actions">
+      <button class="btn btn-outline-gold btn-sm" (click)="logoutAdmin()">
+        <span>🔒 Sign Out Admin</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Alert Banner -->
+  <div *ngIf="statusMsg()" class="status-alert" [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
+    {{ statusMsg()?.text }}
+  </div>
+
+  <!-- Studio Nav Tabs -->
+  <div class="studio-tabs-bar">
+    <button class="tab-btn" [class.active]="activeTab() === 'poets'" (click)="activeTab.set('poets')">
+      👤 Shayars / Authors ({{ authors().length }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'contents'" (click)="activeTab.set('contents')">
+      📜 Poetry & Ghazals ({{ contents().length }})
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'taxonomy'" (click)="activeTab.set('taxonomy')">
+      🏷️ Genres & Themes
+    </button>
+    <button class="tab-btn seed-tab-btn" [class.active]="activeTab() === 'seed'" (click)="activeTab.set('seed')">
+      ⚡ 1-Click Rekhta Seed
+    </button>
+  </div>
+
+  <!-- TAB 1: SEED REKHTA DATABASE -->
+  <div *ngIf="activeTab() === 'seed'" class="tab-content animate-fade-in">
+    <div class="poetic-card seed-card">
+      <h3 class="card-heading font-display">⚡ Populate Database with Rekhta Classics</h3>
+      <p class="card-desc">
+        Click below to populate your Spring Boot backend with classical Shayars (Mirza Ghalib, Faiz, Jaun Elia, Iqbal, Faraz), Genres (Ghazal, Nazm, Rubai), Themes (Ishq, Dard, Tanhai), and authentic verses in Urdu, Hindi & English.
+      </p>
+
+      <button class="btn btn-gold btn-lg" (click)="runDatabaseSeed()" [disabled]="isSeeding()">
+        {{ isSeeding() ? '⏳ Seeding Database in progress...' : '🚀 Populate All Rekhta Classics to Backend' }}
+      </button>
+
+      <!-- Terminal Log Window -->
+      <div *ngIf="seedLogs().length > 0" class="console-box">
+        <div class="console-header">
+          <span>Backend Seeding Stream</span>
+        </div>
+        <div class="console-body">
+          <div *ngFor="let line of seedLogs()" class="console-line">{{ line }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: AUTHORS / POETS MANAGEMENT -->
+  <div *ngIf="activeTab() === 'poets'" class="tab-content animate-fade-in">
+    <div class="studio-grid">
+      <!-- Create Poet Form -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Add New Shayar / Poet</h3>
+        <form (submit)="saveAuthorWithDetails()">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Birth Date</label>
+              <input type="date" class="form-input" [(ngModel)]="poetForm().birthDate" name="birthDate" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Death Date</label>
+              <input type="date" class="form-input" [(ngModel)]="poetForm().deathDate" name="deathDate" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Urdu Name (اردو نام)</label>
+            <input type="text" class="form-input font-urdu" placeholder="مثال: مرزا اسد اللہ خاں غالب" [(ngModel)]="poetForm().urName" name="urName" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Hindi Name (हिन्दी नाम)</label>
+            <input type="text" class="form-input font-hindi" placeholder="उदा: मिर्ज़ा ग़ालिब" [(ngModel)]="poetForm().hiName" name="hiName" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">English / Roman Name</label>
+            <input type="text" class="form-input font-english" placeholder="e.g. Mirza Ghalib" [(ngModel)]="poetForm().enName" name="enName" />
+          </div>
+
+          <button type="submit" class="btn btn-gold btn-block">Save Poet into Database</button>
+        </form>
+      </div>
+
+      <!-- Existing Poets List -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Active Shayars ({{ authors().length }})</h3>
+        <div class="table-container">
+          <table class="studio-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Timeline</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of authors()">
+                <td>#{{ a.id }}</td>
+                <td><strong>{{ a.primaryName }}</strong></td>
+                <td>{{ a.birthDate | date:'yyyy' }} – {{ a.deathDate | date:'yyyy' }}</td>
+                <td>
+                  <a [routerLink]="['/poet', a.id]" class="btn btn-outline-gold btn-sm">View</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CONTENT / POETRY MANAGEMENT -->
+  <div *ngIf="activeTab() === 'contents'" class="tab-content animate-fade-in">
+    <div class="studio-grid">
+      <!-- Create Ghazal Form -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Publish New Ghazal / Poem</h3>
+        <form (submit)="saveContentWithTexts()">
+          <div class="form-group">
+            <label class="form-label">Poem Title (Identifier)</label>
+            <input type="text" class="form-input" placeholder="e.g. Hazaron Khwahishen Aisi" [(ngModel)]="contentForm().title" name="title" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Author / Shayar ID</label>
+              <input type="number" class="form-input" [(ngModel)]="contentForm().authorId" name="authorId" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Genre ID (1=Ghazal, 2=Nazm)</label>
+              <input type="number" class="form-input" [(ngModel)]="contentForm().genreId" name="genreId" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-gold btn-block">Publish Ghazal</button>
+        </form>
+      </div>
+
+      <!-- Existing Poetry List -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Published Poems ({{ contents().length }})</h3>
+        <div class="table-container">
+          <table class="studio-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of contents()">
+                <td>#{{ c.id }}</td>
+                <td><strong>{{ c.primaryText?.title || c.title }}</strong></td>
+                <td>{{ c.author?.primaryName || ('Author #' + c.authorId) }}</td>
+                <td>
+                  <a [routerLink]="['/content', c.id]" class="btn btn-outline-gold btn-sm">Read</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: TAXONOMY (GENRES & THEMES) -->
+  <div *ngIf="activeTab() === 'taxonomy'" class="tab-content animate-fade-in">
+    <div class="studio-grid-3">
+      <!-- Genres -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Genres</h3>
+        <form (submit)="saveGenre()" class="mini-form">
+          <input type="text" class="form-input" placeholder="Genre Name (e.g. مرثیہ)" [(ngModel)]="genreForm().name" name="gName" required />
+          <input type="text" class="form-input" placeholder="Slug (e.g. marsiya)" [(ngModel)]="genreForm().slug" name="gSlug" required />
+          <button type="submit" class="btn btn-gold btn-sm">Add Genre</button>
+        </form>
+        <ul class="taxonomy-list">
+          <li *ngFor="let g of genres()">#{{ g.id }} - {{ g.name }} (<code>{{ g.slug }}</code>)</li>
+        </ul>
+      </div>
+
+      <!-- Themes -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Themes / Moods</h3>
+        <form (submit)="saveTheme()" class="mini-form">
+          <input type="text" class="form-input" placeholder="Theme Name (e.g. تصوف)" [(ngModel)]="themeForm().name" name="tName" required />
+          <input type="text" class="form-input" placeholder="Slug (e.g. sufi)" [(ngModel)]="themeForm().slug" name="tSlug" required />
+          <button type="submit" class="btn btn-gold btn-sm">Add Theme</button>
+        </form>
+        <ul class="taxonomy-list">
+          <li *ngFor="let t of themes()">#{{ t.id }} - {{ t.name }} (<code>{{ t.slug }}</code>)</li>
+        </ul>
+      </div>
+
+      <!-- Scripts -->
+      <div class="poetic-card">
+        <h3 class="card-heading font-display">Scripts</h3>
+        <form (submit)="saveScript()" class="mini-form">
+          <input type="text" class="form-input" placeholder="Script Name (e.g. Urdu)" [(ngModel)]="scriptForm().name" name="sName" required />
+          <input type="text" class="form-input" placeholder="Code (e.g. ur)" [(ngModel)]="scriptForm().code" name="sCode" required />
+          <button type="submit" class="btn btn-gold btn-sm">Add Script</button>
+        </form>
+        <ul class="taxonomy-list">
+          <li *ngFor="let s of scripts()">#{{ s.id }} - {{ s.name }} (<code>{{ s.code }}</code>)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

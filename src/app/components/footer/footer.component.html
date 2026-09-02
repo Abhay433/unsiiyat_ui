@@ -1,0 +1,62 @@
+<footer class="unsiiyat-footer">
+  <div class="poetic-divider">
+    <span>✦ 📜 ✦</span>
+  </div>
+
+  <div class="unsiiyat-container footer-grid">
+    <!-- Brand Info -->
+    <div class="footer-col brand-col">
+      <div class="footer-brand">
+        <span class="footer-emblem">✒️</span>
+        <span class="footer-logo font-urdu gold-gradient-text">{{ scriptService.translate('brand') }}</span>
+      </div>
+      <p class="footer-tagline font-urdu">
+        {{ scriptService.translate('tagline') }}
+      </p>
+      <p class="footer-desc">
+        A sanctuary for connoisseurs of classical and contemporary Urdu & Hindi poetry, couplets, and timeless thoughts.
+      </p>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="footer-col">
+      <h4 class="footer-heading font-display">Treasury</h4>
+      <ul class="footer-links">
+        <li><a routerLink="/poets">{{ scriptService.translate('explore_poets') }}</a></li>
+        <li><a routerLink="/genres">{{ scriptService.translate('explore_genres') }}</a></li>
+        <li><a routerLink="/themes">{{ scriptService.translate('explore_themes') }}</a></li>
+        <li><a routerLink="/studio">{{ scriptService.translate('studio') }}</a></li>
+      </ul>
+    </div>
+
+    <!-- Literary Scripts -->
+    <div class="footer-col">
+      <h4 class="footer-heading font-display">Scripts & Heritage</h4>
+      <div class="script-badges">
+        <div class="script-card" [class.active]="scriptService.activeScript() === 'ur'" (click)="scriptService.setScript('ur')">
+          <span class="script-title font-urdu">اردو رسم الخط</span>
+          <span class="script-subtitle">Nastaliq Urdu</span>
+        </div>
+        <div class="script-card" [class.active]="scriptService.activeScript() === 'hi'" (click)="scriptService.setScript('hi')">
+          <span class="script-title font-hindi">देवनागरी लिपि</span>
+          <span class="script-subtitle">Devanagari Hindi</span>
+        </div>
+        <div class="script-card" [class.active]="scriptService.activeScript() === 'en'" (click)="scriptService.setScript('en')">
+          <span class="script-title font-english">Roman Script</span>
+          <span class="script-subtitle">Phonetic English</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="unsiiyat-container flex-between">
+      <span class="copyright-text">
+        © {{ currentYear }} Unsiiyat Platform. Crafted with reverence for literature & poetry.
+      </span>
+      <span class="backend-status">
+        Connected to Spring Boot API
+      </span>
+    </div>
+  </div>
+</footer>

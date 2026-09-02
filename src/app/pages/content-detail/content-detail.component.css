@@ -1,0 +1,248 @@
+.reader-view {
+  padding: 30px 24px 60px;
+  max-width: 900px;
+}
+
+.reader-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  position: sticky;
+  top: 75px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  background: var(--bg-glass);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.control-left, .control-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.back-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+.back-link:hover {
+  color: var(--accent-gold-light);
+}
+
+.divider-dot {
+  color: var(--text-muted);
+}
+
+.reader-script-tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-full);
+  padding: 2px;
+}
+
+.reader-script-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.reader-script-btn.active {
+  background: var(--accent-gold);
+  color: #0f0c13;
+}
+
+.font-resizer {
+  display: flex;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.tool-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.font-resizer .tool-btn {
+  border: none;
+  border-radius: 0;
+}
+.font-resizer .tool-btn:first-child {
+  border-right: 1px solid var(--border-gold);
+}
+
+.tool-btn:hover, .tool-btn.active {
+  background: var(--accent-gold-glow);
+  color: var(--accent-gold-light);
+}
+
+/* Parchment Card */
+.ghazal-parchment {
+  padding: 48px 40px;
+  background: radial-gradient(circle at top, rgba(35, 28, 48, 0.95), rgba(18, 14, 24, 0.98));
+  box-shadow: var(--shadow-lg), 0 0 30px var(--accent-gold-glow);
+  border-radius: var(--radius-lg);
+}
+
+.parchment-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.ghazal-main-title {
+  font-size: 2.2rem;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.parchment-poet-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.15rem;
+}
+
+.by-text {
+  color: var(--text-muted);
+}
+
+.poet-name-link {
+  color: var(--accent-gold-light);
+  text-decoration: none;
+  font-weight: 600;
+}
+.poet-name-link:hover {
+  text-decoration: underline;
+}
+
+/* Couplets Stream */
+.couplets-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.couplet-stanza {
+  position: relative;
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.couplet-stanza:hover {
+  background: rgba(201, 158, 88, 0.05);
+}
+
+.couplet-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.couplet-line {
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+
+.couplet-actions {
+  margin-top: 10px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.couplet-stanza:hover .couplet-actions {
+  opacity: 1;
+}
+
+.couplet-action-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  color: var(--accent-gold-light);
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.couplet-action-btn:hover {
+  background: var(--accent-gold);
+  color: #0f0c13;
+}
+
+/* Poet Summary Card */
+.poet-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: 24px;
+}
+
+.poet-card-avatar-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--accent-gold);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.poet-card-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.poet-label {
+  font-size: 0.72rem;
+  color: var(--accent-gold);
+  letter-spacing: 1.5px;
+}
+
+.poet-name-sm {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin: 4px 0 6px;
+}
+
+.poet-bio-sm {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+@media (max-width: 650px) {
+  .ghazal-parchment {
+    padding: 24px 16px;
+  }
+  .poet-summary-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .reader-control-bar {
+    top: 60px;
+  }
+}

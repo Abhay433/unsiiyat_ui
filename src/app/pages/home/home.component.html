@@ -1,0 +1,156 @@
+<div class="homepage-view animate-fade-in">
+  <!-- Hero Section: Couplet of the Day -->
+  <section class="hero-section">
+    <div class="unsiiyat-container">
+      <div class="hero-card poetic-card">
+        <!-- Top Toolbar -->
+        <div class="hero-toolbar">
+          <div class="hero-badge">
+            <span class="badge-icon">✦</span>
+            <span>{{ scriptService.translate('sher_of_day') }}</span>
+          </div>
+
+          <div class="hero-controls">
+            <!-- Font Resizer -->
+            <div class="font-resizer">
+              <button class="tool-btn" (click)="changeFontSize(-2)" title="Decrease font size">A-</button>
+              <button class="tool-btn" (click)="changeFontSize(2)" title="Increase font size">A+</button>
+            </div>
+
+            <!-- Audio Simulation -->
+            <button class="tool-btn audio-btn" (click)="toggleAudio()" [class.playing]="isPlayingAudio()" title="Listen Recitation">
+              {{ isPlayingAudio() ? '🔊 Reciting...' : '▶ Listen' }}
+            </button>
+
+            <!-- Copy Button -->
+            <button class="tool-btn copy-btn" (click)="copyHeroCouplet()">
+              {{ copiedHero() ? '✓ Copied' : '📋 ' + scriptService.translate('copy_sher') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Couplet Text -->
+        <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()" [style.font-size.px]="heroFontSize()">
+          <p class="couplet-line first-line">{{ currentHero().firstLine }}</p>
+          <p class="couplet-line second-line">{{ currentHero().secondLine }}</p>
+        </div>
+
+        <!-- Couplet Footer -->
+        <div class="hero-footer flex-between">
+          <div class="poet-citation">
+            <span class="citation-label">—</span>
+            <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ currentHero().poet }}</span>
+          </div>
+          <a [routerLink]="['/content', currentHero().id]" class="btn btn-outline-gold btn-sm">
+            {{ scriptService.translate('read_more') }} →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Shayars (Poets) Carousel / Grid -->
+  <section class="section-padding poets-section">
+    <div class="unsiiyat-container">
+      <div class="section-header flex-between">
+        <div>
+          <h2 class="section-title font-display">{{ scriptService.translate('explore_poets') }}</h2>
+          <p class="section-subtitle">Masters of timeless verse and eternal rhyme</p>
+        </div>
+        <a routerLink="/poets" class="view-all-link">
+          {{ scriptService.translate('all_poets') }} &rarr;
+        </a>
+      </div>
+
+      <div class="poets-grid">
+        <a 
+          *ngFor="let poet of poets()" 
+          [routerLink]="['/poet', poet.id]" 
+          class="poet-card poetic-card">
+          <div class="poet-avatar-wrapper">
+            <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" class="poet-avatar" />
+          </div>
+          <div class="poet-info">
+            <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
+            <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy' }}</span>
+            <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio | slice:0:80 }}...</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Genres Showcase -->
+  <section class="section-padding genres-section">
+    <div class="unsiiyat-container">
+      <div class="section-header">
+        <h2 class="section-title font-display">{{ scriptService.translate('explore_genres') }}</h2>
+        <p class="section-subtitle">Ghazal, Nazm, Rubai, and Classical Forms</p>
+      </div>
+
+      <div class="genres-grid">
+        <div *ngFor="let genre of genres()" class="genre-card poetic-card">
+          <div class="genre-icon">📜</div>
+          <h3 class="genre-name font-urdu">{{ genre.name }}</h3>
+          <span class="genre-slug font-display">{{ genre.slug | uppercase }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Moods & Themes Section -->
+  <section class="section-padding themes-section">
+    <div class="unsiiyat-container">
+      <div class="section-header">
+        <h2 class="section-title font-display">{{ scriptService.translate('explore_themes') }}</h2>
+        <p class="section-subtitle">Poetry by feelings, moments and philosophical reflections</p>
+      </div>
+
+      <div class="themes-chips-wrapper">
+        <div *ngFor="let theme of themes()" class="theme-chip badge">
+          <span class="theme-chip-dot">✦</span>
+          <span>{{ theme.name }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Ghazals / Content Feed -->
+  <section class="section-padding feed-section">
+    <div class="unsiiyat-container">
+      <div class="section-header">
+        <h2 class="section-title font-display">{{ scriptService.translate('recent_ghazals') }}</h2>
+        <p class="section-subtitle">Latest curated ghazals, couplets and verses</p>
+      </div>
+
+      <div class="ghazals-feed-grid">
+        <div *ngFor="let item of contents()" class="ghazal-card poetic-card">
+          <div class="ghazal-card-header flex-between">
+            <span class="ghazal-poet-badge font-english">
+              {{ item.author?.primaryName || item.authorName || 'Classical Shayar' }}
+            </span>
+            <span class="badge">Ghazal</span>
+          </div>
+
+          <h3 class="ghazal-card-title" [ngClass]="scriptService.fontClass()">
+            {{ item.primaryText?.title || item.title }}
+          </h3>
+
+          <div class="ghazal-card-snippet" [ngClass]="scriptService.fontClass()">
+            <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)">{{ line }}</p>
+          </div>
+
+          <div class="ghazal-card-footer flex-between">
+            <div class="ghazal-themes">
+              <span class="theme-tag">#Ishq</span>
+              <span class="theme-tag">#Classical</span>
+            </div>
+            <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
+              {{ scriptService.translate('read_more') }} &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

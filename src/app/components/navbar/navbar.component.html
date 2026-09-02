@@ -1,0 +1,104 @@
+<header class="navbar-wrapper">
+  <!-- Top Heritage Ribbon -->
+  <div class="heritage-top-bar">
+    <div class="unsiiyat-container flex-between">
+      <div class="top-quote font-english">
+        <span>✨ "نکلنا خلد سے آدم کا سنتے آئے ہیں لیکن..."</span>
+      </div>
+      
+      <!-- Script Switcher (Urdu / Hindi / English) -->
+      <div class="script-switcher-pills">
+        <span class="switcher-label">Script:</span>
+        <button 
+          *ngFor="let s of scriptService.scripts"
+          class="script-pill"
+          [class.active]="scriptService.activeScript() === s.code"
+          (click)="switchScript(s.code)">
+          {{ s.nativeName }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <nav class="main-navbar">
+    <div class="unsiiyat-container flex-between">
+      <!-- Brand Logo -->
+      <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
+        <div class="brand-emblem">✒️</div>
+        <div class="brand-text-block">
+          <span class="brand-name font-urdu gold-gradient-text">{{ scriptService.translate('brand') }}</span>
+          <span class="brand-subtext font-display">UNSIIYAT POETRY</span>
+        </div>
+      </a>
+
+      <!-- Search Input -->
+      <form class="nav-search-form" (submit)="onSearch($event)">
+        <input 
+          type="text" 
+          class="nav-search-input"
+          [placeholder]="scriptService.translate('search_placeholder')"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          name="search" />
+        <button type="submit" class="search-btn" aria-label="Search">🔍</button>
+      </form>
+
+      <!-- Navigation Links -->
+      <div class="nav-links-desktop" [class.open]="mobileMenuOpen()">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">
+          {{ scriptService.activeScript() === 'ur' ? 'صفحۂ اول' : (scriptService.activeScript() === 'hi' ? 'मुख्य पृष्ठ' : 'Home') }}
+        </a>
+        <a routerLink="/poets" routerLinkActive="active" (click)="closeMobileMenu()">
+          {{ scriptService.translate('poets') }}
+        </a>
+        <a routerLink="/genres" routerLinkActive="active" (click)="closeMobileMenu()">
+          {{ scriptService.translate('genres') }}
+        </a>
+        <a routerLink="/themes" routerLinkActive="active" (click)="closeMobileMenu()">
+          {{ scriptService.translate('themes') }}
+        </a>
+        <a routerLink="/studio" routerLinkActive="active" class="studio-link" (click)="closeMobileMenu()">
+          <span class="studio-icon">{{ authService.isAdmin() ? '⚙️' : '🔒' }}</span>
+          {{ scriptService.translate('studio') }}
+          <span *ngIf="authService.isAdmin()" class="nav-admin-badge">Admin</span>
+        </a>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="nav-actions">
+        <!-- Theme Toggle -->
+        <button class="icon-btn theme-btn" (click)="toggleTheme()" [title]="isLightMode() ? 'Dark Mode' : 'Parchment Mode'">
+          {{ isLightMode() ? '🌙' : '📜' }}
+        </button>
+
+        <!-- Auth Section -->
+        <ng-container *ngIf="authService.isAuthenticated(); else unauthBlock">
+          <div class="user-menu">
+            <span *ngIf="authService.isAdmin()" class="admin-crown-badge" title="Administrator Privileges Active">👑 Admin</span>
+            <span class="user-badge" [title]="authService.currentUser()?.email">
+              👤 {{ authService.currentUser()?.name }}
+            </span>
+            <button class="btn btn-ghost btn-sm" (click)="authService.logout()">
+              {{ scriptService.translate('logout') }}
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #unauthBlock>
+          <div class="auth-btns">
+            <a routerLink="/admin/login" class="btn btn-outline-gold btn-sm admin-nav-btn" (click)="closeMobileMenu()">
+              <span>🔐</span>
+              <span>Admin Login</span>
+            </a>
+          </div>
+        </ng-template>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-toggle-btn" (click)="toggleMobileMenu()">
+          {{ mobileMenuOpen() ? '✕' : '☰' }}
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>

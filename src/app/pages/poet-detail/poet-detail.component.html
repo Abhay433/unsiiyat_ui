@@ -1,0 +1,64 @@
+<div class="poet-detail-view unsiiyat-container animate-fade-in" *ngIf="poet()">
+  <!-- Poet Hero Banner -->
+  <div class="poet-banner poetic-card">
+    <div class="banner-content">
+      <div class="poet-banner-avatar-wrapper">
+        <img [src]="poet().avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet().primaryName" class="poet-banner-avatar" />
+      </div>
+
+      <div class="poet-banner-text">
+        <span class="poet-tag font-display">MASTER SHAYAR</span>
+        <h1 class="poet-banner-name" [ngClass]="scriptService.fontClass()">
+          {{ poet().primaryName }}
+        </h1>
+        <div class="poet-timeline font-english">
+          <span>{{ scriptService.translate('born') }}: {{ poet().birthDate | date:'mediumDate' }}</span>
+          <span>•</span>
+          <span>{{ scriptService.translate('died') }}: {{ poet().deathDate | date:'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="poet-tabs-bar">
+    <button class="tab-pill" [class.active]="activeTab() === 'ghazals'" (click)="activeTab.set('ghazals')">
+      📜 {{ scriptService.translate('ghazals') }} ({{ poetContents().length }})
+    </button>
+    <button class="tab-pill" [class.active]="activeTab() === 'bio'" (click)="activeTab.set('bio')">
+      📖 Biography / سوانح حیات
+    </button>
+  </div>
+
+  <!-- Ghazals Tab Content -->
+  <div *ngIf="activeTab() === 'ghazals'" class="tab-pane animate-fade-in">
+    <div class="ghazals-list-grid">
+      <div *ngFor="let item of poetContents()" class="ghazal-card poetic-card">
+        <h3 class="ghazal-title" [ngClass]="scriptService.fontClass()">
+          {{ item.primaryText?.title || item.title }}
+        </h3>
+
+        <div class="ghazal-snippet" [ngClass]="scriptService.fontClass()">
+          <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)">{{ line }}</p>
+        </div>
+
+        <div class="ghazal-footer flex-between">
+          <span class="badge">Ghazal</span>
+          <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
+            {{ scriptService.translate('read_more') }} &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biography Tab Content -->
+  <div *ngIf="activeTab() === 'bio'" class="tab-pane animate-fade-in">
+    <div class="bio-card poetic-card">
+      <h3 class="bio-heading font-display">Biography & Literary Journey</h3>
+      <p class="bio-body" [ngClass]="scriptService.fontClass()">
+        {{ poet().primaryBio }}
+      </p>
+    </div>
+  </div>
+</div>

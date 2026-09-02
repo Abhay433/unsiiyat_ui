@@ -1,0 +1,131 @@
+<div class="admin-login-wrapper animate-fade-in">
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <div class="admin-login-card poetic-card">
+    <!-- Royal Emblem & Header -->
+    <div class="card-header text-center">
+      <div class="emblem-container">
+        <span class="royal-emblem">👑</span>
+        <div class="emblem-glow"></div>
+      </div>
+      
+      <span class="security-pill">
+        <span class="pulse-dot"></span>
+        RESTRICTED ADMIN PORTAL
+      </span>
+
+      <h1 class="portal-title font-display gold-gradient-text">
+        دیوانِ خاص
+      </h1>
+      <h2 class="portal-subtitle font-display">
+        Unsiiyat Studio & Admin Authentication
+      </h2>
+      <p class="portal-description">
+        Secure administration gateway for content curation, database seeding, and poet archives.
+      </p>
+    </div>
+
+    <!-- Alert Notifications -->
+    <div *ngIf="errorMsg()" class="alert-box alert-error animate-fade-in">
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-text">{{ errorMsg() }}</span>
+    </div>
+
+    <div *ngIf="successMsg()" class="alert-box alert-success animate-fade-in">
+      <span class="alert-icon">✨</span>
+      <span class="alert-text">{{ successMsg() }}</span>
+    </div>
+
+    <!-- Login Form -->
+    <form (submit)="onSubmit()" class="admin-form">
+      <!-- Email / Identifier -->
+      <div class="form-group">
+        <label class="form-label" for="admin-email">
+          <span>Administrator Email</span>
+          <span class="label-subtext font-urdu">ای میل</span>
+        </label>
+        <div class="input-container">
+          <span class="input-icon">✉️</span>
+          <input
+            id="admin-email"
+            type="email"
+            class="form-input custom-input font-sans"
+            placeholder="admin@unsiiyat.org"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+            name="email"
+            autocomplete="email"
+            required
+            [disabled]="loading()"
+          />
+        </div>
+      </div>
+
+      <!-- Password with Visibility Toggle -->
+      <div class="form-group">
+        <label class="form-label" for="admin-password">
+          <span>Security Key / Password</span>
+          <span class="label-subtext font-urdu">پاس ورڈ</span>
+        </label>
+        <div class="input-container">
+          <span class="input-icon">🔐</span>
+          <input
+            id="admin-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            class="form-input custom-input font-sans"
+            placeholder="••••••••••••"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+            name="password"
+            autocomplete="current-password"
+            required
+            [disabled]="loading()"
+          />
+          <button
+            type="button"
+            class="toggle-pwd-btn"
+            (click)="togglePasswordVisibility()"
+            [title]="showPassword() ? 'Hide password' : 'Show password'"
+            tabindex="-1"
+          >
+            {{ showPassword() ? '👁️' : '🔒' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn btn-gold btn-block submit-btn"
+        [disabled]="loading()"
+      >
+        <span *ngIf="!loading()" class="btn-content">
+          <span>Unlock Admin Studio</span>
+          <span class="arrow-symbol">→</span>
+        </span>
+        <span *ngIf="loading()" class="btn-content">
+          <span class="spinner"></span>
+          <span>Verifying Credentials...</span>
+        </span>
+      </button>
+    </form>
+
+    <!-- Public Sanctuary Notice & Navigation -->
+    <div class="card-footer">
+      <div class="public-notice">
+        <span class="notice-icon">📖</span>
+        <p>
+          Visiting as a poetry reader? All ghazals, shayars, and nazms are open to everyone without login.
+        </p>
+      </div>
+
+      <div class="return-link-wrapper">
+        <a routerLink="/" class="return-home-link">
+          ← Return to Public Poetry Sanctuary
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
