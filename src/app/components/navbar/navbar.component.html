@@ -1,20 +1,36 @@
 <header class="navbar-wrapper">
-  <!-- Top Heritage Ribbon -->
+  <!-- Top Royal Heritage Ribbon -->
   <div class="heritage-top-bar">
     <div class="unsiiyat-container flex-between">
-      <div class="top-quote font-english">
-        <span>✨ "نکلنا خلد سے آدم کا سنتے آئے ہیں لیکن..."</span>
+      <!-- Poetic Quote Ticker -->
+      <div class="top-quote-block">
+        <span class="top-icon">✦</span>
+        <span class="top-quote-text" [ngClass]="scriptService.fontClass()">
+          {{ scriptService.activeScript() === 'ur' ? 'ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے...' :
+          (scriptService.activeScript() === 'hi' ? 'हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले...' : '"Thousands
+          of desires, each worth dying for..." — Mirza Ghalib') }}
+        </span>
       </div>
-      
-      <!-- Script Switcher (Urdu / Hindi / English) -->
-      <div class="script-switcher-pills">
-        <span class="switcher-label">Script:</span>
-        <button 
-          *ngFor="let s of scriptService.scripts"
-          class="script-pill"
-          [class.active]="scriptService.activeScript() === s.code"
-          (click)="switchScript(s.code)">
-          {{ s.nativeName }}
+
+      <!-- Right Controls: Script Selector & Theme Switcher -->
+      <div class="top-controls">
+        <div class="script-switcher-pills">
+          <span class="switcher-label">
+            <span class="switcher-icon">🌐</span>
+            <span>Script:</span>
+          </span>
+          <button *ngFor="let s of scriptService.scripts" class="script-pill"
+            [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s.code)">
+            {{ s.nativeName }}
+          </button>
+        </div>
+
+        <div class="top-divider"></div>
+
+        <!-- Theme Mode Toggle -->
+        <button class="top-theme-btn" (click)="toggleTheme()"
+          [title]="isLightMode() ? 'Switch to Velvet Obsidian Dark' : 'Switch to Royal Parchment Ivory'">
+          <span class="theme-icon">{{ isLightMode() ? '🌙 Dark' : '📜 Parchment' }}</span>
         </button>
       </div>
     </div>
@@ -22,32 +38,55 @@
 
   <!-- Main Navigation Header -->
   <nav class="main-navbar">
-    <div class="unsiiyat-container flex-between">
+    <div class="unsiiyat-container flex-between nav-main-row">
       <!-- Brand Logo -->
       <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
-        <div class="brand-emblem">✒️</div>
+        <div class="brand-emblem-wrap">
+          <span class="brand-emblem">✒️</span>
+        </div>
         <div class="brand-text-block">
           <span class="brand-name font-urdu gold-gradient-text">{{ scriptService.translate('brand') }}</span>
           <span class="brand-subtext font-display">UNSIIYAT POETRY</span>
         </div>
       </a>
 
-      <!-- Search Input -->
-      <form class="nav-search-form" (submit)="onSearch($event)">
-        <input 
-          type="text" 
-          class="nav-search-input"
-          [placeholder]="scriptService.translate('search_placeholder')"
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          name="search" />
-        <button type="submit" class="search-btn" aria-label="Search">🔍</button>
-      </form>
+      <!-- Live Search Box with Auto-Complete Dropdown -->
+      <div class="nav-search-container">
+        <form class="nav-search-form" (submit)="onSearch($event)">
+          <span class="search-icon-left">🔍</span>
+          <input type="text" class="nav-search-input" [placeholder]="scriptService.translate('search_placeholder')"
+            [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (focus)="onSearchFocus()" name="search"
+            autocomplete="off" />
+          <button *ngIf="searchQuery()" type="button" class="search-clear-btn" (click)="searchQuery.set('')">✕</button>
+        </form>
+
+        <!-- Live Search Dropdown -->
+        <div *ngIf="isSearchOpen() && searchResults().length > 0" class="search-dropdown poetic-card">
+          <div class="dropdown-header">
+            <span>Instant Results</span>
+            <span class="badge">{{ searchResults().length }} matches</span>
+          </div>
+          <div class="dropdown-list">
+            <div *ngFor="let item of searchResults()" class="search-result-row" (click)="selectResult(item)">
+              <span class="result-type-badge" [class.type-poet]="item.type === 'poet'"
+                [class.type-ghazal]="item.type === 'ghazal'">
+                {{ item.type === 'poet' ? '👤 Poet' : (item.type === 'ghazal' ? '📜 Ghazal' : '✦ Theme') }}
+              </span>
+              <div class="result-info">
+                <span class="result-title" [ngClass]="scriptService.fontClass()">{{ item.title }}</span>
+                <span *ngIf="item.subtitle" class="result-subtitle">{{ item.subtitle }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Navigation Links -->
       <div class="nav-links-desktop" [class.open]="mobileMenuOpen()">
-        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">
-          {{ scriptService.activeScript() === 'ur' ? 'صفحۂ اول' : (scriptService.activeScript() === 'hi' ? 'मुख्य पृष्ठ' : 'Home') }}
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+          (click)="closeMobileMenu()">
+          {{ scriptService.activeScript() === 'ur' ? 'صفحۂ اول' : (scriptService.activeScript() === 'hi' ? 'मुख्य पृष्ठ'
+          : 'Home') }}
         </a>
         <a routerLink="/poets" routerLinkActive="active" (click)="closeMobileMenu()">
           {{ scriptService.translate('poets') }}
@@ -58,24 +97,20 @@
         <a routerLink="/themes" routerLinkActive="active" (click)="closeMobileMenu()">
           {{ scriptService.translate('themes') }}
         </a>
-        <a routerLink="/studio" routerLinkActive="active" class="studio-link" (click)="closeMobileMenu()">
+        <!-- <a routerLink="/studio" routerLinkActive="active" class="studio-link" (click)="closeMobileMenu()">
           <span class="studio-icon">{{ authService.isAdmin() ? '⚙️' : '🔒' }}</span>
           {{ scriptService.translate('studio') }}
           <span *ngIf="authService.isAdmin()" class="nav-admin-badge">Admin</span>
-        </a>
+        </a> -->
       </div>
 
       <!-- Action Controls -->
       <div class="nav-actions">
-        <!-- Theme Toggle -->
-        <button class="icon-btn theme-btn" (click)="toggleTheme()" [title]="isLightMode() ? 'Dark Mode' : 'Parchment Mode'">
-          {{ isLightMode() ? '🌙' : '📜' }}
-        </button>
-
-        <!-- Auth Section -->
-        <ng-container *ngIf="authService.isAuthenticated(); else unauthBlock">
+        <!-- Auth Section: Shown only when Admin is logged in -->
+        <!-- <ng-container *ngIf="authService.isAuthenticated()">
           <div class="user-menu">
-            <span *ngIf="authService.isAdmin()" class="admin-crown-badge" title="Administrator Privileges Active">👑 Admin</span>
+            <span *ngIf="authService.isAdmin()" class="admin-crown-badge" title="Administrator Active">👑 Admin</span>
+            <a routerLink="/studio" class="btn btn-outline-gold btn-sm" (click)="closeMobileMenu()">⚙️ Studio</a>
             <span class="user-badge" [title]="authService.currentUser()?.email">
               👤 {{ authService.currentUser()?.name }}
             </span>
@@ -83,19 +118,10 @@
               {{ scriptService.translate('logout') }}
             </button>
           </div>
-        </ng-container>
-
-        <ng-template #unauthBlock>
-          <div class="auth-btns">
-            <a routerLink="/admin/login" class="btn btn-outline-gold btn-sm admin-nav-btn" (click)="closeMobileMenu()">
-              <span>🔐</span>
-              <span>Admin Login</span>
-            </a>
-          </div>
-        </ng-template>
+        </ng-container> -->
 
         <!-- Mobile Menu Toggle -->
-        <button class="mobile-toggle-btn" (click)="toggleMobileMenu()">
+        <button class="mobile-toggle-btn" (click)="toggleMobileMenu()" aria-label="Toggle menu">
           {{ mobileMenuOpen() ? '✕' : '☰' }}
         </button>
       </div>

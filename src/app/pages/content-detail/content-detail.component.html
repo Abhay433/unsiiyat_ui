@@ -6,7 +6,7 @@
       <a routerLink="/" class="back-link">&larr; Back to Home</a>
       <span class="divider-dot">•</span>
       <!-- Genre Badge -->
-      <span class="badge">Ghazal</span>
+      <span class="badge">Ghazal (غزل)</span>
     </div>
 
     <!-- Script Switcher Tabs -->
@@ -23,20 +23,41 @@
     <div class="control-right">
       <!-- Font Resizer -->
       <div class="font-resizer">
-        <button class="tool-btn" (click)="changeFontSize(-2)">A-</button>
-        <button class="tool-btn" (click)="changeFontSize(2)">A+</button>
+        <button class="tool-btn" (click)="changeFontSize(-2)" title="Decrease font size">A-</button>
+        <button class="tool-btn" (click)="changeFontSize(2)" title="Increase font size">A+</button>
       </div>
 
       <!-- Dictionary Lookup Trigger -->
-      <button class="tool-btn dict-btn" (click)="openDictionary()">
+      <button class="tool-btn dict-btn" (click)="openDictionary('')" title="Search Word in Dictionary">
         📖 {{ scriptService.translate('meaning_title') }}
       </button>
 
-      <!-- Audio Button -->
-      <button class="tool-btn" [class.active]="isPlayingAudio()" (click)="isPlayingAudio.set(!isPlayingAudio())">
-        {{ isPlayingAudio() ? '🔊 Reciting' : '▶ Audio' }}
+      <!-- Audio Button with Waveform -->
+      <button class="tool-btn audio-btn" [class.active]="isPlayingAudio()" (click)="toggleAudio()" title="Listen to Recitation">
+        <div *ngIf="isPlayingAudio()" class="audio-waveform">
+          <span class="waveform-bar"></span>
+          <span class="waveform-bar"></span>
+          <span class="waveform-bar"></span>
+        </div>
+        <span>{{ isPlayingAudio() ? 'Reciting (0:' + (audioSeconds() < 10 ? '0' : '') + audioSeconds() + ')' : '▶ Recitation' }}</span>
+      </button>
+
+      <!-- Bookmark Button -->
+      <button class="tool-btn bookmark-btn" [class.bookmarked]="isBookmarked()" (click)="toggleBookmark()" title="Bookmark Ghazal">
+        {{ isBookmarked() ? '★ Saved' : '☆ Save' }}
+      </button>
+
+      <!-- Full Ghazal Copy -->
+      <button class="tool-btn" (click)="copyFullGhazal()" title="Copy entire ghazal">
+        {{ copiedIndex() === -1 ? '✓ Copied' : '📋 Copy All' }}
       </button>
     </div>
+  </div>
+
+  <!-- Word Click Hint Notice -->
+  <div class="word-hint-banner flex-between">
+    <span>💡 Tip: Click on any word in the couplets to view its Urdu, Hindi, and English dictionary meaning instantly.</span>
+    <span class="hint-icon font-display">REKHTA LUGHAT ENABLED</span>
   </div>
 
   <!-- Main Ghazal Parchment Card -->
@@ -48,27 +69,23 @@
       </h1>
       
       <div class="parchment-poet-meta">
-        <span class="by-text">By:</span>
+        <span class="by-text font-display">KALAAM-E-SHAYAR:</span>
         <a [routerLink]="['/poet', content().author?.id || 1]" class="poet-name-link" [ngClass]="scriptService.fontClass()">
           {{ content().author?.primaryName || 'Legendary Poet' }}
         </a>
       </div>
 
       <div class="poetic-divider">
-        <span>✒️ ✦ ✒️</span>
+        <span>✦ ✒️ ✦</span>
       </div>
     </header>
 
     <!-- Couplet-by-Couplet Layout -->
     <div class="couplets-stream" [ngClass]="scriptService.fontClass()" [style.font-size.px]="readerFontSize()">
       <div *ngFor="let couplet of couplets; let idx = index" class="couplet-stanza">
-        <div class="couplet-lines">
-          <p class="couplet-line first-line">{{ couplet[0] }}</p>
-          <p class="couplet-line second-line">{{ couplet[1] }}</p>
-        </div>
-
-        <!-- Couplet Actions (Copy / Dictionary) -->
-        <div class="couplet-actions">
+        <div class="couplet-stanza-header flex-between">
+          <span class="couplet-number font-display">Sher #{{ idx + 1 }}</span>
+          
           <button 
             class="couplet-action-btn" 
             (click)="copyCouplet(idx, couplet)"
@@ -76,32 +93,66 @@
             {{ copiedIndex() === idx ? '✓ ' + scriptService.translate('copied') : '📋 ' + scriptService.translate('copy_sher') }}
           </button>
         </div>
+
+        <div class="couplet-lines">
+          <!-- Line 1 with Clickable Words -->
+          <p class="couplet-line first-line">
+            <span 
+              *ngFor="let word of getWords(couplet[0])" 
+              class="interactive-word"
+              (click)="openDictionary(word)"
+              [title]="'Click to see meaning of ' + word">{{ word }} </span>
+          </p>
+
+          <!-- Line 2 with Clickable Words -->
+          <p class="couplet-line second-line">
+            <span 
+              *ngFor="let word of getWords(couplet[1])" 
+              class="interactive-word"
+              (click)="openDictionary(word)"
+              [title]="'Click to see meaning of ' + word">{{ word }} </span>
+          </p>
+        </div>
+
+        <div class="stanza-divider">
+          <span>❦</span>
+        </div>
       </div>
+    </div>
+
+    <!-- Navigation between Ghazals -->
+    <div class="ghazal-pager flex-between">
+      <button class="btn btn-outline-gold" (click)="navigateToPreviousGhazal()">
+        &larr; Previous Ghazal (پچھلی غزل)
+      </button>
+      <button class="btn btn-outline-gold" (click)="navigateToNextGhazal()">
+        Next Ghazal (اگلی غزل) &rarr;
+      </button>
     </div>
 
     <!-- Parchment Footer with Author Bio Card -->
     <footer class="parchment-footer">
       <div class="poet-summary-card">
-        <div class="poet-card-avatar-wrapper">
-          <img [src]="content().author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'" [alt]="content().author?.primaryName" class="poet-card-avatar" />
+        <div class="poet-portrait-ring">
+          <img [src]="content().author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'" [alt]="content().author?.primaryName" />
         </div>
         <div class="poet-card-details">
-          <span class="poet-label font-display">ABOUT THE SHAYAR</span>
+          <span class="poet-label font-display">ABOUT THE MASTER SHAYAR</span>
           <h4 class="poet-name-sm" [ngClass]="scriptService.fontClass()">
             {{ content().author?.primaryName }}
           </h4>
           <p class="poet-bio-sm" [ngClass]="scriptService.fontClass()">
             {{ content().author?.primaryBio }}
           </p>
-          <a [routerLink]="['/poet', content().author?.id || 1]" class="btn btn-outline-gold btn-sm">
-            View Complete Works &rarr;
+          <a [routerLink]="['/poet', content().author?.id || 1]" class="btn btn-gold btn-sm">
+            View Complete Works & Biography &rarr;
           </a>
         </div>
       </div>
     </footer>
   </article>
 
-  <!-- Dictionary Modal -->
+  <!-- Dictionary Modal Popup -->
   <app-dictionary-modal 
     *ngIf="showDict()"
     [selectedWord]="dictWord()"

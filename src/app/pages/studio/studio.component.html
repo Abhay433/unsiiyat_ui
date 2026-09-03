@@ -1,77 +1,514 @@
-<div class="studio-view unsiiyat-container animate-fade-in">
-  <div class="page-header">
-    <div class="header-icon">⚙️</div>
-    <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('studio') }}</h1>
-    <p class="page-subtitle">Content Administration, Multi-Script Management & Database Orchestration</p>
-  </div>
-
-  <!-- Admin Session Bar -->
-  <div class="admin-session-bar poetic-card">
-    <div class="admin-identity-info">
-      <span class="admin-badge-gold">👑 Administrator Session</span>
-      <span class="admin-user-detail">
-        Active as <strong>{{ authService.currentUser()?.name || authService.currentUser()?.email }}</strong> ({{ authService.currentUser()?.email }})
-      </span>
+<div class="admin-portal-layout" [class.sidebar-collapsed]="isSidebarCollapsed()">
+  <!-- ========================================================================= -->
+  <!-- LEFT SIDEBAR                                                              -->
+  <!-- ========================================================================= -->
+  <aside class="admin-sidebar">
+    <!-- Brand Header -->
+    <div class="sidebar-header">
+      <div class="brand-badge-icon">
+        <span>✒️</span>
+      </div>
+      <div class="brand-titles" *ngIf="!isSidebarCollapsed()">
+        <h2 class="brand-title">Unsiiyat Studio</h2>
+        <span class="brand-subtitle">POETRY MANAGEMENT SYSTEM</span>
+      </div>
     </div>
-    <div class="admin-session-actions">
-      <button class="btn btn-outline-gold btn-sm" (click)="logoutAdmin()">
-        <span>🔒 Sign Out Admin</span>
+
+    <!-- Collapse Toggle Button on Border -->
+    <button class="sidebar-collapse-toggle" (click)="toggleSidebar()" [title]="isSidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
+      <span>{{ isSidebarCollapsed() ? '›' : '‹' }}</span>
+    </button>
+
+    <!-- Navigation Menu -->
+    <div class="sidebar-menu-wrapper">
+      <div class="menu-section-label" *ngIf="!isSidebarCollapsed()">
+        <span>MAIN MENU</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 1. Content / Ghazals -->
+        <button 
+          class="nav-item-btn" 
+          [class.active]="activeTab() === 'content'" 
+          (click)="activeTab.set('content'); searchQuery.set('')"
+          title="Content (Ghazals & Poems)">
+          <span class="nav-icon">📜</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Content</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contents().length > 0">{{ contents().length }}</span>
+        </button>
+
+        <!-- 2. Genres -->
+        <button 
+          class="nav-item-btn" 
+          [class.active]="activeTab() === 'genres'" 
+          (click)="activeTab.set('genres'); searchQuery.set('')"
+          title="Genres">
+          <span class="nav-icon">🏷️</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Genres</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && genres().length > 0">{{ genres().length }}</span>
+        </button>
+
+        <!-- 3. Themes -->
+        <button 
+          class="nav-item-btn" 
+          [class.active]="activeTab() === 'themes'" 
+          (click)="activeTab.set('themes'); searchQuery.set('')"
+          title="Themes">
+          <span class="nav-icon">✦</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Themes</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && themes().length > 0">{{ themes().length }}</span>
+        </button>
+
+        <!-- 4. Authors / Poets -->
+        <button 
+          class="nav-item-btn" 
+          [class.active]="activeTab() === 'authors'" 
+          (click)="activeTab.set('authors'); searchQuery.set('')"
+          title="Authors & Poets">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Authors / Poets</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && authors().length > 0">{{ authors().length }}</span>
+        </button>
+
+        <!-- 5. Auth / Platform Admins -->
+        <button 
+          class="nav-item-btn" 
+          [class.active]="activeTab() === 'auth'" 
+          (click)="activeTab.set('auth'); searchQuery.set('')"
+          title="Platform Admins">
+          <span class="nav-icon">🔐</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Platform Admins</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed()">{{ adminUsers().length }}</span>
+        </button>
+
+        <!-- 6. Database Seeder -->
+        <button 
+          class="nav-item-btn" 
+          [class.active]="activeTab() === 'seed'" 
+          (click)="activeTab.set('seed')"
+          title="Database Seeder">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Database Seeder</span>
+        </button>
+      </nav>
+
+      <!-- Secondary Sanctuary Link -->
+      <div class="sidebar-secondary-nav">
+        <a routerLink="/" class="nav-item-btn sanctuary-link" title="Return to Public Sanctuary">
+          <span class="nav-icon">🏛️</span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Public Sanctuary</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Sidebar Bottom User Profile -->
+    <div class="sidebar-user-footer">
+      <div class="user-avatar-circle">
+        <span>👑</span>
+      </div>
+      <div class="user-details-text" *ngIf="!isSidebarCollapsed()">
+        <span class="user-profile-name">{{ authService.currentUser()?.name || 'Administrator' }}</span>
+        <span class="user-profile-role">Platform Admin</span>
+      </div>
+      <button *ngIf="!isSidebarCollapsed()" class="user-logout-icon-btn" (click)="logoutAdmin()" title="Sign Out Admin">
+        <span>🚪</span>
       </button>
     </div>
-  </div>
+  </aside>
 
-  <!-- Status Alert Banner -->
-  <div *ngIf="statusMsg()" class="status-alert" [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
-    {{ statusMsg()?.text }}
-  </div>
+  <!-- ========================================================================= -->
+  <!-- MAIN WORKSPACE                                                            -->
+  <!-- ========================================================================= -->
+  <main class="admin-main-workspace">
+    <!-- Status Alert Banner -->
+    <div *ngIf="statusMsg()" class="status-toast-bar animate-fade-in" [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
+      <span class="status-icon">{{ statusMsg()?.type === 'success' ? '✓' : '⚠️' }}</span>
+      <span class="status-text">{{ statusMsg()?.text }}</span>
+    </div>
 
-  <!-- Studio Nav Tabs -->
-  <div class="studio-tabs-bar">
-    <button class="tab-btn" [class.active]="activeTab() === 'poets'" (click)="activeTab.set('poets')">
-      👤 Shayars / Authors ({{ authors().length }})
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'contents'" (click)="activeTab.set('contents')">
-      📜 Poetry & Ghazals ({{ contents().length }})
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'taxonomy'" (click)="activeTab.set('taxonomy')">
-      🏷️ Genres & Themes
-    </button>
-    <button class="tab-btn seed-tab-btn" [class.active]="activeTab() === 'seed'" (click)="activeTab.set('seed')">
-      ⚡ 1-Click Rekhta Seed
-    </button>
-  </div>
+    <!-- Top Workspace Bar -->
+    <div class="workspace-top-bar flex-between">
+      <div class="workspace-titles">
+        <h1 class="section-main-title">
+          <ng-container [ngSwitch]="activeTab()">
+            <span *ngSwitchCase="'content'">Content & Poetry</span>
+            <span *ngSwitchCase="'genres'">Genres (اصناف / शैलियाँ)</span>
+            <span *ngSwitchCase="'themes'">Themes & Moods (موضوعات)</span>
+            <span *ngSwitchCase="'authors'">Authors & Shayars (شعراء)</span>
+            <span *ngSwitchCase="'auth'">Platform Admins & Auth</span>
+            <span *ngSwitchCase="'seed'">Database Seed Engine</span>
+          </ng-container>
+        </h1>
+        <p class="section-subtitle-counter">
+          <ng-container [ngSwitch]="activeTab()">
+            <span *ngSwitchCase="'content'">{{ contents().length }} poems & ghazals on the platform</span>
+            <span *ngSwitchCase="'genres'">{{ genres().length }} classical & modern poetic forms</span>
+            <span *ngSwitchCase="'themes'">{{ themes().length }} thematic moods curated</span>
+            <span *ngSwitchCase="'authors'">{{ authors().length }} legendary shayars archived</span>
+            <span *ngSwitchCase="'auth'">{{ adminUsers().length }} registered platform administrators</span>
+            <span *ngSwitchCase="'seed'">Spring Boot & PostgreSQL / H2 Database Sync</span>
+          </ng-container>
+        </p>
+      </div>
 
-  <!-- TAB 1: SEED REKHTA DATABASE -->
-  <div *ngIf="activeTab() === 'seed'" class="tab-content animate-fade-in">
-    <div class="poetic-card seed-card">
-      <h3 class="card-heading font-display">⚡ Populate Database with Rekhta Classics</h3>
-      <p class="card-desc">
-        Click below to populate your Spring Boot backend with classical Shayars (Mirza Ghalib, Faiz, Jaun Elia, Iqbal, Faraz), Genres (Ghazal, Nazm, Rubai), Themes (Ishq, Dard, Tanhai), and authentic verses in Urdu, Hindi & English.
-      </p>
+      <div class="workspace-actions-group">
+        <button *ngIf="activeTab() !== 'seed'" class="btn btn-blue btn-add-primary" (click)="openAddModal()">
+          <span>+ Add</span>
+          <span [ngSwitch]="activeTab()">
+            <span *ngSwitchCase="'content'">Content</span>
+            <span *ngSwitchCase="'genres'">Genre</span>
+            <span *ngSwitchCase="'themes'">Theme</span>
+            <span *ngSwitchCase="'authors'">Author</span>
+            <span *ngSwitchCase="'auth'">Admin User</span>
+          </span>
+        </button>
+      </div>
+    </div>
 
-      <button class="btn btn-gold btn-lg" (click)="runDatabaseSeed()" [disabled]="isSeeding()">
-        {{ isSeeding() ? '⏳ Seeding Database in progress...' : '🚀 Populate All Rekhta Classics to Backend' }}
-      </button>
+    <!-- Search Bar for Tables -->
+    <div *ngIf="activeTab() !== 'seed'" class="table-search-bar-wrap">
+      <div class="table-search-box">
+        <span class="search-lens">🔍</span>
+        <input 
+          type="text" 
+          class="table-search-input" 
+          placeholder="Search by name, title, or code..." 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)" />
+        <button *ngIf="searchQuery()" type="button" class="clear-search-btn" (click)="searchQuery.set('')">✕</button>
+      </div>
+    </div>
 
-      <!-- Terminal Log Window -->
-      <div *ngIf="seedLogs().length > 0" class="console-box">
-        <div class="console-header">
-          <span>Backend Seeding Stream</span>
-        </div>
-        <div class="console-body">
-          <div *ngFor="let line of seedLogs()" class="console-line">{{ line }}</div>
+    <!-- ======================================================================= -->
+    <!-- TAB 1: CONTENT MANAGEMENT                                               -->
+    <!-- ======================================================================= -->
+    <div *ngIf="activeTab() === 'content'" class="tab-view-container animate-fade-in">
+      <div class="admin-data-card">
+        <div class="table-responsive">
+          <table class="quill-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Poem Title</th>
+                <th>Author / Shayar</th>
+                <th>Genre</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of filteredContents()">
+                <td class="col-id">#{{ item.id }}</td>
+                <td class="col-main">
+                  <div class="main-cell-title" [ngClass]="scriptService.fontClass()">
+                    {{ item.primaryText?.title || item.title }}
+                  </div>
+                  <span class="cell-subtext">{{ (item.primaryText?.body || '').split('\n')[0] }}</span>
+                </td>
+                <td>
+                  <span class="author-tag">👤 {{ item.author?.primaryName || ('Author #' + item.authorId) }}</span>
+                </td>
+                <td>
+                  <span class="pill-badge pill-genre">{{ item.genreId === 1 ? 'Ghazal' : (item.genreId === 2 ? 'Nazm' : 'Rubai') }}</span>
+                </td>
+                <td>
+                  <span class="status-pill status-active">Published</span>
+                </td>
+                <td style="text-align: right;">
+                  <a [routerLink]="['/content', item.id]" target="_blank" class="table-action-btn" title="View in Reading Room">
+                    👁️ View
+                  </a>
+                </td>
+              </tr>
+              <tr *ngIf="filteredContents().length === 0">
+                <td colspan="6" class="empty-table-cell">
+                  No content records match "{{ searchQuery() }}".
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- TAB 2: AUTHORS / POETS MANAGEMENT -->
-  <div *ngIf="activeTab() === 'poets'" class="tab-content animate-fade-in">
-    <div class="studio-grid">
-      <!-- Create Poet Form -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Add New Shayar / Poet</h3>
-        <form (submit)="saveAuthorWithDetails()">
+    <!-- ======================================================================= -->
+    <!-- TAB 2: GENRES MANAGEMENT                                                -->
+    <!-- ======================================================================= -->
+    <div *ngIf="activeTab() === 'genres'" class="tab-view-container animate-fade-in">
+      <div class="admin-data-card">
+        <div class="table-responsive">
+          <table class="quill-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Genre Name</th>
+                <th>Code / Slug</th>
+                <th>Description</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let g of filteredGenres()">
+                <td class="col-id">#{{ g.id }}</td>
+                <td class="col-main font-urdu font-lg">
+                  <strong>{{ g.name }}</strong>
+                </td>
+                <td>
+                  <span class="pill-badge pill-code">{{ g.slug }}</span>
+                </td>
+                <td class="col-desc">
+                  {{ g.slug === 'ghazal' ? 'Classical rhymed stanzas with Matla, Maqta, Radif & Qafiya.' : (g.slug === 'nazm' ? 'Thematic descriptive poem with a unified subject matter.' : 'Classical poetic verse form.') }}
+                </td>
+                <td style="text-align: right;">
+                  <span class="status-pill status-active">Active</span>
+                </td>
+              </tr>
+              <tr *ngIf="filteredGenres().length === 0">
+                <td colspan="5" class="empty-table-cell">
+                  No genres found matching "{{ searchQuery() }}".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 3: THEMES MANAGEMENT                                                -->
+    <!-- ======================================================================= -->
+    <div *ngIf="activeTab() === 'themes'" class="tab-view-container animate-fade-in">
+      <div class="admin-data-card">
+        <div class="table-responsive">
+          <table class="quill-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Theme / Mood Name</th>
+                <th>Slug Code</th>
+                <th>Heritage Category</th>
+                <th style="text-align: right;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of filteredThemes()">
+                <td class="col-id">#{{ t.id }}</td>
+                <td class="col-main font-urdu font-lg">
+                  <strong>{{ t.name }}</strong>
+                </td>
+                <td>
+                  <span class="pill-badge pill-code">#{{ t.slug }}</span>
+                </td>
+                <td>
+                  <span class="author-tag">✦ Rekhta Heritage Theme</span>
+                </td>
+                <td style="text-align: right;">
+                  <span class="status-pill status-active">Active</span>
+                </td>
+              </tr>
+              <tr *ngIf="filteredThemes().length === 0">
+                <td colspan="5" class="empty-table-cell">
+                  No themes found matching "{{ searchQuery() }}".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 4: AUTHORS / POETS MANAGEMENT                                       -->
+    <!-- ======================================================================= -->
+    <div *ngIf="activeTab() === 'authors'" class="tab-view-container animate-fade-in">
+      <div class="admin-data-card">
+        <div class="table-responsive">
+          <table class="quill-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Shayar Name</th>
+                <th>Lifespan</th>
+                <th>Era / Tradition</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of filteredAuthors()">
+                <td class="col-id">#{{ a.id }}</td>
+                <td class="col-main">
+                  <div class="poet-table-identity">
+                    <div class="poet-mini-avatar">
+                      <span>👤</span>
+                    </div>
+                    <div>
+                      <strong class="poet-table-name">{{ a.primaryName }}</strong>
+                      <span class="poet-urdu-sub font-urdu">{{ getAuthorUrduName(a) }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ a.birthDate | date:'yyyy' }} – {{ a.deathDate | date:'yyyy' }}</td>
+                <td>
+                  <span class="pill-badge pill-genre">Classical Heritage</span>
+                </td>
+                <td style="text-align: right;">
+                  <a [routerLink]="['/poet', a.id]" target="_blank" class="table-action-btn">
+                    👁️ View Bio
+                  </a>
+                </td>
+              </tr>
+              <tr *ngIf="filteredAuthors().length === 0">
+                <td colspan="5" class="empty-table-cell">
+                  No authors found matching "{{ searchQuery() }}".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 5: AUTH / PLATFORM ADMINS MANAGEMENT                                -->
+    <!-- ======================================================================= -->
+    <div *ngIf="activeTab() === 'auth'" class="tab-view-container animate-fade-in">
+      <div class="admin-data-card">
+        <div class="table-responsive">
+          <table class="quill-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">ID</th>
+                <th>Administrator Name</th>
+                <th>Email Address</th>
+                <th>Role & Permissions</th>
+                <th>Status</th>
+                <th style="text-align: right;">Last Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of filteredAdmins()">
+                <td class="col-id">#{{ u.id }}</td>
+                <td class="col-main">
+                  <div class="admin-user-cell">
+                    <span class="crown-icon">👑</span>
+                    <strong>{{ u.name }}</strong>
+                  </div>
+                </td>
+                <td class="col-email">{{ u.email }}</td>
+                <td>
+                  <span class="pill-badge pill-admin">{{ u.role }}</span>
+                </td>
+                <td>
+                  <span class="status-pill status-active">{{ u.status }}</span>
+                </td>
+                <td style="text-align: right; color: var(--text-muted);">{{ u.lastActive }}</td>
+              </tr>
+              <tr *ngIf="filteredAdmins().length === 0">
+                <td colspan="6" class="empty-table-cell">
+                  No administrators found matching "{{ searchQuery() }}".
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 6: DATABASE SEED ENGINE                                             -->
+    <!-- ======================================================================= -->
+    <div *ngIf="activeTab() === 'seed'" class="tab-view-container animate-fade-in">
+      <div class="admin-data-card seed-engine-card">
+        <div class="seed-engine-header">
+          <span class="seed-engine-emblem">⚡</span>
+          <h2 class="seed-title font-display">1-Click Rekhta Database Seeder</h2>
+          <p class="seed-desc">
+            Synchronize and populate your backend with classical Shayars (Mirza Ghalib, Faiz Ahmad Faiz, Jaun Elia, Allama Iqbal, Ahmad Faraz), Genres, Themes, and authentic poetry in Urdu Nastaliq, Hindi Devanagari, and English.
+          </p>
+          <button class="btn btn-blue btn-lg seed-execute-btn" (click)="runDatabaseSeed()" [disabled]="isSeeding()">
+            <span>{{ isSeeding() ? '⏳ Populating Backend Database...' : '🚀 Execute Rekhta Database Seed' }}</span>
+          </button>
+        </div>
+
+        <!-- Terminal Log Window -->
+        <div *ngIf="seedLogs().length > 0" class="console-box">
+          <div class="console-header">
+            <span>Live Seeding Stream</span>
+          </div>
+          <div class="console-body">
+            <div *ngFor="let line of seedLogs()" class="console-line">{{ line }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- CREATE / ADD MODAL                                                        -->
+  <!-- ========================================================================= -->
+  <div *ngIf="showAddModal()" class="admin-modal-backdrop" (click)="closeAddModal()">
+    <div class="admin-modal-card animate-fade-in" (click)="$event.stopPropagation()">
+      <div class="modal-top flex-between">
+        <h3 class="modal-heading font-display">
+          <span [ngSwitch]="activeTab()">
+            <span *ngSwitchCase="'content'">📜 Publish New Ghazal / Poem</span>
+            <span *ngSwitchCase="'genres'">🏷️ Create Literary Genre</span>
+            <span *ngSwitchCase="'themes'">✦ Create Poetic Theme</span>
+            <span *ngSwitchCase="'authors'">👤 Add Shayar / Poet Profile</span>
+            <span *ngSwitchCase="'auth'">🔐 Register Platform Administrator</span>
+          </span>
+        </h3>
+        <button class="modal-close" (click)="closeAddModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Add Content Form -->
+        <form *ngIf="activeTab() === 'content'" (submit)="saveContentWithTexts()">
+          <div class="form-group">
+            <label class="form-label">Poem Title (Identifier)</label>
+            <input type="text" class="form-input" placeholder="e.g. Hazaron Khwahishen Aisi" [(ngModel)]="contentForm().title" name="title" required />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Author ID</label>
+              <input type="number" class="form-input" [(ngModel)]="contentForm().authorId" name="authorId" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Genre ID (1=Ghazal, 2=Nazm)</label>
+              <input type="number" class="form-input" [(ngModel)]="contentForm().genreId" name="genreId" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-blue btn-block">Publish Ghazal to Database</button>
+        </form>
+
+        <!-- Add Genre Form -->
+        <form *ngIf="activeTab() === 'genres'" (submit)="saveGenre()">
+          <div class="form-group">
+            <label class="form-label">Genre Name (اردو / हिन्दी)</label>
+            <input type="text" class="form-input font-urdu" placeholder="e.g. مرثیہ / Rubaiyat" [(ngModel)]="genreForm().name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Slug Code (Lowercase)</label>
+            <input type="text" class="form-input" placeholder="e.g. marsiya" [(ngModel)]="genreForm().slug" name="slug" required />
+          </div>
+          <button type="submit" class="btn btn-blue btn-block">Save Genre</button>
+        </form>
+
+        <!-- Add Theme Form -->
+        <form *ngIf="activeTab() === 'themes'" (submit)="saveTheme()">
+          <div class="form-group">
+            <label class="form-label">Theme / Mood Name (اردو / हिन्दी)</label>
+            <input type="text" class="form-input font-urdu" placeholder="e.g. تصوف / Sufism" [(ngModel)]="themeForm().name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Slug Code</label>
+            <input type="text" class="form-input" placeholder="e.g. sufi" [(ngModel)]="themeForm().slug" name="slug" required />
+          </div>
+          <button type="submit" class="btn btn-blue btn-block">Save Theme</button>
+        </form>
+
+        <!-- Add Author Form -->
+        <form *ngIf="activeTab() === 'authors'" (submit)="saveAuthorWithDetails()">
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Birth Date</label>
@@ -82,151 +519,41 @@
               <input type="date" class="form-input" [(ngModel)]="poetForm().deathDate" name="deathDate" />
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Urdu Name (اردو نام)</label>
-            <input type="text" class="form-input font-urdu" placeholder="مثال: مرزا اسد اللہ خاں غالب" [(ngModel)]="poetForm().urName" name="urName" />
+            <input type="text" class="form-input font-urdu" placeholder="مثال: مرزا غالب" [(ngModel)]="poetForm().urName" name="urName" />
           </div>
-
           <div class="form-group">
             <label class="form-label">Hindi Name (हिन्दी नाम)</label>
             <input type="text" class="form-input font-hindi" placeholder="उदा: मिर्ज़ा ग़ालिब" [(ngModel)]="poetForm().hiName" name="hiName" />
           </div>
-
           <div class="form-group">
-            <label class="form-label">English / Roman Name</label>
+            <label class="form-label">English Name</label>
             <input type="text" class="form-input font-english" placeholder="e.g. Mirza Ghalib" [(ngModel)]="poetForm().enName" name="enName" />
           </div>
-
-          <button type="submit" class="btn btn-gold btn-block">Save Poet into Database</button>
+          <button type="submit" class="btn btn-blue btn-block">Save Shayar</button>
         </form>
-      </div>
 
-      <!-- Existing Poets List -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Active Shayars ({{ authors().length }})</h3>
-        <div class="table-container">
-          <table class="studio-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Timeline</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let a of authors()">
-                <td>#{{ a.id }}</td>
-                <td><strong>{{ a.primaryName }}</strong></td>
-                <td>{{ a.birthDate | date:'yyyy' }} – {{ a.deathDate | date:'yyyy' }}</td>
-                <td>
-                  <a [routerLink]="['/poet', a.id]" class="btn btn-outline-gold btn-sm">View</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB 3: CONTENT / POETRY MANAGEMENT -->
-  <div *ngIf="activeTab() === 'contents'" class="tab-content animate-fade-in">
-    <div class="studio-grid">
-      <!-- Create Ghazal Form -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Publish New Ghazal / Poem</h3>
-        <form (submit)="saveContentWithTexts()">
+        <!-- Add Admin User Form -->
+        <form *ngIf="activeTab() === 'auth'" (submit)="saveAdminUser()">
           <div class="form-group">
-            <label class="form-label">Poem Title (Identifier)</label>
-            <input type="text" class="form-input" placeholder="e.g. Hazaron Khwahishen Aisi" [(ngModel)]="contentForm().title" name="title" required />
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" placeholder="e.g. Diwan Security Officer" [(ngModel)]="newAdminForm().name" name="name" required />
           </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Author / Shayar ID</label>
-              <input type="number" class="form-input" [(ngModel)]="contentForm().authorId" name="authorId" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Genre ID (1=Ghazal, 2=Nazm)</label>
-              <input type="number" class="form-input" [(ngModel)]="contentForm().genreId" name="genreId" />
-            </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" placeholder="admin@unsiiyat.org" [(ngModel)]="newAdminForm().email" name="email" required />
           </div>
-
-          <button type="submit" class="btn btn-gold btn-block">Publish Ghazal</button>
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <select class="form-select" [(ngModel)]="newAdminForm().role" name="role">
+              <option value="PLATFORM_ADMIN">PLATFORM_ADMIN</option>
+              <option value="CONTENT_EDITOR">CONTENT_EDITOR</option>
+              <option value="MODERATOR">MODERATOR</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-blue btn-block">Create Administrator</button>
         </form>
-      </div>
-
-      <!-- Existing Poetry List -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Published Poems ({{ contents().length }})</h3>
-        <div class="table-container">
-          <table class="studio-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Author</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let c of contents()">
-                <td>#{{ c.id }}</td>
-                <td><strong>{{ c.primaryText?.title || c.title }}</strong></td>
-                <td>{{ c.author?.primaryName || ('Author #' + c.authorId) }}</td>
-                <td>
-                  <a [routerLink]="['/content', c.id]" class="btn btn-outline-gold btn-sm">Read</a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB 4: TAXONOMY (GENRES & THEMES) -->
-  <div *ngIf="activeTab() === 'taxonomy'" class="tab-content animate-fade-in">
-    <div class="studio-grid-3">
-      <!-- Genres -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Genres</h3>
-        <form (submit)="saveGenre()" class="mini-form">
-          <input type="text" class="form-input" placeholder="Genre Name (e.g. مرثیہ)" [(ngModel)]="genreForm().name" name="gName" required />
-          <input type="text" class="form-input" placeholder="Slug (e.g. marsiya)" [(ngModel)]="genreForm().slug" name="gSlug" required />
-          <button type="submit" class="btn btn-gold btn-sm">Add Genre</button>
-        </form>
-        <ul class="taxonomy-list">
-          <li *ngFor="let g of genres()">#{{ g.id }} - {{ g.name }} (<code>{{ g.slug }}</code>)</li>
-        </ul>
-      </div>
-
-      <!-- Themes -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Themes / Moods</h3>
-        <form (submit)="saveTheme()" class="mini-form">
-          <input type="text" class="form-input" placeholder="Theme Name (e.g. تصوف)" [(ngModel)]="themeForm().name" name="tName" required />
-          <input type="text" class="form-input" placeholder="Slug (e.g. sufi)" [(ngModel)]="themeForm().slug" name="tSlug" required />
-          <button type="submit" class="btn btn-gold btn-sm">Add Theme</button>
-        </form>
-        <ul class="taxonomy-list">
-          <li *ngFor="let t of themes()">#{{ t.id }} - {{ t.name }} (<code>{{ t.slug }}</code>)</li>
-        </ul>
-      </div>
-
-      <!-- Scripts -->
-      <div class="poetic-card">
-        <h3 class="card-heading font-display">Scripts</h3>
-        <form (submit)="saveScript()" class="mini-form">
-          <input type="text" class="form-input" placeholder="Script Name (e.g. Urdu)" [(ngModel)]="scriptForm().name" name="sName" required />
-          <input type="text" class="form-input" placeholder="Code (e.g. ur)" [(ngModel)]="scriptForm().code" name="sCode" required />
-          <button type="submit" class="btn btn-gold btn-sm">Add Script</button>
-        </form>
-        <ul class="taxonomy-list">
-          <li *ngFor="let s of scripts()">#{{ s.id }} - {{ s.name }} (<code>{{ s.code }}</code>)</li>
-        </ul>
       </div>
     </div>
   </div>

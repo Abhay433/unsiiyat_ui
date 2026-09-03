@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -21,8 +21,18 @@ export class PoetsComponent implements OnInit {
 
   poets = signal<any[]>([]);
   searchFilter = signal('');
-  selectedEra = signal('all');
+  selectedLetter = signal('ALL');
+  selectedEra = signal<'all' | 'classical' | 'progressive' | 'modern'>('all');
   loading = signal(true);
+
+  readonly alphabet = ['ALL', 'A', 'B', 'F', 'G', 'I', 'J', 'M', 'P', 'R', 'S', 'Z'];
+
+  constructor() {
+    effect(() => {
+      this.scriptService.activeScript();
+      this.loadPoets();
+    });
+  }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -61,19 +71,34 @@ export class PoetsComponent implements OnInit {
       deathDate: p.deathDate,
       avatarUrl: p.avatarUrl,
       primaryName: p.details[lang]?.name || p.details.ur.name,
-      primaryBio: p.details[lang]?.biography || p.details.ur.biography
+      primaryBio: p.details[lang]?.biography || p.details.ur.biography,
+      era: p.id === 1 ? 'classical' : (p.id === 2 ? 'progressive' : 'modern')
     }));
     this.poets.set(list);
   }
 
-  get filteredPoets() {
+  readonly filteredPoets = computed(() => {
     const query = this.searchFilter().toLowerCase().trim();
-    if (!query) return this.poets();
+    const letter = this.selectedLetter();
+    const era = this.selectedEra();
 
     return this.poets().filter(p => {
       const name = (p.primaryName || '').toLowerCase();
       const bio = (p.primaryBio || '').toLowerCase();
-      return name.includes(query) || bio.includes(query);
+
+      const matchesQuery = !query || name.includes(query) || bio.includes(query);
+      const matchesLetter = letter === 'ALL' || name.startsWith(letter.toLowerCase()) || name.includes(letter.toLowerCase());
+      const matchesEra = era === 'all' || (p.era || 'classical') === era;
+
+      return matchesQuery && matchesLetter && matchesEra;
     });
+  });
+
+  setLetter(l: string) {
+    this.selectedLetter.set(l);
+  }
+
+  setEra(era: 'all' | 'classical' | 'progressive' | 'modern') {
+    this.selectedEra.set(era);
   }
 }

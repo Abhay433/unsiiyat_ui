@@ -1,61 +1,86 @@
 <div class="homepage-view animate-fade-in">
-  <!-- Hero Section: Couplet of the Day -->
+  <!-- Hero Section: Couplet of the Day (شعرِ روز / शेर-ए-खास) -->
   <section class="hero-section">
     <div class="unsiiyat-container">
       <div class="hero-card poetic-card">
         <!-- Top Toolbar -->
-        <div class="hero-toolbar">
+        <div class="hero-toolbar flex-between">
           <div class="hero-badge">
             <span class="badge-icon">✦</span>
-            <span>{{ scriptService.translate('sher_of_day') }}</span>
+            <span class="badge-text">{{ scriptService.translate('sher_of_day') }}</span>
           </div>
 
           <div class="hero-controls">
             <!-- Font Resizer -->
-            <div class="font-resizer">
+            <div class="font-resizer-group">
+              <span class="control-label">{{ scriptService.translate('font_size') }}:</span>
               <button class="tool-btn" (click)="changeFontSize(-2)" title="Decrease font size">A-</button>
               <button class="tool-btn" (click)="changeFontSize(2)" title="Increase font size">A+</button>
             </div>
 
-            <!-- Audio Simulation -->
-            <button class="tool-btn audio-btn" (click)="toggleAudio()" [class.playing]="isPlayingAudio()" title="Listen Recitation">
-              {{ isPlayingAudio() ? '🔊 Reciting...' : '▶ Listen' }}
+            <!-- Audio Simulation Button with Waveform -->
+            <button class="tool-btn audio-btn" (click)="toggleAudio()" [class.playing]="isPlayingAudio()" title="Listen to Recitation">
+              <div *ngIf="isPlayingAudio()" class="audio-waveform">
+                <span class="waveform-bar"></span>
+                <span class="waveform-bar"></span>
+                <span class="waveform-bar"></span>
+                <span class="waveform-bar"></span>
+                <span class="waveform-bar"></span>
+              </div>
+              <span>{{ isPlayingAudio() ? 'Reciting (0:' + (audioProgress() < 10 ? '0' : '') + audioProgress() + ')' : '▶ Recitation' }}</span>
             </button>
 
             <!-- Copy Button -->
             <button class="tool-btn copy-btn" (click)="copyHeroCouplet()">
-              {{ copiedHero() ? '✓ Copied' : '📋 ' + scriptService.translate('copy_sher') }}
+              {{ copiedHero() ? '✓ ' + scriptService.translate('copied') : '📋 ' + scriptService.translate('copy_sher') }}
             </button>
           </div>
         </div>
 
-        <!-- Couplet Text -->
+        <!-- Couplet Text Presentation -->
         <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()" [style.font-size.px]="heroFontSize()">
           <p class="couplet-line first-line">{{ currentHero().firstLine }}</p>
           <p class="couplet-line second-line">{{ currentHero().secondLine }}</p>
         </div>
 
+        <!-- Couplet Meaning Breakdown -->
+        <div class="hero-meaning-box">
+          <span class="meaning-tag">📖 Mafhoom / भावार्थ:</span>
+          <p class="meaning-text" [ngClass]="scriptService.fontClass()">{{ currentHero().meaning }}</p>
+        </div>
+
         <!-- Couplet Footer -->
         <div class="hero-footer flex-between">
           <div class="poet-citation">
-            <span class="citation-label">—</span>
-            <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ currentHero().poet }}</span>
+            <div class="poet-citation-avatar">
+              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=100" alt="Mirza Ghalib" />
+            </div>
+            <div class="poet-citation-info">
+              <span class="citation-label font-display">MASTER SHAYAR</span>
+              <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ currentHero().poet }}</span>
+            </div>
           </div>
-          <a [routerLink]="['/content', currentHero().id]" class="btn btn-outline-gold btn-sm">
-            {{ scriptService.translate('read_more') }} →
-          </a>
+          
+          <div class="hero-action-links">
+            <button class="btn btn-ghost btn-sm" (click)="openDictionaryWith('Khwahish')">
+              📖 Explore Words
+            </button>
+            <a [routerLink]="['/content', currentHero().id]" class="btn btn-gold btn-sm">
+              {{ scriptService.translate('read_more') }} &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Featured Shayars (Poets) Carousel / Grid -->
+  <!-- Section 1: Shayar Spotlight (شاعروں کی محفل / प्रमुख शायर) -->
   <section class="section-padding poets-section">
     <div class="unsiiyat-container">
       <div class="section-header flex-between">
         <div>
           <h2 class="section-title font-display">{{ scriptService.translate('explore_poets') }}</h2>
-          <p class="section-subtitle">Masters of timeless verse and eternal rhyme</p>
+          <p class="section-subtitle">Masters of timeless verse, classical gazals, and philosophical poetry</p>
         </div>
         <a routerLink="/poets" class="view-all-link">
           {{ scriptService.translate('all_poets') }} &rarr;
@@ -67,67 +92,132 @@
           *ngFor="let poet of poets()" 
           [routerLink]="['/poet', poet.id]" 
           class="poet-card poetic-card">
-          <div class="poet-avatar-wrapper">
-            <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" class="poet-avatar" />
+          <div class="poet-portrait-ring">
+            <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" />
           </div>
-          <div class="poet-info">
+          <div class="poet-card-info">
+            <span class="poet-era-tag font-display">CLASSICAL SHAYAR</span>
             <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
             <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy' }}</span>
-            <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio | slice:0:80 }}...</p>
+            <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio | slice:0:75 }}...</p>
+            <span class="poet-works-count">✦ 40+ Ghazals & Nazms</span>
           </div>
         </a>
       </div>
     </div>
   </section>
 
-  <!-- Genres Showcase -->
-  <section class="section-padding genres-section">
+  <!-- Section 2: Word of the Day / Lughat (لفظِ روز / आज का लफ़्ज़) -->
+  <section class="section-padding lughat-section">
     <div class="unsiiyat-container">
-      <div class="section-header">
-        <h2 class="section-title font-display">{{ scriptService.translate('explore_genres') }}</h2>
-        <p class="section-subtitle">Ghazal, Nazm, Rubai, and Classical Forms</p>
-      </div>
+      <div class="lughat-card poetic-card">
+        <div class="lughat-header flex-between">
+          <div class="lughat-badge">
+            <span>📖</span>
+            <span class="badge-title font-display">{{ scriptService.translate('word_of_day') }}</span>
+          </div>
+          <div class="lughat-nav-btns">
+            <button class="tool-btn" (click)="prevWord()" title="Previous Word">&larr; Prev</button>
+            <button class="tool-btn" (click)="nextWord()" title="Next Word">Next &rarr;</button>
+          </div>
+        </div>
 
-      <div class="genres-grid">
-        <div *ngFor="let genre of genres()" class="genre-card poetic-card">
-          <div class="genre-icon">📜</div>
-          <h3 class="genre-name font-urdu">{{ genre.name }}</h3>
-          <span class="genre-slug font-display">{{ genre.slug | uppercase }}</span>
+        <div class="lughat-body">
+          <div class="word-highlight-row">
+            <h2 class="lughat-word" [ngClass]="scriptService.fontClass()">{{ currentWord().word }}</h2>
+            <span class="lughat-pronounce">/ {{ currentWord().pronunciation }} /</span>
+            <span class="lughat-origin font-display">{{ currentWord().origin }}</span>
+          </div>
+
+          <div class="lughat-meanings-grid">
+            <div class="meaning-col">
+              <span class="lang-tag font-urdu">اردو فرہنگ</span>
+              <p class="meaning-val font-urdu">{{ currentWord().meanings.ur }}</p>
+            </div>
+            <div class="meaning-col">
+              <span class="lang-tag font-hindi">हिन्दी अर्थ</span>
+              <p class="meaning-val font-hindi">{{ currentWord().meanings.hi }}</p>
+            </div>
+            <div class="meaning-col">
+              <span class="lang-tag font-english">English Meaning</span>
+              <p class="meaning-val font-english">{{ currentWord().meanings.en }}</p>
+            </div>
+          </div>
+
+          <div class="lughat-couplet-box">
+            <span class="couplet-origin-tag">شعر میں استعمال (Usage in Verse):</span>
+            <p class="lughat-couplet-line font-urdu">{{ currentWord().sampleCouplet.firstLine }}</p>
+            <p class="lughat-couplet-line font-urdu">{{ currentWord().sampleCouplet.secondLine }}</p>
+            <span class="lughat-couplet-poet font-urdu">— {{ currentWord().sampleCouplet.poet }}</span>
+          </div>
+        </div>
+
+        <div class="lughat-footer flex-between">
+          <span class="lughat-info-text">Enrich your literary vocabulary with Rekhta & Unsiiyat classical dictionary</span>
+          <button class="btn btn-outline-gold btn-sm" (click)="openDictionaryWith(currentWord().word)">
+            Open Full Lughat &rarr;
+          </button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Moods & Themes Section -->
-  <section class="section-padding themes-section">
-    <div class="unsiiyat-container">
-      <div class="section-header">
-        <h2 class="section-title font-display">{{ scriptService.translate('explore_themes') }}</h2>
-        <p class="section-subtitle">Poetry by feelings, moments and philosophical reflections</p>
-      </div>
-
-      <div class="themes-chips-wrapper">
-        <div *ngFor="let theme of themes()" class="theme-chip badge">
-          <span class="theme-chip-dot">✦</span>
-          <span>{{ theme.name }}</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Recent Ghazals / Content Feed -->
+  <!-- Section 3: Treasury Feed with Category Tabs -->
   <section class="section-padding feed-section">
     <div class="unsiiyat-container">
-      <div class="section-header">
-        <h2 class="section-title font-display">{{ scriptService.translate('recent_ghazals') }}</h2>
-        <p class="section-subtitle">Latest curated ghazals, couplets and verses</p>
+      <div class="section-header flex-between">
+        <div>
+          <h2 class="section-title font-display">{{ scriptService.translate('recent_ghazals') }}</h2>
+          <p class="section-subtitle">Curated poetry by themes, classical meters, and emotional moods</p>
+        </div>
       </div>
 
+      <!-- Category Filter Tabs -->
+      <div class="feed-tabs-row">
+        <button 
+          class="feed-tab-btn" 
+          [class.active]="activeFeedCategory() === 'all'" 
+          (click)="activeFeedCategory.set('all')">
+          All Ghazals (تمام کلام)
+        </button>
+        <button 
+          class="feed-tab-btn" 
+          [class.active]="activeFeedCategory() === 'ishq'" 
+          (click)="activeFeedCategory.set('ishq')">
+          💖 Ishq & Romance (عشق)
+        </button>
+        <button 
+          class="feed-tab-btn" 
+          [class.active]="activeFeedCategory() === 'dard'" 
+          (click)="activeFeedCategory.set('dard')">
+          💔 Dard & Longing (درد)
+        </button>
+        <button 
+          class="feed-tab-btn" 
+          [class.active]="activeFeedCategory() === 'zindagi'" 
+          (click)="activeFeedCategory.set('zindagi')">
+          🌿 Life & Philosophy (زندگی)
+        </button>
+        <button 
+          class="feed-tab-btn" 
+          [class.active]="activeFeedCategory() === 'sufi'" 
+          (click)="activeFeedCategory.set('sufi')">
+          🕯️ Sufism & Mysticism (تصوف)
+        </button>
+        <button 
+          class="feed-tab-btn" 
+          [class.active]="activeFeedCategory() === 'inqilab'" 
+          (click)="activeFeedCategory.set('inqilab')">
+          🚩 Revolution & Hope (انقلاب)
+        </button>
+      </div>
+
+      <!-- Ghazals Feed Grid -->
       <div class="ghazals-feed-grid">
-        <div *ngFor="let item of contents()" class="ghazal-card poetic-card">
+        <div *ngFor="let item of filteredContents(); let idx = index" class="ghazal-card poetic-card">
           <div class="ghazal-card-header flex-between">
             <span class="ghazal-poet-badge font-english">
-              {{ item.author?.primaryName || item.authorName || 'Classical Shayar' }}
+              👤 {{ item.author?.primaryName || item.authorName || 'Classical Shayar' }}
             </span>
             <span class="badge">Ghazal</span>
           </div>
@@ -137,14 +227,26 @@
           </h3>
 
           <div class="ghazal-card-snippet" [ngClass]="scriptService.fontClass()">
-            <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)">{{ line }}</p>
+            <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)" class="snippet-line">{{ line }}</p>
           </div>
 
           <div class="ghazal-card-footer flex-between">
-            <div class="ghazal-themes">
-              <span class="theme-tag">#Ishq</span>
-              <span class="theme-tag">#Classical</span>
+            <div class="card-interaction-btns">
+              <button 
+                class="icon-action-btn" 
+                [class.liked]="likedItems()[item.id]" 
+                (click)="toggleLike(item.id)" 
+                title="Like this ghazal">
+                {{ likedItems()[item.id] ? '❤️' : '🤍' }} {{ likeCounts()[item.id] || 120 }}
+              </button>
+              <button 
+                class="icon-action-btn" 
+                (click)="copyFeedCouplet(idx, getFirstCouplet(item.primaryText?.body), item.author?.primaryName || item.authorName)"
+                title="Copy Couplet">
+                {{ copiedIndex() === idx ? '✓' : '📋' }}
+              </button>
             </div>
+
             <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
               {{ scriptService.translate('read_more') }} &rarr;
             </a>
@@ -153,4 +255,78 @@
       </div>
     </div>
   </section>
+
+  <!-- Section 4: Moods & Emotions Cloud -->
+  <section class="section-padding themes-section">
+    <div class="unsiiyat-container">
+      <div class="section-header">
+        <h2 class="section-title font-display">{{ scriptService.translate('explore_themes') }}</h2>
+        <p class="section-subtitle">Discover poetry resonant with your state of mind and emotions</p>
+      </div>
+
+      <div class="themes-chips-wrapper">
+        <a 
+          *ngFor="let theme of themes()" 
+          [routerLink]="['/themes']" 
+          class="theme-chip-card poetic-card">
+          <div class="theme-chip-icon">✦</div>
+          <div class="theme-chip-details">
+            <h4 class="theme-chip-name" [ngClass]="scriptService.fontClass()">{{ theme.name }}</h4>
+            <span class="theme-chip-slug font-display">#{{ theme.slug }}</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 5: Curated Audio Lounge & Collections Showcase -->
+  <section class="section-padding lounge-section">
+    <div class="unsiiyat-container">
+      <div class="section-header flex-between">
+        <div>
+          <h2 class="section-title font-display">{{ scriptService.translate('audio_lounge') }}</h2>
+          <p class="section-subtitle">Immerse yourself in acoustic recitations, mushaira recordings, and classical tarannum</p>
+        </div>
+      </div>
+
+      <div class="lounge-grid">
+        <div class="lounge-card poetic-card">
+          <div class="lounge-banner-tag font-display">SPECIAL COLLECTION</div>
+          <h3 class="lounge-title font-urdu">دیوانِ غالب — مکمل شاہکار</h3>
+          <p class="lounge-desc font-hindi">मिर्ज़ा ग़ालिब की अमर ग़ज़लों का मुकम्मल संकलन एवं ऑडियो पाठ।</p>
+          <div class="lounge-footer flex-between">
+            <span class="audio-count">🎧 45 Recitations</span>
+            <a routerLink="/poet/1" class="btn btn-gold btn-sm">Listen Now &rarr;</a>
+          </div>
+        </div>
+
+        <div class="lounge-card poetic-card">
+          <div class="lounge-banner-tag font-display">TARANNUM SPECIAL</div>
+          <h3 class="lounge-title font-urdu">فیض احمد فیض — صدائے انقلاب</h3>
+          <p class="lounge-desc font-hindi">फ़ैज़ की पुरअसर नज़्में और रूहानी ग़ज़लें जो इतिहास का हिस्सा बनीं।</p>
+          <div class="lounge-footer flex-between">
+            <span class="audio-count">🎧 32 Recitations</span>
+            <a routerLink="/poet/2" class="btn btn-gold btn-sm">Listen Now &rarr;</a>
+          </div>
+        </div>
+
+        <div class="lounge-card poetic-card">
+          <div class="lounge-banner-tag font-display">CLASSICAL ESSENTIALS</div>
+          <h3 class="lounge-title font-urdu">جون ایلیا — نوحہ گری و فلسفہ</h3>
+          <p class="lounge-desc font-hindi">जौन एलिया का बागी अंदाज़-ए-बयाँ और अस्तित्ववादी शेर-ओ-सुख़न।</p>
+          <div class="lounge-footer flex-between">
+            <span class="audio-count">🎧 28 Recitations</span>
+            <a routerLink="/poet/3" class="btn btn-gold btn-sm">Listen Now &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dictionary Modal Popup -->
+  <app-dictionary-modal 
+    *ngIf="showDictModal()"
+    [selectedWord]="selectedDictWord()"
+    (close)="showDictModal.set(false)">
+  </app-dictionary-modal>
 </div>

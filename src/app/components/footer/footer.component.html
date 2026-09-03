@@ -1,62 +1,125 @@
 <footer class="unsiiyat-footer">
+  <!-- Poetic Quotation Banner -->
+  <div class="footer-quote-banner">
+    <div class="unsiiyat-container flex-center">
+      <span class="quote-ornament">✦</span>
+      <p class="footer-quote-text font-urdu" *ngIf="scriptService.activeScript() === 'ur'">
+        "شاعری دل کی زباں ہے اور لفظ اس کا آئینہ — ادب انسانی روح کا لازوال سرمایہ ہے"
+      </p>
+      <p class="footer-quote-text font-hindi" *ngIf="scriptService.activeScript() === 'hi'">
+        "शायरी दिल की ज़बाँ है और लफ़्ज़ उसका आईना — साहित्य मानवीय आत्मा की अमर धरोहर है"
+      </p>
+      <p class="footer-quote-text font-english" *ngIf="scriptService.activeScript() === 'en'">
+        "Poetry is the whisper of the soul, and verse its eternal mirror."
+      </p>
+      <span class="quote-ornament">✦</span>
+    </div>
+  </div>
+
   <div class="poetic-divider">
-    <span>✦ 📜 ✦</span>
+    <span>❦ 📜 ❦</span>
   </div>
 
   <div class="unsiiyat-container footer-grid">
-    <!-- Brand Info -->
+    <!-- Column 1: Brand Info & Mission -->
     <div class="footer-col brand-col">
       <div class="footer-brand">
         <span class="footer-emblem">✒️</span>
         <span class="footer-logo font-urdu gold-gradient-text">{{ scriptService.translate('brand') }}</span>
       </div>
-      <p class="footer-tagline font-urdu">
+      <p class="footer-tagline" [ngClass]="scriptService.fontClass()">
         {{ scriptService.translate('tagline') }}
       </p>
       <p class="footer-desc">
-        A sanctuary for connoisseurs of classical and contemporary Urdu & Hindi poetry, couplets, and timeless thoughts.
+        Unsiiyat is a premier sanctuary dedicated to preserving, celebrating, and presenting classical and contemporary Urdu and Hindi poetry, ghazals, and linguistic heritage across multiple scripts.
       </p>
+      <div class="footer-social-links">
+        <span class="social-tag">#UrduPoetry</span>
+        <span class="social-tag">#HindiKavita</span>
+        <span class="social-tag">#Ghazal</span>
+        <span class="social-tag">#Shayar</span>
+      </div>
     </div>
 
-    <!-- Quick Navigation -->
+    <!-- Column 2: Treasury Navigation -->
     <div class="footer-col">
-      <h4 class="footer-heading font-display">Treasury</h4>
+      <h4 class="footer-heading font-display">Treasury / مخزن</h4>
       <ul class="footer-links">
         <li><a routerLink="/poets">{{ scriptService.translate('explore_poets') }}</a></li>
         <li><a routerLink="/genres">{{ scriptService.translate('explore_genres') }}</a></li>
         <li><a routerLink="/themes">{{ scriptService.translate('explore_themes') }}</a></li>
-        <li><a routerLink="/studio">{{ scriptService.translate('studio') }}</a></li>
       </ul>
     </div>
 
-    <!-- Literary Scripts -->
+    <!-- Column 3: Multi-Script Heritage -->
     <div class="footer-col">
       <h4 class="footer-heading font-display">Scripts & Heritage</h4>
       <div class="script-badges">
         <div class="script-card" [class.active]="scriptService.activeScript() === 'ur'" (click)="scriptService.setScript('ur')">
-          <span class="script-title font-urdu">اردو رسم الخط</span>
-          <span class="script-subtitle">Nastaliq Urdu</span>
+          <div class="script-card-text">
+            <span class="script-title font-urdu">اردو نستعلیق</span>
+            <span class="script-subtitle">Nastaliq Urdu</span>
+          </div>
+          <span class="script-arrow">&rarr;</span>
         </div>
         <div class="script-card" [class.active]="scriptService.activeScript() === 'hi'" (click)="scriptService.setScript('hi')">
-          <span class="script-title font-hindi">देवनागरी लिपि</span>
-          <span class="script-subtitle">Devanagari Hindi</span>
+          <div class="script-card-text">
+            <span class="script-title font-hindi">देवनागरी लिपि</span>
+            <span class="script-subtitle">Devanagari Hindi</span>
+          </div>
+          <span class="script-arrow">&rarr;</span>
         </div>
         <div class="script-card" [class.active]="scriptService.activeScript() === 'en'" (click)="scriptService.setScript('en')">
-          <span class="script-title font-english">Roman Script</span>
-          <span class="script-subtitle">Phonetic English</span>
+          <div class="script-card-text">
+            <span class="script-title font-english">Roman Phonetic</span>
+            <span class="script-subtitle">English Script</span>
+          </div>
+          <span class="script-arrow">&rarr;</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Column 4: Newsletter & Daily Couplet -->
+    <div class="footer-col newsletter-col">
+      <h4 class="footer-heading font-display">Daily Couplet</h4>
+      <p class="newsletter-desc" [ngClass]="scriptService.fontClass()">
+        {{ scriptService.translate('newsletter_title') }}
+      </p>
+      <form class="newsletter-form" (submit)="onSubscribe($event)">
+        <input 
+          type="email" 
+          class="newsletter-input" 
+          placeholder="Enter your email..."
+          [ngModel]="newsletterEmail()"
+          (ngModelChange)="newsletterEmail.set($event)"
+          name="email"
+          required />
+        <button type="submit" class="btn btn-gold btn-sm newsletter-btn">
+          {{ scriptService.translate('subscribe') }}
+        </button>
+      </form>
+      <span *ngIf="isSubscribed()" class="subscribed-feedback">
+        ✓ Subscribed to Daily Poetry Digest
+      </span>
+    </div>
+  </div>
+
+  <!-- Footer Bottom Bar -->
+  <div class="footer-bottom">
+    <div class="unsiiyat-container flex-between footer-bottom-inner">
+      <span class="copyright-text">
+        © {{ currentYear }} Unsiiyat (انسیت / उन्सीयत). Crafted with reverence for literary excellence.
+      </span>
+      <div class="footer-status-pill">
+        <span class="status-dot"></span>
+        <span>Spring Boot API Connected</span>
       </div>
     </div>
   </div>
 
-  <div class="footer-bottom">
-    <div class="unsiiyat-container flex-between">
-      <span class="copyright-text">
-        © {{ currentYear }} Unsiiyat Platform. Crafted with reverence for literature & poetry.
-      </span>
-      <span class="backend-status">
-        Connected to Spring Boot API
-      </span>
-    </div>
+  <!-- Floating Toast Message -->
+  <div *ngIf="toastMessage()" class="unsiiyat-toast">
+    <span>📜</span>
+    <span>{{ toastMessage() }}</span>
   </div>
 </footer>

@@ -1,40 +1,55 @@
 <div class="modal-backdrop" (click)="close.emit()">
   <div class="modal-card animate-fade-in" (click)="$event.stopPropagation()">
-    <div class="modal-header">
+    <!-- Modal Header -->
+    <div class="modal-header flex-between">
       <div class="modal-title-group">
         <span class="modal-emblem">📖</span>
-        <h3 class="modal-title font-display">
-          {{ scriptService.translate('meaning_title') }}
-        </h3>
+        <div>
+          <h3 class="modal-title font-display">
+            {{ scriptService.translate('meaning_title') }}
+          </h3>
+          <span class="modal-subtitle">Rekhta & Unsiiyat Classical Poetic Vocabulary</span>
+        </div>
       </div>
-      <button class="modal-close-btn" (click)="close.emit()">✕</button>
+      <button class="modal-close-btn" (click)="close.emit()" title="Close Dictionary">✕</button>
     </div>
 
     <!-- Search input inside dictionary -->
     <div class="dict-search-wrapper">
+      <span class="search-icon">🔍</span>
       <input 
         type="text" 
-        class="form-input"
-        placeholder="Search classical word (e.g. خلد, قفس, خودی)..."
+        class="dict-search-input"
+        placeholder="Type or search word (e.g. خلد, قفس, خودی, رنجش, Unsiiyat)..."
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)" />
+      <button *ngIf="searchQuery()" type="button" class="dict-clear-btn" (click)="searchQuery.set('')">✕</button>
     </div>
 
     <!-- Dictionary Word Cards -->
     <div class="dict-list">
-      <div *ngFor="let item of wordList" class="dict-item">
-        <div class="dict-word font-urdu">{{ item[0] }}</div>
+      <div *ngIf="wordList.length === 0" class="empty-dict-message">
+        <p>No exact entry found for "<em>{{ searchQuery() }}</em>".</p>
+        <span>Explore related words by clearing the search box.</span>
+      </div>
+
+      <div *ngFor="let item of wordList" class="dict-item poetic-card">
+        <div class="dict-word-header flex-between">
+          <div class="dict-word font-urdu">{{ item[0] }}</div>
+          <span class="badge">Word Meaning</span>
+        </div>
+
         <div class="dict-meanings">
           <div class="meaning-row">
-            <span class="meaning-lang font-urdu">اردو:</span>
+            <span class="meaning-lang font-urdu">اردو معنی:</span>
             <span class="meaning-text font-urdu">{{ item[1].ur }}</span>
           </div>
           <div class="meaning-row">
-            <span class="meaning-lang font-hindi">हिन्दी:</span>
+            <span class="meaning-lang font-hindi">हिन्दी अर्थ:</span>
             <span class="meaning-text font-hindi">{{ item[1].hi }}</span>
           </div>
           <div class="meaning-row">
-            <span class="meaning-lang font-english">English:</span>
+            <span class="meaning-lang font-english">English Meaning:</span>
             <span class="meaning-text font-english">{{ item[1].en }}</span>
           </div>
         </div>

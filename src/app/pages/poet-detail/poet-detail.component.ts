@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { ScriptService } from '../../core/services/script.service';
@@ -17,20 +17,31 @@ export class PoetDetailComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   private readonly authorService = inject(AuthorService);
   private readonly contentService = inject(ContentService);
-  private readonly seedService = inject(SeedDataService);
+  readonly seedService = inject(SeedDataService);
   private readonly route = inject(ActivatedRoute);
 
   poetId = signal<number>(1);
   poet = signal<any>(null);
   poetContents = signal<any[]>([]);
-  activeTab = signal<'ghazals' | 'bio'>('ghazals');
+  activeTab = signal<'ghazals' | 'ashar' | 'bio'>('ghazals');
+  copiedIndex = signal<number | null>(null);
   loading = signal(true);
+
+  constructor() {
+    effect(() => {
+      this.scriptService.activeScript();
+      if (this.poetId()) {
+        this.loadPoetData(this.poetId());
+      }
+    });
+  }
 
   ngOnInit() {
     this.route.params.subscribe(params => {
       const id = Number(params['id']) || 1;
       this.poetId.set(id);
       this.loadPoetData(id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
@@ -92,6 +103,13 @@ export class PoetDetailComponent implements OnInit {
         themeIds: poem.themeIds
       }));
     this.poetContents.set(list);
+  }
+
+  copyCouplet(index: number, lines: string[]) {
+    const text = `${lines.join('\n')}\n\n— ${this.poet()?.primaryName}\n(Via Unsiiyat Poetry)`;
+    navigator.clipboard.writeText(text);
+    this.copiedIndex.set(index);
+    setTimeout(() => this.copiedIndex.set(null), 2000);
   }
 
   getFirstCouplet(body?: string): string[] {

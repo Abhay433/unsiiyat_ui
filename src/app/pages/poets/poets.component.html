@@ -1,40 +1,71 @@
 <div class="poets-page unsiiyat-container animate-fade-in">
   <!-- Page Header -->
-  <div class="page-header">
+  <div class="page-header text-center">
     <div class="header-icon">✒️</div>
     <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('all_poets') }}</h1>
-    <p class="page-subtitle">Legendary Shayars across eras from Classical Delhi & Lucknow to Modern Pioneers</p>
+    <p class="page-subtitle">Grand gallery of classical, progressive, and modern Urdu & Hindi poets</p>
+    <div class="poetic-divider">
+      <span>✦ 📜 ✦</span>
+    </div>
   </div>
 
   <!-- Filter & Search Bar -->
   <div class="poets-filter-bar poetic-card">
-    <div class="filter-input-wrapper">
-      <input 
-        type="text" 
-        class="form-input search-input"
-        placeholder="Search poet by name or keywords..."
-        [ngModel]="searchFilter()"
-        (ngModelChange)="searchFilter.set($event)" />
+    <div class="filter-top-row flex-between">
+      <div class="filter-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          class="poets-search-input"
+          placeholder="Search poet by name or historical era..."
+          [ngModel]="searchFilter()"
+          (ngModelChange)="searchFilter.set($event)" />
+      </div>
+
+      <div class="era-filter-pills">
+        <button class="era-pill" [class.active]="selectedEra() === 'all'" (click)="setEra('all')">All Eras</button>
+        <button class="era-pill" [class.active]="selectedEra() === 'classical'" (click)="setEra('classical')">Classical (کلاسیکی)</button>
+        <button class="era-pill" [class.active]="selectedEra() === 'progressive'" (click)="setEra('progressive')">Progressive (ترقی پسند)</button>
+        <button class="era-pill" [class.active]="selectedEra() === 'modern'" (click)="setEra('modern')">Modern (جدید)</button>
+      </div>
     </div>
-    <div class="filter-stats">
-      <span>Showing <strong>{{ filteredPoets.length }}</strong> poets</span>
+
+    <!-- Alphabetical Filter Ribbon -->
+    <div class="alphabet-ribbon">
+      <button 
+        *ngFor="let letter of alphabet" 
+        class="letter-btn" 
+        [class.active]="selectedLetter() === letter"
+        (click)="setLetter(letter)">
+        {{ letter }}
+      </button>
     </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="poets-stats-row flex-between">
+    <span class="stats-text">Showing <strong>{{ filteredPoets().length }}</strong> legendary shayars</span>
+    <span class="sort-text">Sorted by Literary Chronology</span>
   </div>
 
   <!-- Poets Grid -->
   <div class="poets-directory-grid">
     <a 
-      *ngFor="let poet of filteredPoets" 
+      *ngFor="let poet of filteredPoets()" 
       [routerLink]="['/poet', poet.id]" 
       class="poet-card poetic-card">
-      <div class="poet-avatar-wrapper">
-        <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" class="poet-avatar" />
+      <div class="poet-portrait-ring">
+        <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" />
       </div>
-      <div class="poet-info">
+      
+      <div class="poet-card-info">
+        <span class="poet-era-tag font-display">MASTER SHAYAR</span>
         <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
         <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy' }}</span>
         <p class="poet-bio-preview" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio }}</p>
-        <span class="read-more-btn">Explore Works &rarr;</span>
+        <div class="poet-card-action">
+          <span class="explore-btn font-display">Explore Portfolio &rarr;</span>
+        </div>
       </div>
     </a>
   </div>

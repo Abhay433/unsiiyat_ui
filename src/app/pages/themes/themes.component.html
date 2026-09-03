@@ -1,27 +1,36 @@
 <div class="themes-page unsiiyat-container animate-fade-in">
-  <div class="page-header">
+  <div class="page-header text-center">
     <div class="header-icon">✦</div>
     <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('explore_themes') }}</h1>
-    <p class="page-subtitle">Poetic reflections on love, separation, existential void, and spirituality</p>
+    <p class="page-subtitle">Poetic reflections on love (عشق), solitude (تنہائی), life (زندگی), grief, and spirituality</p>
+    <div class="poetic-divider">
+      <span>✦ 📜 ✦</span>
+    </div>
   </div>
 
-  <!-- Theme Tabs -->
-  <div class="theme-pills-bar">
+  <!-- Theme Mood Pills Bar -->
+  <div class="theme-pills-bar poetic-card">
     <button 
       *ngFor="let t of themes()" 
       class="theme-pill"
       [class.active]="selectedThemeId() === t.id"
       (click)="selectedThemeId.set(t.id!)">
-      {{ t.name }}
+      <span class="theme-icon">✦</span>
+      <span>{{ t.name }}</span>
     </button>
+  </div>
+
+  <div class="poets-stats-row flex-between">
+    <span class="stats-text">Showing poetry curated for <strong>{{ getActiveThemeName() }}</strong></span>
+    <span class="sort-text">✦ Rekhta Heritage Curation</span>
   </div>
 
   <!-- Content Grid for Selected Theme -->
   <div class="themes-contents-grid">
     <div *ngFor="let item of filteredContents" class="ghazal-card poetic-card">
       <div class="ghazal-card-header flex-between">
-        <span class="poet-badge font-english">{{ item.author?.primaryName || 'Legendary Poet' }}</span>
-        <span class="badge">Couplets</span>
+        <span class="poet-badge font-english">👤 {{ item.author?.primaryName || 'Legendary Poet' }}</span>
+        <span class="badge">#{{ getActiveThemeSlug() }}</span>
       </div>
 
       <h3 class="ghazal-title" [ngClass]="scriptService.fontClass()">
@@ -29,13 +38,13 @@
       </h3>
 
       <div class="ghazal-snippet" [ngClass]="scriptService.fontClass()">
-        <p>{{ (item.primaryText?.body || '').split('\n')[0] }}</p>
-        <p>{{ (item.primaryText?.body || '').split('\n')[1] }}</p>
+        <p class="snippet-line">{{ (item.primaryText?.body || '').split('\n')[0] }}</p>
+        <p class="snippet-line">{{ (item.primaryText?.body || '').split('\n')[1] }}</p>
       </div>
 
       <div class="ghazal-footer flex-between">
-        <span class="read-hint">Thematic Verse</span>
-        <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
+        <span class="read-hint">Classical Verse</span>
+        <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-sm">
           {{ scriptService.translate('read_more') }} &rarr;
         </a>
       </div>

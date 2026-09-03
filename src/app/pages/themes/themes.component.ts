@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ScriptService } from '../../core/services/script.service';
@@ -24,6 +24,13 @@ export class ThemesComponent implements OnInit {
   contents = signal<any[]>([]);
   selectedThemeId = signal<number | null>(null);
 
+  constructor() {
+    effect(() => {
+      this.scriptService.activeScript();
+      this.loadContents();
+    });
+  }
+
   ngOnInit() {
     this.taxonomyService.filterThemes().subscribe({
       next: (res) => {
@@ -39,6 +46,10 @@ export class ThemesComponent implements OnInit {
       }
     });
 
+    this.loadContents();
+  }
+
+  loadContents() {
     const sId = this.scriptService.getScriptId(this.scriptService.activeScript());
     this.contentService.getEnrichedContents(sId).subscribe({
       next: (data) => this.contents.set(data),
@@ -59,6 +70,16 @@ export class ThemesComponent implements OnInit {
       };
     });
     this.contents.set(list);
+  }
+
+  getActiveThemeName(): string {
+    const found = this.themes().find(t => t.id === this.selectedThemeId());
+    return found ? found.name : 'Selected Mood';
+  }
+
+  getActiveThemeSlug(): string {
+    const found = this.themes().find(t => t.id === this.selectedThemeId());
+    return found ? found.slug : 'theme';
   }
 
   get filteredContents() {

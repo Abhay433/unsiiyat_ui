@@ -90,7 +90,13 @@ export class ScriptService {
       'born': { ur: 'پیدائش', hi: 'पैदाइश', en: 'Born' },
       'died': { ur: 'وفات', hi: 'विसाल / देहांत', en: 'Died' },
       'font_size': { ur: 'حجمِ خط', hi: 'फ़ॉन्ट साइज़', en: 'Font Size' },
-      'meaning_title': { ur: 'فرہنگ / لغت', hi: 'शब्दावली / लुग़त', en: 'Word Meaning / Dictionary' }
+      'meaning_title': { ur: 'فرہنگ / لغت', hi: 'शब्दावली / लुग़त', en: 'Dictionary / Lughat' },
+      'word_of_day': { ur: 'لفظِ روز', hi: 'आज का लफ़्ज़', en: 'Word of the Day' },
+      'top_couplets': { ur: 'منتخب اشعار', hi: 'चयनित अशआर', en: 'Selected Couplets' },
+      'audio_lounge': { ur: 'محفلِ سماعت', hi: 'महफ़िल-ए-समाअत', en: 'Audio Recitations' },
+      'newsletter_title': { ur: 'روزانہ ایک شعر اپنے ان باکس میں حاصل کریں', hi: 'हर सुबह एक बेहतरीन शेर अपने इनबॉक्स में पाएं', en: 'Receive a Curated Couplet Every Day' },
+      'subscribe': { ur: 'شامل ہوں', hi: 'सब्सक्राइब करें', en: 'Subscribe' },
+      'subscribed_msg': { ur: 'شکریہ! آپ انسیت خاندان میں شامل ہو چکے ہیں۔', hi: 'शुक्रिया! आप उन्सीयत परिवार से जुड़ गए हैं।', en: 'Thank you! You are now subscribed to Unsiiyat.' }
     };
 
     return dictionary[key]?.[lang] || dictionary[key]?.['en'] || key;

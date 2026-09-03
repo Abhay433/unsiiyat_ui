@@ -1,27 +1,45 @@
 <div class="genres-page unsiiyat-container animate-fade-in">
-  <div class="page-header">
+  <div class="page-header text-center">
     <div class="header-icon">📜</div>
     <h1 class="page-title font-display gold-gradient-text">{{ scriptService.translate('explore_genres') }}</h1>
-    <p class="page-subtitle">From Ghazals & Nazms to classical Rubaiyat and Marsiya</p>
+    <p class="page-subtitle">Classical poetic structures, rhythmic meters, and literary forms of Urdu & Hindi</p>
+    <div class="poetic-divider">
+      <span>✦ ✒️ ✦</span>
+    </div>
   </div>
 
-  <!-- Genre Tabs -->
-  <div class="genre-pills-bar">
-    <button 
+  <!-- Genre Showcase Cards -->
+  <div class="genre-cards-showcase">
+    <div 
       *ngFor="let g of genres()" 
-      class="genre-pill"
+      class="genre-interactive-card poetic-card"
       [class.active]="selectedGenreId() === g.id"
       (click)="selectedGenreId.set(g.id!)">
-      {{ g.name }}
-    </button>
+      <div class="genre-card-top flex-between">
+        <span class="genre-icon-emblem">📜</span>
+        <span class="badge font-display">{{ g.slug | uppercase }}</span>
+      </div>
+      <h3 class="genre-card-title font-urdu">{{ g.name }}</h3>
+      <p class="genre-card-desc">
+        {{ g.slug === 'ghazal' ? 'Classic stanzas of rhythmic rhyme (Qafiya & Radif), profound romantic and philosophical couplets.' : (g.slug === 'nazm' ? 'Thematic continuous poems exploring unified narrative, socio-political reflections, and modern thought.' : 'Selected standalone couplets and classical four-line Rubaiyat.') }}
+      </p>
+      <div class="genre-card-footer flex-between">
+        <span class="genre-count">✦ {{ g.id === 1 ? '50+ Ghazals' : '20+ Poems' }}</span>
+        <span class="select-indicator">{{ selectedGenreId() === g.id ? '● Active' : 'Explore' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="poetic-divider-lg">
+    <span>❦ Selected Works in This Form ❦</span>
   </div>
 
   <!-- Content Grid for Selected Genre -->
   <div class="genre-contents-grid">
     <div *ngFor="let item of filteredContents" class="ghazal-card poetic-card">
       <div class="ghazal-card-header flex-between">
-        <span class="poet-badge font-english">{{ item.author?.primaryName || 'Legendary Poet' }}</span>
-        <span class="badge">Poetic Form</span>
+        <span class="poet-badge font-english">👤 {{ item.author?.primaryName || 'Legendary Poet' }}</span>
+        <span class="badge font-display">GHAZAL</span>
       </div>
 
       <h3 class="ghazal-title" [ngClass]="scriptService.fontClass()">
@@ -29,13 +47,13 @@
       </h3>
 
       <div class="ghazal-snippet" [ngClass]="scriptService.fontClass()">
-        <p>{{ (item.primaryText?.body || '').split('\n')[0] }}</p>
-        <p>{{ (item.primaryText?.body || '').split('\n')[1] }}</p>
+        <p class="snippet-line">{{ (item.primaryText?.body || '').split('\n')[0] }}</p>
+        <p class="snippet-line">{{ (item.primaryText?.body || '').split('\n')[1] }}</p>
       </div>
 
       <div class="ghazal-footer flex-between">
-        <span class="read-hint">Complete Stanzas</span>
-        <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
+        <span class="read-hint">Master Stanzas</span>
+        <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-sm">
           {{ scriptService.translate('read_more') }} &rarr;
         </a>
       </div>

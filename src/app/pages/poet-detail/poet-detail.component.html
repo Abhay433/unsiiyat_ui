@@ -1,64 +1,131 @@
 <div class="poet-detail-view unsiiyat-container animate-fade-in" *ngIf="poet()">
-  <!-- Poet Hero Banner -->
-  <div class="poet-banner poetic-card">
-    <div class="banner-content">
-      <div class="poet-banner-avatar-wrapper">
-        <img [src]="poet().avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet().primaryName" class="poet-banner-avatar" />
+  <!-- Back Nav -->
+  <div class="detail-nav-bar flex-between">
+    <a routerLink="/poets" class="back-link">&larr; Back to All Poets (تمام شعراء)</a>
+    <span class="badge">Master Shayar Profile</span>
+  </div>
+
+  <!-- Hero Profile Banner -->
+  <div class="poet-hero-banner poetic-card">
+    <div class="poet-hero-flex">
+      <div class="poet-portrait-ring-lg">
+        <img [src]="poet().avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet().primaryName" />
       </div>
 
-      <div class="poet-banner-text">
-        <span class="poet-tag font-display">MASTER SHAYAR</span>
-        <h1 class="poet-banner-name" [ngClass]="scriptService.fontClass()">
-          {{ poet().primaryName }}
-        </h1>
-        <div class="poet-timeline font-english">
-          <span>{{ scriptService.translate('born') }}: {{ poet().birthDate | date:'mediumDate' }}</span>
-          <span>•</span>
-          <span>{{ scriptService.translate('died') }}: {{ poet().deathDate | date:'mediumDate' }}</span>
+      <div class="poet-hero-details">
+        <span class="poet-hero-era font-display">EMINENT POET / شاعرِ بے مثال</span>
+        <h1 class="poet-hero-title" [ngClass]="scriptService.fontClass()">{{ poet().primaryName }}</h1>
+        <span class="poet-hero-lifespan font-english">
+          {{ poet().birthDate | date:'yyyy' }} – {{ poet().deathDate | date:'yyyy' }}
+        </span>
+
+        <p class="poet-hero-bio-short" [ngClass]="scriptService.fontClass()">
+          {{ poet().primaryBio }}
+        </p>
+
+        <div class="poet-stats-badges">
+          <span class="stat-badge">📜 {{ poetContents().length }} Classical Works</span>
+          <span class="stat-badge">⭐ Top 10 Classical Rating</span>
+          <span class="stat-badge">🎧 Audio Recitations Available</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Navigation Tabs -->
-  <div class="poet-tabs-bar">
-    <button class="tab-pill" [class.active]="activeTab() === 'ghazals'" (click)="activeTab.set('ghazals')">
-      📜 {{ scriptService.translate('ghazals') }} ({{ poetContents().length }})
+  <!-- Tabbed Navigation Ribbon -->
+  <div class="poet-tabs-ribbon flex-center">
+    <button 
+      class="poet-tab-btn" 
+      [class.active]="activeTab() === 'ghazals'" 
+      (click)="activeTab.set('ghazals')">
+      📜 Ghazals & Nazms (غزلیات)
     </button>
-    <button class="tab-pill" [class.active]="activeTab() === 'bio'" (click)="activeTab.set('bio')">
-      📖 Biography / سوانح حیات
+    <button 
+      class="poet-tab-btn" 
+      [class.active]="activeTab() === 'ashar'" 
+      (click)="activeTab.set('ashar')">
+      ✒️ Selected Couplets (منتخب اشعار)
+    </button>
+    <button 
+      class="poet-tab-btn" 
+      [class.active]="activeTab() === 'bio'" 
+      (click)="activeTab.set('bio')">
+      📖 Biography & Life Era (سوانح حیات)
     </button>
   </div>
 
-  <!-- Ghazals Tab Content -->
-  <div *ngIf="activeTab() === 'ghazals'" class="tab-pane animate-fade-in">
-    <div class="ghazals-list-grid">
+  <!-- Tab 1: Ghazals Stream -->
+  <div *ngIf="activeTab() === 'ghazals'" class="tab-content animate-fade-in">
+    <div class="ghazals-feed-grid">
       <div *ngFor="let item of poetContents()" class="ghazal-card poetic-card">
-        <h3 class="ghazal-title" [ngClass]="scriptService.fontClass()">
+        <div class="ghazal-card-header flex-between">
+          <span class="ghazal-poet-badge font-english">
+            {{ poet().primaryName }}
+          </span>
+          <span class="badge">Ghazal</span>
+        </div>
+
+        <h3 class="ghazal-card-title" [ngClass]="scriptService.fontClass()">
           {{ item.primaryText?.title || item.title }}
         </h3>
 
-        <div class="ghazal-snippet" [ngClass]="scriptService.fontClass()">
-          <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)">{{ line }}</p>
+        <div class="ghazal-card-snippet" [ngClass]="scriptService.fontClass()">
+          <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)" class="snippet-line">{{ line }}</p>
         </div>
 
-        <div class="ghazal-footer flex-between">
-          <span class="badge">Ghazal</span>
-          <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
-            {{ scriptService.translate('read_more') }} &rarr;
+        <div class="ghazal-card-footer flex-between">
+          <span class="status-count">5 Stanzas</span>
+          <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-sm">
+            Read Full Ghazal &rarr;
           </a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Biography Tab Content -->
-  <div *ngIf="activeTab() === 'bio'" class="tab-pane animate-fade-in">
-    <div class="bio-card poetic-card">
-      <h3 class="bio-heading font-display">Biography & Literary Journey</h3>
-      <p class="bio-body" [ngClass]="scriptService.fontClass()">
+  <!-- Tab 2: Ash'ar (Couplets Gallery) -->
+  <div *ngIf="activeTab() === 'ashar'" class="tab-content animate-fade-in">
+    <div class="ashar-gallery-grid">
+      <div *ngFor="let item of poetContents(); let idx = index" class="ashar-stanza-card poetic-card">
+        <div class="couplet-header flex-between">
+          <span class="badge font-display">Couplet #{{ idx + 1 }}</span>
+          <button class="tool-btn" (click)="copyCouplet(idx, getFirstCouplet(item.primaryText?.body))">
+            {{ copiedIndex() === idx ? '✓ Copied' : '📋 ' + scriptService.translate('copy_sher') }}
+          </button>
+        </div>
+
+        <div class="couplet-content-box" [ngClass]="scriptService.fontClass()">
+          <p class="couplet-line first-line">{{ getFirstCouplet(item.primaryText?.body)[0] }}</p>
+          <p class="couplet-line second-line">{{ getFirstCouplet(item.primaryText?.body)[1] }}</p>
+        </div>
+
+        <div class="couplet-footer flex-between">
+          <span class="attribution font-display">— {{ poet().primaryName }}</span>
+          <a [routerLink]="['/content', item.id]" class="view-link">View in context &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Detailed Biography -->
+  <div *ngIf="activeTab() === 'bio'" class="tab-content animate-fade-in">
+    <div class="bio-extended-card poetic-card">
+      <h3 class="bio-heading font-display">LITERARY BIOGRAPHY & HISTORICAL CONTEXT</h3>
+      <div class="poetic-divider">
+        <span>✦ 📜 ✦</span>
+      </div>
+      <p class="bio-full-text" [ngClass]="scriptService.fontClass()">
         {{ poet().primaryBio }}
       </p>
+      
+      <div class="historical-milestones">
+        <h4 class="milestone-title font-display">LITERARY HERITAGE</h4>
+        <ul class="milestone-list">
+          <li><strong>Form:</strong> Classical Ghazal, Nazm, Qasida & Rubaiyat</li>
+          <li><strong>Themes:</strong> Human Consciousness, Longing, Mysticism, Social Revolution</li>
+          <li><strong>Scripts:</strong> Nastaliq Urdu, Devanagari Hindi, Roman Transliteration</li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
