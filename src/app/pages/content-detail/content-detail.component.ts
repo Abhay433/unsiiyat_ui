@@ -25,7 +25,7 @@ export class ContentDetailComponent implements OnInit {
   contentId = signal<number>(1);
   content = signal<any>(null);
   allTexts = signal<any[]>([]);
-  readerFontSize = signal(24); // px
+  readerFontSize = signal(26); // px
   isPlayingAudio = signal(false);
   audioSeconds = signal(0);
   copiedIndex = signal<number | null>(null);
@@ -33,6 +33,7 @@ export class ContentDetailComponent implements OnInit {
   showDict = signal(false);
   loading = signal(true);
   isBookmarked = signal(false);
+  showShareToast = signal(false);
 
   constructor() {
     effect(() => {
@@ -61,7 +62,7 @@ export class ContentDetailComponent implements OnInit {
         const found = contents.find(c => c.id === id);
         if (found) {
           this.content.set(found);
-          this.allTexts.set(found.texts || []);
+          this.allTexts.set(found.texts || (found as any).contentTexts || []);
         } else {
           this.setFallbackContent(id);
         }
@@ -106,10 +107,28 @@ export class ContentDetailComponent implements OnInit {
   readonly currentPoemText = computed(() => {
     const lang = this.scriptService.activeScript();
     const sId = this.scriptService.getScriptId(lang);
-    const textObj = this.allTexts().find(t => t.scriptId === sId);
-    if (textObj) return textObj;
+    const texts = this.allTexts();
 
-    return this.content()?.primaryText || { title: this.content()?.title, body: '' };
+    if (texts && texts.length > 0) {
+      const match = texts.find(t => t.scriptId === sId);
+      if (match && (match.title?.trim() || match.body?.trim())) {
+        return match;
+      }
+    }
+
+    // Fallback: Check seed
+    const seedItem = this.seedService.classicalPoems.find(p => p.id === this.contentId());
+    if (seedItem?.texts?.[lang]) {
+      return seedItem.texts[lang];
+    }
+
+    if (texts && texts.length > 0) {
+      const firstWithBody = texts.find(t => t.body?.trim());
+      if (firstWithBody) return firstWithBody;
+      return texts[0];
+    }
+
+    return this.content()?.primaryText || { title: this.content()?.title || 'Untitled Kalam', body: '' };
   });
 
   // Split poem body into couplets (stanzas of 2 lines)
@@ -128,15 +147,111 @@ export class ContentDetailComponent implements OnInit {
     return line.split(' ').filter(w => w.trim().length > 0);
   }
 
+  getGenreName(): string {
+    const lang = this.scriptService.activeScript();
+    const c = this.content();
+    const gid = c?.genreId || c?.genre?.id || 1;
+    const slug = (c?.genre?.slug || (gid === 1 ? 'ghazal' : gid === 2 ? 'nazm' : gid === 3 ? 'sher' : gid === 4 ? 'rubai' : 'ghazal')).toLowerCase();
+
+    const genreMap: Record<string, Record<ScriptCode, string>> = {
+      ghazal: { ur: 'غزل', hi: 'ग़ज़ल', en: 'Ghazal' },
+      nazm: { ur: 'نظم', hi: 'नज़्म', en: 'Nazm' },
+      sher: { ur: 'شعر', hi: 'शेर', en: 'Sher / Couplet' },
+      rubai: { ur: 'رباعی', hi: 'रुबाई', en: 'Rubai' },
+      qasida: { ur: 'قصیدہ', hi: 'क़सीदा', en: 'Qasida' },
+      marsiya: { ur: 'مرثیہ', hi: 'मर्सिया', en: 'Marsiya' },
+      masnavi: { ur: 'مثنوی', hi: 'मसनवी', en: 'Masnavi' }
+    };
+    return genreMap[slug]?.[lang] || (lang === 'ur' ? 'غزل' : (lang === 'hi' ? 'ग़ज़ल' : 'Ghazal'));
+  }
+
+  getAuthorName(): string {
+    const lang = this.scriptService.activeScript();
+    const c = this.content();
+    if (!c) return 'Legendary Poet';
+
+    const author = c.author;
+    if (author) {
+      if (lang === 'ur' && author.urName) return author.urName;
+      if (lang === 'hi' && author.hiName) return author.hiName;
+      if (lang === 'en' && author.enName) return author.enName;
+
+      if (Array.isArray(author.details)) {
+        const sId = this.scriptService.getScriptId(lang);
+        const d = author.details.find((x: any) => x.scriptId === sId);
+        if (d?.name) return d.name;
+      }
+      if (author.primaryName) return author.primaryName;
+    }
+
+    const seedPoet = this.seedService.classicalPoets.find(p => p.id === c.authorId);
+    if (seedPoet?.details?.[lang]?.name) return seedPoet.details[lang].name;
+
+    return c.author?.primaryName || (lang === 'ur' ? 'شاعر' : (lang === 'hi' ? 'शायर' : 'Poet'));
+  }
+
+  getAuthorBio(): string {
+    const lang = this.scriptService.activeScript();
+    const c = this.content();
+    const author = c?.author;
+
+    if (author) {
+      if (Array.isArray(author.details)) {
+        const sId = this.scriptService.getScriptId(lang);
+        const d = author.details.find((x: any) => x.scriptId === sId);
+        if (d?.biography) return d.biography;
+      }
+      if (author.primaryBio) return author.primaryBio;
+    }
+
+    const seedPoet = this.seedService.classicalPoets.find(p => p.id === c?.authorId);
+    if (seedPoet?.details?.[lang]?.biography) return seedPoet.details[lang].biography;
+
+    return (
+      author?.primaryBio ||
+      (lang === 'ur'
+        ? 'اردو و ہندی کلاسیکی شاعری کا عظیم و لافانی ورثہ۔'
+        : (lang === 'hi'
+          ? 'उर्दू व हिन्दी शास्त्रीय शायरी की अनमोल धरोहर।'
+          : 'Celebrated classical master poet of timeless poetic tradition.'))
+    );
+  }
+
+  getCoupletNumeral(idx: number): string {
+    const lang = this.scriptService.activeScript();
+    const urduNums = ['۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹', '۱۰', '۱۱', '۱۲', '۱۳', '۱۴', '۱۵', '۱۶', '۱۷', '۱۸', '۱۹', '۲۰'];
+    const hindiNums = ['१', '२', '३', '४', '५', '६', '७', '८', '९', '१०', '११', '१२', '१३', '१४', '१५', '१६', '१७', '१८', '१९', '२०'];
+    const num = idx + 1;
+    if (lang === 'ur') return `شعر ${urduNums[idx] || num}`;
+    if (lang === 'hi') return `शेर ${hindiNums[idx] || num}`;
+    return `Sher #${num}`;
+  }
+
+  getPoemDirection(): 'rtl' | 'ltr' {
+    return this.scriptService.activeScript() === 'ur' ? 'rtl' : 'ltr';
+  }
+
+  getPoemFontClass(): string {
+    const lang = this.scriptService.activeScript();
+    if (lang === 'ur') return 'font-urdu';
+    if (lang === 'hi') return 'font-hindi';
+    return 'font-english';
+  }
+
   changeFontSize(delta: number) {
     const size = this.readerFontSize() + delta;
-    if (size >= 16 && size <= 38) {
+    if (size >= 18 && size <= 42) {
       this.readerFontSize.set(size);
     }
   }
 
   switchScript(code: ScriptCode) {
     this.scriptService.setScript(code);
+  }
+
+  editInStudio() {
+    const id = this.contentId();
+    this.router.navigate(['/studio'], { queryParams: { editContentId: id } });
   }
 
   toggleAudio() {
@@ -154,7 +269,7 @@ export class ContentDetailComponent implements OnInit {
   }
 
   copyCouplet(index: number, couplet: string[]) {
-    const poet = this.content()?.author?.primaryName || 'Legendary Poet';
+    const poet = this.getAuthorName();
     const text = `${couplet[0]}\n${couplet[1]}\n\n— ${poet}\n(Via Unsiiyat Poetry - Rekhta Realm)`;
     navigator.clipboard.writeText(text);
     this.copiedIndex.set(index);
@@ -162,7 +277,7 @@ export class ContentDetailComponent implements OnInit {
   }
 
   copyFullGhazal() {
-    const poet = this.content()?.author?.primaryName || 'Legendary Poet';
+    const poet = this.getAuthorName();
     const title = this.currentPoemText()?.title || '';
     const body = this.currentPoemText()?.body || '';
     const text = `${title}\n\n${body}\n\n— ${poet}\n(Read more on Unsiiyat Poetry)`;
@@ -179,6 +294,20 @@ export class ContentDetailComponent implements OnInit {
 
   toggleBookmark() {
     this.isBookmarked.update(v => !v);
+  }
+
+  shareKalam() {
+    if (navigator.share) {
+      navigator.share({
+        title: this.currentPoemText()?.title || 'Unsiiyat Poetry',
+        text: `Read "${this.currentPoemText()?.title}" by ${this.getAuthorName()} on Unsiiyat Poetry`,
+        url: window.location.href
+      }).catch(() => { });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      this.showShareToast.set(true);
+      setTimeout(() => this.showShareToast.set(false), 2500);
+    }
   }
 
   navigateToPreviousGhazal() {

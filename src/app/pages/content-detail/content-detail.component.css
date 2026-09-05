@@ -4,8 +4,8 @@
 
 .reader-view {
   padding-top: 24px;
-  padding-bottom: 60px;
-  max-width: 920px;
+  padding-bottom: 70px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
@@ -52,6 +52,35 @@
   color: var(--border-card);
 }
 
+/* Edit Kalam Pill in Header */
+.btn-edit-kalam-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid var(--border-blue, rgba(37, 99, 235, 0.35));
+  color: var(--accent-blue, #3b82f6);
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-edit-kalam-pill:hover {
+  background: var(--accent-blue, #2563eb);
+  color: #ffffff;
+  border-color: var(--accent-blue, #2563eb);
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.edit-icon {
+  font-size: 0.88rem;
+}
+
+/* Script Tabs */
 .reader-script-tabs {
   display: flex;
   align-items: center;
@@ -66,8 +95,8 @@
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  padding: 4px 12px;
-  font-size: 0.8rem;
+  padding: 5px 14px;
+  font-size: 0.84rem;
   font-weight: 600;
   border-radius: var(--radius-full);
   cursor: pointer;
@@ -75,9 +104,10 @@
 }
 
 .reader-script-btn.active {
-  background: var(--accent-blue);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
   color: #ffffff;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 .control-right {
@@ -92,9 +122,61 @@
   gap: 4px;
 }
 
-.dict-btn {
+.tool-btn {
   background: var(--bg-secondary);
+  border: 1px solid var(--border-card);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-xs);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tool-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-card-highlight);
+}
+
+.dict-btn {
   color: var(--accent-gold);
+}
+
+.dict-btn:hover {
+  border-color: var(--accent-gold);
+}
+
+.audio-btn.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.audio-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.waveform-bar {
+  width: 2px;
+  background: #10b981;
+  border-radius: 1px;
+  animation: pulseWave 0.8s ease-in-out infinite alternate;
+}
+.waveform-bar:nth-child(1) { height: 6px; }
+.waveform-bar:nth-child(2) { height: 12px; animation-delay: 0.2s; }
+.waveform-bar:nth-child(3) { height: 8px; animation-delay: 0.4s; }
+
+@keyframes pulseWave {
+  0% { height: 4px; }
+  100% { height: 14px; }
 }
 
 .bookmark-btn.bookmarked {
@@ -103,15 +185,39 @@
   border-color: var(--accent-gold);
 }
 
+.share-btn:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.copy-all-btn:hover {
+  border-color: var(--accent-gold);
+}
+
 /* Word Hint Notice */
 .word-hint-banner {
   background: var(--bg-secondary);
   border: 1px dashed var(--border-card);
-  padding: 8px 16px;
+  padding: 10px 18px;
   border-radius: var(--radius-sm);
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 20px;
+}
+
+.hint-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.share-toast-pill {
+  font-size: 0.78rem;
+  color: #10b981;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
 }
 
 .hint-icon {
@@ -123,24 +229,36 @@
 
 /* Ghazal Parchment Card */
 .ghazal-parchment {
-  padding: 44px 54px;
+  padding: 48px 60px;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
+  position: relative;
 }
 
 .parchment-header {
   text-align: center;
-  margin-bottom: 34px;
+  margin-bottom: 38px;
+  position: relative;
+}
+
+.parchment-genre-tag {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
 
 .ghazal-main-title {
-  font-size: 2.2rem;
+  font-size: 2.35rem;
   font-weight: 800;
   color: var(--text-primary);
-  margin-bottom: 14px;
-  line-height: 1.35;
+  margin-bottom: 16px;
+  line-height: 1.45;
+  letter-spacing: -0.2px;
 }
 
 .parchment-poet-meta {
@@ -148,20 +266,20 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .by-text {
   color: var(--text-muted);
   font-size: 0.78rem;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   font-weight: 600;
 }
 
 .poet-name-link {
   color: var(--accent-gold);
   text-decoration: none;
-  font-size: 1.25rem;
+  font-size: 1.28rem;
   font-weight: 700;
   transition: all var(--transition-fast);
 }
@@ -171,44 +289,51 @@
   text-decoration: underline;
 }
 
+.poetic-divider {
+  margin-top: 14px;
+  font-size: 0.95rem;
+  color: var(--accent-gold);
+  opacity: 0.75;
+}
+
 /* Couplets Stream */
 .couplets-stream {
-  margin: 34px 0;
+  margin: 36px 0;
 }
 
 .couplet-stanza {
   background: var(--bg-secondary);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
-  padding: 24px 28px;
-  margin-bottom: 24px;
+  padding: 26px 32px;
+  margin-bottom: 26px;
   transition: all var(--transition-normal);
   position: relative;
 }
 
 .couplet-stanza:hover {
   border-color: var(--border-blue);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
 }
 
 .couplet-stanza-header {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .couplet-number {
-  font-size: 0.76rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--accent-gold);
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .couplet-action-btn {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   color: var(--text-secondary);
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: var(--radius-xs);
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -221,11 +346,11 @@
 
 .couplet-lines {
   text-align: center;
-  line-height: 2.4;
+  line-height: 2.5;
 }
 
 .couplet-line {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-weight: 700;
 }
 
@@ -241,85 +366,158 @@
 .interactive-word {
   cursor: pointer;
   transition: all var(--transition-fast);
-  padding: 1px 3px;
-  border-radius: 3px;
+  padding: 2px 4px;
+  border-radius: 4px;
   display: inline-block;
   color: inherit;
 }
 
 .interactive-word:hover {
   color: var(--accent-blue) !important;
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(59, 130, 246, 0.15);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
 }
 
 .stanza-divider {
   text-align: center;
   color: var(--accent-gold);
-  opacity: 0.4;
-  font-size: 0.85rem;
-  margin-top: 14px;
+  opacity: 0.45;
+  font-size: 0.95rem;
+  margin-top: 16px;
 }
 
 /* Pager */
 .ghazal-pager {
-  margin: 36px 0 20px;
-  padding-top: 24px;
+  margin: 38px 0 24px;
+  padding-top: 26px;
   border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn-edit-center {
+  padding: 9px 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Poet Summary Card */
 .parchment-footer {
-  margin-top: 34px;
+  margin-top: 36px;
 }
 
 .poet-summary-card {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 24px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
-  padding: 24px 28px;
+  padding: 26px 30px;
+}
+
+.poet-portrait-ring {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-gold);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.poet-portrait-ring img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .poet-card-details {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.poet-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .poet-label {
   font-size: 0.72rem;
   color: var(--text-muted);
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
+.btn-studio-shortcut {
+  background: transparent;
+  border: 1px solid var(--border-blue, rgba(37, 99, 235, 0.3));
+  color: var(--accent-blue, #3b82f6);
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-studio-shortcut:hover {
+  background: var(--accent-blue, #2563eb);
+  color: #ffffff;
+}
+
 .poet-name-sm {
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .poet-bio-sm {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.poet-card-actions {
+  margin-top: 4px;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  .reader-control-bar {
+    padding: 10px 14px;
+  }
   .ghazal-parchment {
-    padding: 26px 16px;
+    padding: 28px 18px;
   }
   .ghazal-main-title {
-    font-size: 1.7rem;
+    font-size: 1.8rem;
+  }
+  .couplet-stanza {
+    padding: 18px 16px;
   }
   .poet-summary-card {
     flex-direction: column;
     text-align: center;
+  }
+  .poet-card-top-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ghazal-pager {
+    flex-direction: column;
+    gap: 10px;
   }
 }

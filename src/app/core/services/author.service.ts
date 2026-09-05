@@ -13,7 +13,7 @@ export class AuthorService {
   filterAuthors(request: AuthorFilterRequest = {}): Observable<PagedResponse<Author>> {
     const payload = {
       page: request.page ?? 0,
-      size: request.size ?? 50,
+      size: request.size ?? 200,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'asc',
       ...request
@@ -21,14 +21,18 @@ export class AuthorService {
     return this.api.post<PagedResponse<Author>>('/api/authors/list', payload);
   }
 
-  saveAuthor(author: Author): Observable<ApiResponse<void>> {
-    return this.api.post<ApiResponse<void>>('/api/authors/addOrUpdate', author);
+  saveAuthor(author: Author): Observable<ApiResponse<Author>> {
+    return this.api.post<ApiResponse<Author>>('/api/authors/addOrUpdate', author);
+  }
+
+  deleteAuthor(author: { id: number }): Observable<ApiResponse<string>> {
+    return this.api.post<ApiResponse<string>>('/api/authors/delete', author);
   }
 
   filterAuthorDetails(request: AuthorDetailFilterRequest = {}): Observable<PagedResponse<AuthorDetail>> {
     const payload = {
       page: request.page ?? 0,
-      size: request.size ?? 100,
+      size: request.size ?? 500,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'asc',
       ...request
@@ -51,13 +55,21 @@ export class AuthorService {
         const details: AuthorDetail[] = detailsRes.data || [];
 
         return authors.map(author => {
-          const authorDetails = details.filter(d => d.authorId === author.id);
+          const authorDetails = (author.details && author.details.length > 0) 
+            ? author.details 
+            : details.filter(d => d.authorId === author.id);
           const currentDetail = authorDetails.find(d => d.scriptId === scriptId) || authorDetails[0];
+
+          const primaryName = currentDetail?.name 
+            || (scriptId === 1 ? author.urName : (scriptId === 2 ? author.hiName : author.enName))
+            || author.primaryName 
+            || author.name 
+            || `Poet #${author.id}`;
 
           return {
             ...author,
             details: authorDetails,
-            primaryName: currentDetail?.name || `Poet #${author.id}`,
+            primaryName,
             primaryBio: currentDetail?.biography || ''
           };
         });

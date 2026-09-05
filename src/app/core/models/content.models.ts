@@ -16,6 +16,7 @@ export interface Content {
   author?: Author;
   themes?: Theme[];
   texts?: ContentText[];
+  contentTexts?: ContentText[];
   primaryText?: ContentText;
 }
 

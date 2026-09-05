@@ -1,8 +1,8 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-import { ScriptService } from '../../core/services/script.service';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { ScriptService, ScriptCode } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
 import { TaxonomyService } from '../../core/services/taxonomy.service';
@@ -10,7 +10,7 @@ import { SeedDataService } from '../../core/services/seed-data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Genre, Theme, Script } from '../../core/models/taxonomy.models';
 import { Author } from '../../core/models/author.models';
-import { Content } from '../../core/models/content.models';
+import { Content, ContentText } from '../../core/models/content.models';
 
 export interface AdminUserItem {
   id: number;
@@ -32,10 +32,20 @@ export class StudioComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly authorService = inject(AuthorService);
   private readonly contentService = inject(ContentService);
   private readonly taxonomyService = inject(TaxonomyService);
-  private readonly seedService = inject(SeedDataService);
+  readonly seedService = inject(SeedDataService);
+
+  constructor() {
+    effect(() => {
+      // Reactively reload enriched data whenever header script changes (Urdu, Hindi, English)
+      const currentScript = this.scriptService.activeScript();
+      const scriptId = this.scriptService.getScriptId(currentScript);
+      this.refreshAllData(scriptId);
+    });
+  }
 
   // Active Navigation Tab
   activeTab = signal<'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed'>('content');
@@ -69,8 +79,22 @@ export class StudioComponent implements OnInit {
   seedLogs = signal<string[]>([]);
   isSeeding = signal(false);
 
+  editingContentId = signal<number | null>(null);
+
   // Forms
-  contentForm = signal({
+  contentForm = signal<{
+    id?: number;
+    title: string;
+    authorId: number;
+    genreId: number;
+    selectedThemeIds: number[];
+    urTitle: string;
+    urBody: string;
+    hiTitle: string;
+    hiBody: string;
+    enTitle: string;
+    enBody: string;
+  }>({
     title: '',
     authorId: 1,
     genreId: 1,
@@ -110,6 +134,19 @@ export class StudioComponent implements OnInit {
 
   ngOnInit() {
     this.refreshAllData();
+    this.route.queryParams.subscribe(params => {
+      const editId = Number(params['editContentId']);
+      if (editId) {
+        this.contentService.getEnrichedContents().subscribe({
+          next: (contents) => {
+            const item = contents.find(c => c.id === editId);
+            if (item) {
+              this.openEditContentModal(item);
+            }
+          }
+        });
+      }
+    });
   }
 
   toggleSidebar() {
@@ -216,13 +253,15 @@ export class StudioComponent implements OnInit {
     return result;
   }
 
-  refreshAllData() {
-    this.authorService.getEnrichedAuthors().subscribe({
+  refreshAllData(scriptId?: number) {
+    const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+
+    this.authorService.getEnrichedAuthors(currentScriptId).subscribe({
       next: (res) => this.authors.set(res),
       error: () => this.authors.set([])
     });
 
-    this.contentService.getEnrichedContents().subscribe({
+    this.contentService.getEnrichedContents(currentScriptId).subscribe({
       next: (res) => this.contents.set(res),
       error: () => this.contents.set([])
     });
@@ -249,12 +288,266 @@ export class StudioComponent implements OnInit {
     });
   }
 
+  // Multi-script Dynamic Content Extractors
+  getContentTitleForActiveScript(item: Content): string {
+    const currentScript = this.scriptService.activeScript();
+    const scriptId = this.scriptService.getScriptId(currentScript);
+
+    // 1. Check texts array for explicit script match
+    if (Array.isArray(item.texts) && item.texts.length > 0) {
+      const match = item.texts.find(t => t.scriptId === scriptId);
+      if (match?.title?.trim()) {
+        return match.title.trim();
+      }
+    }
+
+    // 2. Check seed classical poems by content id
+    const seedItem = this.seedService.classicalPoems.find(p => p.id === item.id);
+    if (seedItem?.texts?.[currentScript]?.title?.trim()) {
+      return seedItem.texts[currentScript].title.trim();
+    }
+
+    // 3. Fallback to primaryText if matched or available
+    if (item.primaryText?.title?.trim() && item.primaryText?.scriptId === scriptId) {
+      return item.primaryText.title.trim();
+    }
+
+    // 4. Fallback across other available scripts
+    if (Array.isArray(item.texts)) {
+      if (currentScript === 'en') {
+        const en = item.texts.find(t => t.scriptId === 3);
+        if (en?.title?.trim()) return en.title.trim();
+      } else if (currentScript === 'hi') {
+        const hi = item.texts.find(t => t.scriptId === 2);
+        if (hi?.title?.trim()) return hi.title.trim();
+      } else {
+        const ur = item.texts.find(t => t.scriptId === 1);
+        if (ur?.title?.trim()) return ur.title.trim();
+      }
+    }
+
+    return item.primaryText?.title || item.title || 'Untitled Poem';
+  }
+
+  getContentBodySnippetForActiveScript(item: Content): string {
+    const currentScript = this.scriptService.activeScript();
+    const scriptId = this.scriptService.getScriptId(currentScript);
+
+    // 1. Check texts array for script match
+    if (Array.isArray(item.texts) && item.texts.length > 0) {
+      const match = item.texts.find(t => t.scriptId === scriptId);
+      if (match?.body?.trim()) {
+        const firstLine = match.body.trim().split('\n')[0].trim();
+        if (firstLine) return firstLine;
+      }
+    }
+
+    // 2. Check seed classical poems
+    const seedItem = this.seedService.classicalPoems.find(p => p.id === item.id);
+    if (seedItem?.texts?.[currentScript]?.body?.trim()) {
+      const firstLine = seedItem.texts[currentScript].body.trim().split('\n')[0].trim();
+      if (firstLine) return firstLine;
+    }
+
+    // 3. Fallback to any text available in texts
+    if (Array.isArray(item.texts) && item.texts.length > 0) {
+      const first = item.texts.find(t => t.body?.trim());
+      if (first?.body?.trim()) {
+        return first.body.trim().split('\n')[0].trim();
+      }
+    }
+
+    if (item.primaryText?.body?.trim()) {
+      return item.primaryText.body.trim().split('\n')[0].trim();
+    }
+
+    return '';
+  }
+
+  getAuthorNameForActiveScript(author?: Author, authorId?: number): string {
+    const currentScript = this.scriptService.activeScript();
+    const scriptId = this.scriptService.getScriptId(currentScript);
+
+    const targetAuthor = author || (authorId ? this.authors().find(a => a.id === authorId) : undefined);
+
+    if (targetAuthor) {
+      if (currentScript === 'ur' && (targetAuthor as any).urName?.trim()) {
+        return (targetAuthor as any).urName.trim();
+      }
+      if (currentScript === 'hi' && (targetAuthor as any).hiName?.trim()) {
+        return (targetAuthor as any).hiName.trim();
+      }
+      if (currentScript === 'en' && (targetAuthor as any).enName?.trim()) {
+        return (targetAuthor as any).enName.trim();
+      }
+
+      if (Array.isArray(targetAuthor.details) && targetAuthor.details.length > 0) {
+        const detail = targetAuthor.details.find(d => d.scriptId === scriptId);
+        if (detail?.name?.trim()) {
+          return detail.name.trim();
+        }
+        if (targetAuthor.details[0]?.name?.trim()) {
+          return targetAuthor.details[0].name.trim();
+        }
+      }
+
+      if (targetAuthor.primaryName?.trim()) {
+        return targetAuthor.primaryName.trim();
+      }
+      if (targetAuthor.name?.trim()) {
+        return targetAuthor.name.trim();
+      }
+
+      const seedPoet = this.seedService.classicalPoets.find(p => p.id === targetAuthor.id);
+      if (seedPoet?.details?.[currentScript]?.name?.trim()) {
+        return seedPoet.details[currentScript].name.trim();
+      }
+    }
+
+    if (authorId) {
+      const seedPoet = this.seedService.classicalPoets.find(p => p.id === authorId);
+      if (seedPoet?.details?.[currentScript]?.name?.trim()) {
+        return seedPoet.details[currentScript].name.trim();
+      }
+      return `Poet #${authorId}`;
+    }
+
+    return 'Shayar';
+  }
+
+  getGenreNameForActiveScript(genreId?: number, genre?: Genre): string {
+    const currentScript = this.scriptService.activeScript();
+    const targetGenre = genre || (genreId ? this.genres().find(g => g.id === genreId) : undefined);
+    const slug = (targetGenre?.slug || (genreId === 1 ? 'ghazal' : genreId === 2 ? 'nazm' : genreId === 3 ? 'sher' : genreId === 4 ? 'rubai' : '')).toLowerCase();
+
+    const genreMap: Record<string, Record<ScriptCode, string>> = {
+      'ghazal': { ur: 'غزل', hi: 'ग़ज़ल', en: 'Ghazal' },
+      'nazm': { ur: 'نظم', hi: 'नज़्म', en: 'Nazm' },
+      'sher': { ur: 'شعر', hi: 'शेर', en: 'Sher' },
+      'ashar': { ur: 'اشعار', hi: 'अशआर', en: "Ash'ar" },
+      'rubai': { ur: 'رباعی', hi: 'रुबाई', en: 'Rubai' },
+      'qasida': { ur: 'قصیدہ', hi: 'क़सीदा', en: 'Qasida' },
+      'marsiya': { ur: 'مرثیہ', hi: 'मर्सिया', en: 'Marsiya' },
+      'masnavi': { ur: 'مثنوی', hi: 'मसनवी', en: 'Masnavi' },
+      'qita': { ur: 'قطعہ', hi: 'क़तआ', en: 'Qita' },
+      'hamd': { ur: 'حمد', hi: 'हम्द', en: 'Hamd' },
+      'naat': { ur: 'نعت', hi: 'नात', en: 'Naat' }
+    };
+
+    if (slug && genreMap[slug]?.[currentScript]) {
+      return genreMap[slug][currentScript];
+    }
+
+    if (targetGenre?.name) {
+      const parts = targetGenre.name.split('/').map(p => p.trim());
+      if (parts.length === 3) {
+        if (currentScript === 'ur') return parts[0];
+        if (currentScript === 'hi') return parts[1];
+        if (currentScript === 'en') return parts[2];
+      }
+      return targetGenre.name;
+    }
+
+    return currentScript === 'ur' ? 'غزل' : (currentScript === 'hi' ? 'ग़ज़ल' : 'Ghazal');
+  }
+
+  getGenreDescriptionForActiveScript(g: Genre): string {
+    const lang = this.scriptService.activeScript();
+    const slug = (g.slug || '').toLowerCase();
+    
+    const descMap: Record<string, Record<ScriptCode, string>> = {
+      ghazal: {
+        ur: 'مطلع، مقطع، ردیف اور قافیہ پر مشتمل روایتی کلام۔',
+        hi: 'मतला, मक़्ता, रदीफ़ और क़ाफ़िया से सजी शास्त्रीय विधा।',
+        en: 'Classical rhymed stanzas with Matla, Maqta, Radif & Qafiya.'
+      },
+      nazm: {
+        ur: 'ایک ہی مرکزی خیال اور موضوع پر لکھی گئی آزاد یا پابند شاعری۔',
+        hi: 'एक ही विषय और केंद्रीय विचार पर रचित कविता।',
+        en: 'Thematic descriptive poem with a unified subject matter.'
+      },
+      sher: {
+        ur: 'دو مصرعوں پر مشتمل مکمل معنی خیز شعر۔',
+        hi: 'दो पंक्तियों में संपूर्ण भाव समेटे हुआ शेर।',
+        en: 'Self-contained standalone couplet expressing complete thought.'
+      },
+      rubai: {
+        ur: 'چار مصرعوں پر مشتمل مختصر اور جامع صنفِ سخن۔',
+        hi: 'चार पंक्तियों की संक्षिप्त एवं प्रभावशाली विधा।',
+        en: 'A distinct four-line poetic stanza with deep philosophical essence.'
+      }
+    };
+
+    return descMap[slug]?.[lang] || descMap[slug]?.['en'] || (lang === 'ur' ? 'کلاسیکی صنفِ سخن' : (lang === 'hi' ? 'शास्त्रीय काव्य विधा' : 'Classical poetic verse form.'));
+  }
+
+  getThemeNameForActiveScript(theme: Theme): string {
+    const currentScript = this.scriptService.activeScript();
+    const slug = (theme.slug || '').toLowerCase();
+
+    const themeMap: Record<string, Record<ScriptCode, string>> = {
+      'ishq': { ur: 'عشق و محبت', hi: 'इश्क़ व मोहब्बत', en: 'Love (Ishq)' },
+      'dard': { ur: 'درد و الم', hi: 'दर्द व अलम', en: 'Heartbreak & Pain' },
+      'tanhai': { ur: 'تنہائی', hi: 'तन्हाई', en: 'Solitude & Longing' },
+      'zindagi': { ur: 'فلسفہ و زندگی', hi: 'फ़लसफ़ा व ज़िंदगी', en: 'Life & Philosophy' },
+      'sufi': { ur: 'تصوف و روحانیت', hi: 'तसव्वुफ़ व रूहानियत', en: 'Sufism & Mysticism' },
+      'judai': { ur: 'جدائی و ہجر', hi: 'जुदाई व हिज्र', en: 'Separation & Distance' },
+      'inqilab': { ur: 'امید و انقلاب', hi: 'उम्मीद व इंक़लाब', en: 'Hope & Revolution' }
+    };
+
+    if (slug && themeMap[slug]?.[currentScript]) {
+      return themeMap[slug][currentScript];
+    }
+
+    if (theme.name) {
+      return theme.name;
+    }
+    return theme.slug || 'Theme';
+  }
+
+  getContentFontClass(item: Content): string {
+    const currentScript = this.scriptService.activeScript();
+    if (currentScript === 'ur') return 'font-urdu';
+    if (currentScript === 'hi') return 'font-hindi';
+    return 'font-english';
+  }
+
+  getContentDirection(item: Content): 'rtl' | 'ltr' {
+    return this.scriptService.activeScript() === 'ur' ? 'rtl' : 'ltr';
+  }
+
+  getAuthorSecondaryName(a: Author): string {
+    const currentScript = this.scriptService.activeScript();
+    if (currentScript === 'ur') {
+      if ((a as any).enName?.trim()) return (a as any).enName.trim();
+      const en = a.details?.find(d => d.scriptId === 3);
+      if (en?.name?.trim()) return en.name.trim();
+      if (a.primaryName?.trim()) return a.primaryName.trim();
+      if ((a as any).name?.trim()) return (a as any).name.trim();
+      const seedPoet = this.seedService.classicalPoets.find(p => p.id === a.id);
+      if (seedPoet?.details?.en?.name) return seedPoet.details.en.name;
+      return '';
+    } else {
+      if ((a as any).urName?.trim()) return (a as any).urName.trim();
+      const ur = a.details?.find(d => d.scriptId === 1);
+      if (ur?.name?.trim()) return ur.name.trim();
+      return this.getAuthorUrduName(a);
+    }
+  }
+
+  getAuthorSecondaryFontClass(): string {
+    return this.scriptService.activeScript() === 'ur' ? 'font-english' : 'font-urdu';
+  }
+
   // Filtered lists based on search
   filteredContents = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.contents();
     return this.contents().filter(c => 
       (c.title || '').toLowerCase().includes(q) ||
+      (this.getContentTitleForActiveScript(c) || '').toLowerCase().includes(q) ||
+      (this.getContentBodySnippetForActiveScript(c) || '').toLowerCase().includes(q) ||
+      (this.getAuthorNameForActiveScript(c.author, c.authorId) || '').toLowerCase().includes(q) ||
       (c.primaryText?.title || '').toLowerCase().includes(q) ||
       (c.author?.primaryName || '').toLowerCase().includes(q)
     );
@@ -265,6 +558,7 @@ export class StudioComponent implements OnInit {
     if (!q) return this.genres();
     return this.genres().filter(g => 
       (g.name || '').toLowerCase().includes(q) ||
+      (this.getGenreNameForActiveScript(g.id, g) || '').toLowerCase().includes(q) ||
       (g.slug || '').toLowerCase().includes(q)
     );
   });
@@ -275,6 +569,7 @@ export class StudioComponent implements OnInit {
     if (!q) return all;
     return all.filter(g => 
       (g.name || '').toLowerCase().includes(q) ||
+      (this.getGenreNameForActiveScript(g.id, g) || '').toLowerCase().includes(q) ||
       (g.slug || '').toLowerCase().includes(q)
     );
   });
@@ -284,6 +579,7 @@ export class StudioComponent implements OnInit {
     if (!q) return this.themes();
     return this.themes().filter(t => 
       (t.name || '').toLowerCase().includes(q) ||
+      (this.getThemeNameForActiveScript(t) || '').toLowerCase().includes(q) ||
       (t.slug || '').toLowerCase().includes(q)
     );
   });
@@ -293,17 +589,21 @@ export class StudioComponent implements OnInit {
     if (!q) return this.authors();
     return this.authors().filter(a => {
       const matchPrimary = (a.primaryName || '').toLowerCase().includes(q);
+      const matchActiveName = (this.getAuthorNameForActiveScript(a, a.id) || '').toLowerCase().includes(q);
       const matchDetails = Array.isArray(a.details) && a.details.some(d => (d.name || '').toLowerCase().includes(q));
-      return matchPrimary || matchDetails;
+      return matchPrimary || matchActiveName || matchDetails;
     });
   });
 
   getAuthorUrduName(a: Author): string {
+    if ((a as any).urName?.trim()) return (a as any).urName.trim();
     if (Array.isArray(a.details)) {
       const ur = a.details.find(d => d.scriptId === 1);
-      if (ur?.name) return ur.name;
+      if (ur?.name?.trim()) return ur.name.trim();
     }
-    return a.primaryName || '';
+    const seedPoet = this.seedService.classicalPoets.find(p => p.id === a.id);
+    if (seedPoet?.details?.ur?.name) return seedPoet.details.ur.name;
+    return a.primaryName || (a as any).name || '';
   }
 
   filteredAdmins = computed(() => {
@@ -318,16 +618,97 @@ export class StudioComponent implements OnInit {
 
   // Actions
   openAddModal() {
+    this.editingContentId.set(null);
     if (this.activeTab() === 'content') {
       this.contentCreationStep.set('select-genre');
       this.genreSearchQuery.set('');
       this.showInlineGenreCreate.set(false);
+      this.contentForm.set({
+        id: undefined,
+        title: '',
+        authorId: this.authors()[0]?.id || 1,
+        genreId: this.genres()[0]?.id || 1,
+        selectedThemeIds: [this.themes()[0]?.id || 1],
+        urTitle: '',
+        urBody: '',
+        hiTitle: '',
+        hiBody: '',
+        enTitle: '',
+        enBody: ''
+      });
     }
     this.showAddModal.set(true);
   }
 
   closeAddModal() {
     this.showAddModal.set(false);
+    this.editingContentId.set(null);
+  }
+
+  openEditContentModal(item: Content) {
+    if (!item || !item.id) return;
+
+    this.editingContentId.set(item.id);
+    this.activeTab.set('content');
+    this.contentCreationStep.set('editor');
+
+    const allTexts = item.texts || item.contentTexts || [];
+    const urText = allTexts.find(t => t.scriptId === 1);
+    const hiText = allTexts.find(t => t.scriptId === 2);
+    const enText = allTexts.find(t => t.scriptId === 3);
+
+    if (!urText && !hiText && !enText) {
+      this.contentService.filterContentTexts({ contentId: item.id }).subscribe({
+        next: (res) => {
+          const texts = res.data || [];
+          const ur = texts.find(t => t.scriptId === 1);
+          const hi = texts.find(t => t.scriptId === 2);
+          const en = texts.find(t => t.scriptId === 3);
+          this.populateContentForm(item, ur, hi, en);
+          this.showAddModal.set(true);
+        },
+        error: () => {
+          this.populateContentForm(item, urText, hiText, enText);
+          this.showAddModal.set(true);
+        }
+      });
+    } else {
+      this.populateContentForm(item, urText, hiText, enText);
+      this.showAddModal.set(true);
+    }
+  }
+
+  private populateContentForm(item: Content, ur?: ContentText, hi?: ContentText, en?: ContentText) {
+    const authorId = item.authorId || item.author?.id || this.authors()[0]?.id || 1;
+    const genreId = item.genreId || item.genre?.id || this.genres()[0]?.id || 1;
+    const themeIds = (item.themeIds && item.themeIds.length > 0)
+      ? item.themeIds
+      : (item.themes && item.themes.length > 0 ? item.themes.map(t => t.id!).filter(Boolean) : [this.themes()[0]?.id || 1]);
+
+    this.contentForm.set({
+      id: item.id,
+      title: item.title || '',
+      authorId,
+      genreId,
+      selectedThemeIds: themeIds,
+      urTitle: ur?.title || item.title || '',
+      urBody: ur?.body || '',
+      hiTitle: hi?.title || item.title || '',
+      hiBody: hi?.body || '',
+      enTitle: en?.title || item.title || '',
+      enBody: en?.body || ''
+    });
+
+    if (ur?.body) {
+      this.activeScriptEditorTab.set('ur');
+    } else if (hi?.body) {
+      this.activeScriptEditorTab.set('hi');
+    } else if (en?.body) {
+      this.activeScriptEditorTab.set('en');
+    } else {
+      const active = this.scriptService.activeScript();
+      this.activeScriptEditorTab.set(active === 'ur' ? 'ur' : (active === 'hi' ? 'hi' : 'en'));
+    }
   }
 
   getGenreIcon(slug?: string): string {
@@ -425,16 +806,41 @@ export class StudioComponent implements OnInit {
     });
   }
 
-  // --- Save Content in 3 Scripts Simultaneously ---
+  // --- Delete Content ---
+  deleteContent(item: Content) {
+    const title = item.title || this.getContentTitleForActiveScript(item) || `Poem #${item.id}`;
+    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    if (!item.id) {
+      this.showStatus('error', 'Content ID is missing.');
+      return;
+    }
+
+    this.contentService.deleteContent({ id: item.id }).subscribe({
+      next: () => {
+        this.showStatus('success', `"${title}" deleted successfully.`);
+        this.refreshAllData();
+      },
+      error: (err) => {
+        console.error('Failed to delete content:', err);
+        this.showStatus('error', err?.error?.message || 'Failed to delete content.');
+      }
+    });
+  }
+
+  // --- Save / Update Content in 3 Scripts Simultaneously ---
   saveContentWithTexts() {
     const f = this.contentForm();
+    const editId = this.editingContentId();
     
     // Auto-derive title from master title, script titles, or first verse line
     const firstLine = (f.urBody || f.hiBody || f.enBody || '').split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
     const finalTitle = (f.title || f.urTitle || f.hiTitle || f.enTitle || firstLine || 'Untitled Kalam').trim();
 
     if (!f.urBody.trim() && !f.hiBody.trim() && !f.enBody.trim() && !f.urTitle.trim() && !f.hiTitle.trim() && !f.enTitle.trim()) {
-      this.showStatus('error', 'Please enter some poetry verses (اشعار / کلام) before publishing.');
+      this.showStatus('error', 'Please enter some poetry verses (اشعار / کلام) before saving.');
       return;
     }
 
@@ -459,10 +865,11 @@ export class StudioComponent implements OnInit {
       }
     };
 
-    console.log('Publishing content payload:', { title: finalTitle, authorId, genreId, themeIds, scriptTexts });
+    console.log('Saving content payload:', { id: editId, title: finalTitle, authorId, genreId, themeIds, scriptTexts });
 
     this.contentService.saveCompleteContentWithTexts(
       {
+        id: editId || undefined,
         title: finalTitle,
         authorId,
         genreId,
@@ -472,22 +879,10 @@ export class StudioComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.isSavingContent.set(false);
-        this.showStatus('success', `🎉 "${finalTitle}" published successfully across Urdu, Hindi & English!`);
-        
-        // Also ensure fallback seed data contains this new poem for instant offline reactivity
-        const author = this.authors().find(a => a.id === authorId);
-        this.seedService.classicalPoems.unshift({
-          id: Date.now(),
-          authorId,
-          genreId,
-          themeIds,
-          title: finalTitle,
-          texts: {
-            ur: { title: scriptTexts.ur.title, body: scriptTexts.ur.body || scriptTexts.en.body || scriptTexts.hi.body },
-            hi: { title: scriptTexts.hi.title, body: scriptTexts.hi.body || scriptTexts.en.body || scriptTexts.ur.body },
-            en: { title: scriptTexts.en.title, body: scriptTexts.en.body || scriptTexts.hi.body || scriptTexts.ur.body }
-          }
-        });
+        const actionMsg = editId 
+          ? `✏️ "${finalTitle}" updated successfully in the database!` 
+          : `🎉 "${finalTitle}" published successfully across Urdu, Hindi & English!`;
+        this.showStatus('success', actionMsg);
 
         this.contentForm.set({
           title: '',
@@ -502,13 +897,14 @@ export class StudioComponent implements OnInit {
           enBody: ''
         });
 
+        this.editingContentId.set(null);
         this.closeAddModal();
         this.refreshAllData();
       },
       error: (err) => {
         this.isSavingContent.set(false);
-        console.error('Failed to publish content:', err);
-        this.showStatus('error', err?.error?.message || err?.message || 'Failed to publish content.');
+        console.error('Failed to save content:', err);
+        this.showStatus('error', err?.error?.message || err?.message || 'Failed to save content.');
       }
     });
   }
@@ -549,17 +945,52 @@ export class StudioComponent implements OnInit {
     });
   }
 
+  // --- Delete Author ---
+  deleteAuthor(author: Author) {
+    const authorName = this.getAuthorNameForActiveScript(author, author.id) || `Poet #${author.id}`;
+    if (!confirm(`Are you sure you want to delete "${authorName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    if (!author.id) {
+      this.showStatus("error", "Author ID is missing.");
+      return;
+    }
+
+    this.authorService.deleteAuthor({ id: author.id }).subscribe({
+      next: () => {
+        this.showStatus("success", `Author "${authorName}" deleted successfully.`);
+        this.refreshAllData();
+      },
+      error: (err) => {
+        console.error("Failed to delete author:", err);
+        this.showStatus("error", err?.error?.message || "Failed to delete author.");
+      }
+    });
+  }
+
   // --- Save Author ---
   saveAuthorWithDetails() {
     const f = this.poetForm();
-    if (!f.urName && !f.enName && !f.hiName) {
+    if (!f.urName?.trim() && !f.enName?.trim() && !f.hiName?.trim()) {
       this.showStatus('error', 'Please enter the poet name in at least one script.');
       return;
     }
 
-    this.authorService.saveAuthor({ birthDate: f.birthDate, deathDate: f.deathDate }).subscribe({
+    const payload: any = {
+      birthDate: f.birthDate || null,
+      deathDate: f.deathDate || null,
+      urName: f.urName?.trim() || '',
+      hiName: f.hiName?.trim() || '',
+      enName: f.enName?.trim() || '',
+      name: f.enName?.trim() || f.urName?.trim() || f.hiName?.trim() || '',
+      primaryName: f.enName?.trim() || f.urName?.trim() || f.hiName?.trim() || ''
+    };
+
+    this.authorService.saveAuthor(payload).subscribe({
       next: () => {
         this.showStatus('success', 'Shayar profile saved into database!');
+        this.poetForm.set({ birthDate: '', deathDate: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
         this.closeAddModal();
         this.refreshAllData();
       },

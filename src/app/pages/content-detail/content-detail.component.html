@@ -3,10 +3,16 @@
   <div class="reader-control-bar poetic-card">
     <div class="control-left">
       <!-- Back Navigation -->
-      <a routerLink="/" class="back-link">&larr; Back to Home</a>
+      <a routerLink="/" class="back-link">&larr; Home</a>
       <span class="divider-dot">•</span>
       <!-- Genre Badge -->
-      <span class="badge">Ghazal (غزل)</span>
+      <span class="pill-badge pill-genre">{{ getGenreName() }}</span>
+      <span class="divider-dot">•</span>
+      <!-- Direct Edit Button -->
+      <button type="button" class="btn-edit-kalam-pill" (click)="editInStudio()" title="Edit this Ghazal / Poem in Studio">
+        <span class="edit-icon">✏️</span>
+        <span>Edit Kalam</span>
+      </button>
     </div>
 
     <!-- Script Switcher Tabs -->
@@ -47,8 +53,13 @@
         {{ isBookmarked() ? '★ Saved' : '☆ Save' }}
       </button>
 
+      <!-- Share Button -->
+      <button class="tool-btn share-btn" (click)="shareKalam()" title="Share Link">
+        🔗 Share
+      </button>
+
       <!-- Full Ghazal Copy -->
-      <button class="tool-btn" (click)="copyFullGhazal()" title="Copy entire ghazal">
+      <button class="tool-btn copy-all-btn" (click)="copyFullGhazal()" title="Copy entire ghazal">
         {{ copiedIndex() === -1 ? '✓ Copied' : '📋 Copy All' }}
       </button>
     </div>
@@ -56,22 +67,31 @@
 
   <!-- Word Click Hint Notice -->
   <div class="word-hint-banner flex-between">
-    <span>💡 Tip: Click on any word in the couplets to view its Urdu, Hindi, and English dictionary meaning instantly.</span>
-    <span class="hint-icon font-display">REKHTA LUGHAT ENABLED</span>
+    <span class="hint-text">
+      💡 <strong>Tip:</strong> Click on any word in the couplets to view its Urdu, Hindi, and English dictionary meaning instantly.
+    </span>
+    <div class="hint-badge-group">
+      <span *ngIf="showShareToast()" class="share-toast-pill animate-fade-in">✓ Link copied to clipboard!</span>
+      <span class="hint-icon font-display">REKHTA LUGHAT ENABLED</span>
+    </div>
   </div>
 
   <!-- Main Ghazal Parchment Card -->
   <article class="ghazal-parchment poetic-card">
     <!-- Header Title & Poet Link -->
     <header class="parchment-header">
-      <h1 class="ghazal-main-title" [ngClass]="scriptService.fontClass()">
-        {{ currentPoemText()?.title }}
+      <div class="parchment-genre-tag">
+        <span>✦ {{ getGenreName() }} ✦</span>
+      </div>
+
+      <h1 class="ghazal-main-title" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()">
+        {{ currentPoemText()?.title || content().title }}
       </h1>
       
       <div class="parchment-poet-meta">
         <span class="by-text font-display">KALAAM-E-SHAYAR:</span>
-        <a [routerLink]="['/poet', content().author?.id || 1]" class="poet-name-link" [ngClass]="scriptService.fontClass()">
-          {{ content().author?.primaryName || 'Legendary Poet' }}
+        <a [routerLink]="['/poet', content().author?.id || content().authorId || 1]" class="poet-name-link" [ngClass]="getPoemFontClass()">
+          👤 {{ getAuthorName() }}
         </a>
       </div>
 
@@ -81,12 +101,15 @@
     </header>
 
     <!-- Couplet-by-Couplet Layout -->
-    <div class="couplets-stream" [ngClass]="scriptService.fontClass()" [style.font-size.px]="readerFontSize()">
+    <div class="couplets-stream" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()" [style.font-size.px]="readerFontSize()">
       <div *ngFor="let couplet of couplets; let idx = index" class="couplet-stanza">
-        <div class="couplet-stanza-header flex-between">
-          <span class="couplet-number font-display">Sher #{{ idx + 1 }}</span>
+        <div class="couplet-stanza-header flex-between" dir="ltr">
+          <span class="couplet-number font-display">
+            {{ getCoupletNumeral(idx) }}
+          </span>
           
           <button 
+            type="button"
             class="couplet-action-btn" 
             (click)="copyCouplet(idx, couplet)"
             [title]="scriptService.translate('copy_sher')">
@@ -122,10 +145,15 @@
 
     <!-- Navigation between Ghazals -->
     <div class="ghazal-pager flex-between">
-      <button class="btn btn-outline-gold" (click)="navigateToPreviousGhazal()">
+      <button type="button" class="btn btn-outline-gold" (click)="navigateToPreviousGhazal()">
         &larr; Previous Ghazal (پچھلی غزل)
       </button>
-      <button class="btn btn-outline-gold" (click)="navigateToNextGhazal()">
+
+      <button type="button" class="btn btn-blue btn-edit-center" (click)="editInStudio()">
+        ✏️ Edit in Studio
+      </button>
+
+      <button type="button" class="btn btn-outline-gold" (click)="navigateToNextGhazal()">
         Next Ghazal (اگلی غزل) &rarr;
       </button>
     </div>
@@ -134,19 +162,26 @@
     <footer class="parchment-footer">
       <div class="poet-summary-card">
         <div class="poet-portrait-ring">
-          <img [src]="content().author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'" [alt]="content().author?.primaryName" />
+          <img [src]="content().author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'" [alt]="getAuthorName()" />
         </div>
         <div class="poet-card-details">
-          <span class="poet-label font-display">ABOUT THE MASTER SHAYAR</span>
-          <h4 class="poet-name-sm" [ngClass]="scriptService.fontClass()">
-            {{ content().author?.primaryName }}
+          <div class="poet-card-top-row flex-between">
+            <span class="poet-label font-display">ABOUT THE MASTER SHAYAR</span>
+            <button type="button" class="btn-studio-shortcut" (click)="editInStudio()">
+              ✏️ Studio Editor
+            </button>
+          </div>
+          <h4 class="poet-name-sm" [ngClass]="getPoemFontClass()">
+            {{ getAuthorName() }}
           </h4>
-          <p class="poet-bio-sm" [ngClass]="scriptService.fontClass()">
-            {{ content().author?.primaryBio }}
+          <p class="poet-bio-sm" [ngClass]="getPoemFontClass()">
+            {{ getAuthorBio() }}
           </p>
-          <a [routerLink]="['/poet', content().author?.id || 1]" class="btn btn-gold btn-sm">
-            View Complete Works & Biography &rarr;
-          </a>
+          <div class="poet-card-actions">
+            <a [routerLink]="['/poet', content().author?.id || content().authorId || 1]" class="btn btn-gold btn-sm">
+              View Complete Works & Biography &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </footer>

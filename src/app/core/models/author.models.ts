@@ -7,8 +7,13 @@ export interface Author {
   createdAt?: string;
   updatedAt?: string;
   // UI enriched properties
-  details?: AuthorDetail[];
+  name?: string;
   primaryName?: string;
+  urName?: string;
+  hiName?: string;
+  enName?: string;
+  details?: AuthorDetail[];
+  authorDetails?: AuthorDetail[];
   primaryBio?: string;
   avatarUrl?: string;
   worksCount?: number;

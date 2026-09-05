@@ -492,6 +492,40 @@
   border-color: var(--accent-blue);
 }
 
+.table-actions-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.table-action-edit {
+  cursor: pointer;
+  border-color: rgba(37, 99, 235, 0.3);
+  color: var(--accent-blue, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+  font-weight: 600;
+}
+
+.table-action-edit:hover {
+  background: var(--accent-blue, #2563eb);
+  color: #ffffff;
+  border-color: var(--accent-blue, #2563eb);
+}
+
+.table-action-delete {
+  cursor: pointer;
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.table-action-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
 /* Poet Identity in Table */
 .poet-table-identity {
   display: flex;

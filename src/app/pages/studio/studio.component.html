@@ -174,25 +174,34 @@
               <tr *ngFor="let item of filteredContents()">
                 <td class="col-id">#{{ item.id }}</td>
                 <td class="col-main">
-                  <div class="main-cell-title" [ngClass]="scriptService.fontClass()">
-                    {{ item.primaryText?.title || item.title }}
+                  <div class="main-cell-title" [ngClass]="getContentFontClass(item)" [dir]="getContentDirection(item)">
+                    {{ getContentTitleForActiveScript(item) }}
                   </div>
-                  <span class="cell-subtext">{{ (item.primaryText?.body || '').split('\n')[0] }}</span>
+                  <span class="cell-subtext" [ngClass]="getContentFontClass(item)" [dir]="getContentDirection(item)">
+                    {{ getContentBodySnippetForActiveScript(item) }}
+                  </span>
                 </td>
                 <td>
-                  <span class="author-tag">👤 {{ item.author?.primaryName || ('Author #' + item.authorId) }}</span>
+                  <span class="author-tag" [ngClass]="scriptService.fontClass()">
+                    👤 {{ getAuthorNameForActiveScript(item.author, item.authorId) }}
+                  </span>
                 </td>
                 <td>
-                  <span class="pill-badge pill-genre">{{ item.genreId === 1 ? 'Ghazal' : (item.genreId === 2 ? 'Nazm' :
-                    'Rubai') }}</span>
+                  <span class="pill-badge pill-genre" [ngClass]="scriptService.fontClass()">
+                    {{ getGenreNameForActiveScript(item.genreId, item.genre) }}
+                  </span>
                 </td>
                 <td>
-                  <span class="status-pill status-active">Published</span>
+                  <span class="status-pill status-active">
+                    {{ scriptService.activeScript() === 'ur' ? 'شائع شدہ' : (scriptService.activeScript() === 'hi' ?
+                    'प्रकाशित' : 'Published') }}
+                  </span>
                 </td>
                 <td style="text-align: right;">
                   <a [routerLink]="['/content', item.id]" target="_blank" class="table-action-btn"
                     title="View in Reading Room">
-                    👁️ View
+                    👁️ {{ scriptService.activeScript() === 'ur' ? 'دیکھیں' : (scriptService.activeScript() === 'hi' ?
+                    'देखें' : 'View') }}
                   </a>
                 </td>
               </tr>
@@ -226,19 +235,20 @@
             <tbody>
               <tr *ngFor="let g of filteredGenres()">
                 <td class="col-id">#{{ g.id }}</td>
-                <td class="col-main font-urdu font-lg">
-                  <strong>{{ g.name }}</strong>
+                <td class="col-main font-lg" [ngClass]="scriptService.fontClass()">
+                  <strong>{{ getGenreNameForActiveScript(g.id, g) }}</strong>
                 </td>
                 <td>
                   <span class="pill-badge pill-code">{{ g.slug }}</span>
                 </td>
-                <td class="col-desc">
-                  {{ g.slug === 'ghazal' ? 'Classical rhymed stanzas with Matla, Maqta, Radif & Qafiya.' : (g.slug ===
-                  'nazm' ? 'Thematic descriptive poem with a unified subject matter.' : 'Classical poetic verse form.')
-                  }}
+                <td class="col-desc" [ngClass]="scriptService.fontClass()">
+                  {{ getGenreDescriptionForActiveScript(g) }}
                 </td>
                 <td style="text-align: right;">
-                  <span class="status-pill status-active">Active</span>
+                  <span class="status-pill status-active">
+                    {{ scriptService.activeScript() === 'ur' ? 'فعال' : (scriptService.activeScript() === 'hi' ?
+                    'सक्रिय' : 'Active') }}
+                  </span>
                 </td>
               </tr>
               <tr *ngIf="filteredGenres().length === 0">
@@ -271,8 +281,8 @@
             <tbody>
               <tr *ngFor="let t of filteredThemes()">
                 <td class="col-id">#{{ t.id }}</td>
-                <td class="col-main font-urdu font-lg">
-                  <strong>{{ t.name }}</strong>
+                <td class="col-main font-lg" [ngClass]="scriptService.fontClass()">
+                  <strong>{{ getThemeNameForActiveScript(t) }}</strong>
                 </td>
                 <td>
                   <span class="pill-badge pill-code">#{{ t.slug }}</span>
@@ -281,7 +291,10 @@
                   <span class="author-tag">✦ Rekhta Heritage Theme</span>
                 </td>
                 <td style="text-align: right;">
-                  <span class="status-pill status-active">Active</span>
+                  <span class="status-pill status-active">
+                    {{ scriptService.activeScript() === 'ur' ? 'فعال' : (scriptService.activeScript() === 'hi' ?
+                    'सक्रिय' : 'Active') }}
+                  </span>
                 </td>
               </tr>
               <tr *ngIf="filteredThemes().length === 0">
@@ -320,8 +333,12 @@
                       <span>👤</span>
                     </div>
                     <div>
-                      <strong class="poet-table-name">{{ a.primaryName }}</strong>
-                      <span class="poet-urdu-sub font-urdu">{{ getAuthorUrduName(a) }}</span>
+                      <strong class="poet-table-name" [ngClass]="scriptService.fontClass()">
+                        {{ getAuthorNameForActiveScript(a, a.id) }}
+                      </strong>
+                      <span class="poet-urdu-sub" [ngClass]="getAuthorSecondaryFontClass()">
+                        {{ getAuthorSecondaryName(a) }}
+                      </span>
                     </div>
                   </div>
                 </td>
@@ -330,9 +347,18 @@
                   <span class="pill-badge pill-genre">Classical Heritage</span>
                 </td>
                 <td style="text-align: right;">
-                  <a [routerLink]="['/poet', a.id]" target="_blank" class="table-action-btn">
-                    👁️ View Bio
-                  </a>
+                  <div class="table-actions-wrapper">
+                    <a [routerLink]="['/poet', a.id]" target="_blank" class="table-action-btn"
+                      title="View Shayar Profile">
+                      👁️ {{ scriptService.activeScript() === 'ur' ? 'سوانح حیات' : (scriptService.activeScript() ===
+                      'hi'
+                      ? 'जीवनी देखें' : 'View Bio') }}
+                    </a>
+                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteAuthor(a)"
+                      title="Delete Shayar">
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="filteredAuthors().length === 0">
