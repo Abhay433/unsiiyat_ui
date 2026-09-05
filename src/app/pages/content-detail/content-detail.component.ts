@@ -7,6 +7,7 @@ import { ContentService } from '../../core/services/content.service';
 import { AuthorService } from '../../core/services/author.service';
 import { SeedDataService } from '../../core/services/seed-data.service';
 import { DictionaryModalComponent } from '../../components/dictionary-modal/dictionary-modal.component';
+import { ContentText } from '../../core/models/content.models';
 
 @Component({
   selector: 'app-content-detail',
@@ -78,6 +79,9 @@ export class ContentDetailComponent implements OnInit {
         if (found) {
           this.content.set(found);
           this.allTexts.set(found.texts || (found as any).contentTexts || []);
+          if (this.isEditing()) {
+            this.startEditing();
+          }
         } else {
           this.setFallbackContent(id);
         }
@@ -116,9 +120,9 @@ export class ContentDetailComponent implements OnInit {
       },
       primaryText: activeText,
       allTexts: [
-        { scriptId: 1, ...urText },
-        { scriptId: 2, ...hiText },
-        { scriptId: 3, ...enText }
+        { scriptId: this.scriptService.getScriptId('ur'), ...urText },
+        { scriptId: this.scriptService.getScriptId('hi'), ...hiText },
+        { scriptId: this.scriptService.getScriptId('en'), ...enText }
       ]
     };
 
@@ -145,49 +149,62 @@ export class ContentDetailComponent implements OnInit {
   startEditing() {
     const current = this.content();
     const texts = this.allTexts() || [];
-    const ur = texts.find(t => t.scriptId === 1);
-    const hi = texts.find(t => t.scriptId === 2);
-    const en = texts.find(t => t.scriptId === 3);
+    const active = this.scriptService.activeScript();
+    const visibleText = this.currentPoemText();
+    const visibleTitle = (visibleText?.title || current?.title || '').trim();
+    const visibleBody = (visibleText?.body || '').trim();
 
-    const fallbackUr = current?.texts?.find?.((t: any) => t.scriptId === 1);
-    const fallbackHi = current?.texts?.find?.((t: any) => t.scriptId === 2);
-    const fallbackEn = current?.texts?.find?.((t: any) => t.scriptId === 3);
+    const ur = texts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+    const hi = texts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+    const en = texts.find(t => this.scriptService.isScriptMatch(t, 'en'));
+
+    const fallbackUr = current?.texts?.find?.((t: any) => this.scriptService.isScriptMatch(t, 'ur'));
+    const fallbackHi = current?.texts?.find?.((t: any) => this.scriptService.isScriptMatch(t, 'hi'));
+    const fallbackEn = current?.texts?.find?.((t: any) => this.scriptService.isScriptMatch(t, 'en'));
 
     const seedItem = this.seedService.classicalPoems.find(p => p.id === this.contentId());
 
     // Urdu: only Urdu text
     let urTitle = ur?.title || fallbackUr?.title || '';
-    if (!urTitle && this.isUrdu(current?.title)) {
-      urTitle = current?.title || '';
+    if (!urTitle && (active === 'ur' || this.isUrdu(visibleTitle))) {
+      urTitle = visibleTitle;
     }
     if (!urTitle && seedItem?.texts?.ur?.title) {
       urTitle = seedItem.texts.ur.title;
     }
-    const urBody = ur?.body || fallbackUr?.body || seedItem?.texts?.ur?.body || '';
+    let urBody = ur?.body || fallbackUr?.body || (active === 'ur' ? visibleBody : '') || seedItem?.texts?.ur?.body || '';
 
-    // Hindi: strictly avoid Urdu text leaking into Hindi
+    // Hindi: only Hindi text
     let hiTitle = hi?.title || fallbackHi?.title || '';
-    if (this.isUrdu(hiTitle)) hiTitle = '';
-    if (!hiTitle && this.isHindi(current?.title)) {
-      hiTitle = current?.title || '';
+    if (!hiTitle && (active === 'hi' || this.isHindi(visibleTitle))) {
+      hiTitle = visibleTitle;
     }
     if (!hiTitle && seedItem?.texts?.hi?.title) {
       hiTitle = seedItem.texts.hi.title;
     }
-    let hiBody = hi?.body || fallbackHi?.body || seedItem?.texts?.hi?.body || '';
-    if (this.isUrdu(hiBody)) hiBody = '';
+    let hiBody = hi?.body || fallbackHi?.body || (active === 'hi' ? visibleBody : '') || seedItem?.texts?.hi?.body || '';
 
-    // English: strictly avoid Urdu or Hindi text leaking into English
+    // English / Roman
     let enTitle = en?.title || fallbackEn?.title || '';
-    if (this.isUrdu(enTitle) || this.isHindi(enTitle)) enTitle = '';
-    if (!enTitle && this.isLatinOrEnglish(current?.title)) {
-      enTitle = current?.title || '';
+    if (!enTitle && (active === 'en' || this.isLatinOrEnglish(visibleTitle))) {
+      enTitle = visibleTitle;
     }
     if (!enTitle && seedItem?.texts?.en?.title) {
       enTitle = seedItem.texts.en.title;
     }
-    let enBody = en?.body || fallbackEn?.body || seedItem?.texts?.en?.body || '';
-    if (this.isUrdu(enBody) || this.isHindi(enBody)) enBody = '';
+    let enBody = en?.body || fallbackEn?.body || (active === 'en' ? visibleBody : '') || seedItem?.texts?.en?.body || '';
+
+    // Fallbacks if one language is completely missing in database
+    if (!urTitle && !hiTitle && !enTitle) {
+      if (active === 'hi' || this.isHindi(visibleTitle)) hiTitle = visibleTitle;
+      else if (active === 'ur' || this.isUrdu(visibleTitle)) urTitle = visibleTitle;
+      else enTitle = visibleTitle || current?.title || '';
+    }
+    if (!urBody && !hiBody && !enBody && visibleBody) {
+      if (active === 'hi' || this.isHindi(visibleBody)) hiBody = visibleBody;
+      else if (active === 'ur' || this.isUrdu(visibleBody)) urBody = visibleBody;
+      else enBody = visibleBody;
+    }
 
     this.editForm.set({
       urTitle,
@@ -198,10 +215,52 @@ export class ContentDetailComponent implements OnInit {
       enBody
     });
 
-    const active = this.scriptService.activeScript();
     this.editScriptTab.set(active);
     this.isEditing.set(true);
     window.scrollTo({ top: 120, behavior: 'smooth' });
+
+    // Direct asynchronous DB fetch from content_texts table
+    const id = this.contentId();
+    if (id) {
+      this.contentService.filterContentTexts({ contentId: id, size: 50 }).subscribe({
+        next: (res) => {
+          const raw = (res.data || []) as any[];
+          if (raw.length > 0) {
+            const freshTexts: ContentText[] = raw.map(t => {
+              const rawId = Number(t.scriptId ?? t.script_id ?? t.script?.id);
+              const detected = this.scriptService.detectScriptFromText((t.title || '') + ' ' + (t.body || ''));
+              const finalSId = rawId || this.scriptService.getScriptId(detected);
+              if (rawId) {
+                this.scriptService.learnScriptId(rawId, detected);
+              }
+              return {
+                id: t.id,
+                contentId: Number(t.contentId ?? t.content_id ?? t.content?.id ?? id),
+                scriptId: finalSId,
+                title: t.title || '',
+                body: t.body || ''
+              };
+            });
+
+            this.allTexts.set(freshTexts);
+
+            const fUr = freshTexts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+            const fHi = freshTexts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+            const fEn = freshTexts.find(t => this.scriptService.isScriptMatch(t, 'en'));
+
+            this.editForm.update(curr => ({
+              urTitle: fUr?.title || curr.urTitle,
+              urBody: fUr?.body || curr.urBody,
+              hiTitle: fHi?.title || curr.hiTitle,
+              hiBody: fHi?.body || curr.hiBody,
+              enTitle: fEn?.title || curr.enTitle,
+              enBody: fEn?.body || curr.enBody
+            }));
+          }
+        },
+        error: (err) => console.warn('Could not fetch direct content_texts on edit:', err)
+      });
+    }
   }
 
   cancelEditing() {
@@ -344,17 +403,27 @@ export class ContentDetailComponent implements OnInit {
         genreId,
         themeIds
       },
-      scriptTexts
+      scriptTexts,
+      this.allTexts() || []
     ).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.showEditStatus('success', `🎉 "${finalTitle}" saved successfully!`);
 
+        const existingTexts = this.allTexts() || [];
+        const exUr = existingTexts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+        const exHi = existingTexts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+        const exEn = existingTexts.find(t => this.scriptService.isScriptMatch(t, 'en'));
+
+        const urSId = exUr?.scriptId || this.scriptService.getScriptId('ur');
+        const hiSId = exHi?.scriptId || this.scriptService.getScriptId('hi');
+        const enSId = exEn?.scriptId || this.scriptService.getScriptId('en');
+
         // Update local state with script-distinct records
-        const updatedTexts = [
-          { id: 1, contentId: id, scriptId: 1, title: scriptTexts.ur?.title || '', body: scriptTexts.ur?.body || '' },
-          { id: 2, contentId: id, scriptId: 2, title: scriptTexts.hi?.title || '', body: scriptTexts.hi?.body || '' },
-          { id: 3, contentId: id, scriptId: 3, title: scriptTexts.en?.title || '', body: scriptTexts.en?.body || '' }
+        const updatedTexts: ContentText[] = [
+          { id: exUr?.id, contentId: id, scriptId: urSId, title: scriptTexts.ur?.title || '', body: scriptTexts.ur?.body || '' },
+          { id: exHi?.id, contentId: id, scriptId: hiSId, title: scriptTexts.hi?.title || '', body: scriptTexts.hi?.body || '' },
+          { id: exEn?.id, contentId: id, scriptId: enSId, title: scriptTexts.en?.title || '', body: scriptTexts.en?.body || '' }
         ];
 
         this.allTexts.set(updatedTexts);
@@ -380,6 +449,7 @@ export class ContentDetailComponent implements OnInit {
         }
 
         this.isEditing.set(false);
+        this.loadContent(id);
       },
       error: (err) => {
         this.isSaving.set(false);
@@ -393,23 +463,15 @@ export class ContentDetailComponent implements OnInit {
     setTimeout(() => this.editStatusMsg.set(null), 4500);
   }
 
-  // Get current active script text
+  // Get current active script text dynamically
   readonly currentPoemText = computed(() => {
     const lang = this.scriptService.activeScript();
-    const sId = this.scriptService.getScriptId(lang);
     const texts = this.allTexts();
 
     if (texts && texts.length > 0) {
-      const match = texts.find(t => t.scriptId === sId);
-      if (match) {
-        // If English is selected but the record only contains a leaked Urdu title with no body, skip
-        if (lang === 'en' && this.isUrdu(match.title) && !match.body?.trim()) {
-          // fall through
-        } else if (lang === 'hi' && this.isUrdu(match.title) && !match.body?.trim()) {
-          // fall through
-        } else if (match.title?.trim() || match.body?.trim()) {
-          return match;
-        }
+      const match = texts.find(t => this.scriptService.isScriptMatch(t, lang));
+      if (match && (match.title?.trim() || match.body?.trim())) {
+        return match;
       }
     }
 
@@ -420,7 +482,7 @@ export class ContentDetailComponent implements OnInit {
     }
 
     if (texts && texts.length > 0) {
-      const match = texts.find(t => t.scriptId === sId);
+      const match = texts.find(t => this.scriptService.isScriptMatch(t, lang));
       if (match) return match;
       const firstWithBody = texts.find(t => t.body?.trim());
       if (firstWithBody) return firstWithBody;
@@ -487,10 +549,9 @@ export class ContentDetailComponent implements OnInit {
 
     const contentId = this.contentId();
     const activeLang = this.scriptService.activeScript();
-    const scriptId = this.scriptService.getScriptId(activeLang);
+    const existingText = (this.allTexts() || []).find(t => this.scriptService.isScriptMatch(t, activeLang));
+    const scriptId = existingText?.scriptId || this.scriptService.getScriptId(activeLang);
     const title = this.currentPoemText()?.title || this.content()?.title || 'Untitled Kalam';
-
-    const existingText = (this.allTexts() || []).find(t => t.scriptId === scriptId);
 
     this.isSavingCouplet.set(true);
 
@@ -507,7 +568,7 @@ export class ContentDetailComponent implements OnInit {
         // Update allTexts signal
         this.allTexts.update(texts => {
           const list = texts ? [...texts] : [];
-          const matchIndex = list.findIndex(t => t.scriptId === scriptId);
+          const matchIndex = list.findIndex(t => this.scriptService.isScriptMatch(t, activeLang));
           if (matchIndex >= 0) {
             list[matchIndex] = { ...list[matchIndex], body: newBody, title };
           } else {
@@ -575,8 +636,7 @@ export class ContentDetailComponent implements OnInit {
       if (lang === 'en' && author.enName) return author.enName;
 
       if (Array.isArray(author.details)) {
-        const sId = this.scriptService.getScriptId(lang);
-        const d = author.details.find((x: any) => x.scriptId === sId);
+        const d = author.details.find((x: any) => this.scriptService.isScriptMatch({ scriptId: x.scriptId, title: x.name, body: x.biography }, lang));
         if (d?.name) return d.name;
       }
       if (author.primaryName) return author.primaryName;
@@ -595,8 +655,7 @@ export class ContentDetailComponent implements OnInit {
 
     if (author) {
       if (Array.isArray(author.details)) {
-        const sId = this.scriptService.getScriptId(lang);
-        const d = author.details.find((x: any) => x.scriptId === sId);
+        const d = author.details.find((x: any) => this.scriptService.isScriptMatch({ scriptId: x.scriptId, title: x.name, body: x.biography }, lang));
         if (d?.biography) return d.biography;
       }
       if (author.primaryBio) return author.primaryBio;

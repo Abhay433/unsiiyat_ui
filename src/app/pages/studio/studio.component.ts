@@ -291,11 +291,11 @@ export class StudioComponent implements OnInit {
   // Multi-script Dynamic Content Extractors
   getContentTitleForActiveScript(item: Content): string {
     const currentScript = this.scriptService.activeScript();
-    const scriptId = this.scriptService.getScriptId(currentScript);
+    const allTexts = (item.texts || (item as any).contentTexts || []) as ContentText[];
 
-    // 1. Check texts array for explicit script match
-    if (Array.isArray(item.texts) && item.texts.length > 0) {
-      const match = item.texts.find(t => t.scriptId === scriptId);
+    // 1. Dynamic check with ScriptService (DB ID + Unicode detection)
+    if (allTexts.length > 0) {
+      const match = allTexts.find(t => this.scriptService.isScriptMatch(t, currentScript));
       if (match?.title?.trim()) {
         return match.title.trim();
       }
@@ -307,23 +307,9 @@ export class StudioComponent implements OnInit {
       return seedItem.texts[currentScript].title.trim();
     }
 
-    // 3. Fallback to primaryText if matched or available
-    if (item.primaryText?.title?.trim() && item.primaryText?.scriptId === scriptId) {
+    // 3. Fallback to primaryText if matches script
+    if (item.primaryText?.title?.trim() && this.scriptService.isScriptMatch(item.primaryText, currentScript)) {
       return item.primaryText.title.trim();
-    }
-
-    // 4. Fallback across other available scripts
-    if (Array.isArray(item.texts)) {
-      if (currentScript === 'en') {
-        const en = item.texts.find(t => t.scriptId === 3);
-        if (en?.title?.trim()) return en.title.trim();
-      } else if (currentScript === 'hi') {
-        const hi = item.texts.find(t => t.scriptId === 2);
-        if (hi?.title?.trim()) return hi.title.trim();
-      } else {
-        const ur = item.texts.find(t => t.scriptId === 1);
-        if (ur?.title?.trim()) return ur.title.trim();
-      }
     }
 
     return item.primaryText?.title || item.title || 'Untitled Poem';
@@ -331,11 +317,11 @@ export class StudioComponent implements OnInit {
 
   getContentBodySnippetForActiveScript(item: Content): string {
     const currentScript = this.scriptService.activeScript();
-    const scriptId = this.scriptService.getScriptId(currentScript);
+    const allTexts = (item.texts || (item as any).contentTexts || []) as ContentText[];
 
-    // 1. Check texts array for script match
-    if (Array.isArray(item.texts) && item.texts.length > 0) {
-      const match = item.texts.find(t => t.scriptId === scriptId);
+    // 1. Dynamic check with ScriptService
+    if (allTexts.length > 0) {
+      const match = allTexts.find(t => this.scriptService.isScriptMatch(t, currentScript));
       if (match?.body?.trim()) {
         const firstLine = match.body.trim().split('\n')[0].trim();
         if (firstLine) return firstLine;
@@ -347,14 +333,6 @@ export class StudioComponent implements OnInit {
     if (seedItem?.texts?.[currentScript]?.body?.trim()) {
       const firstLine = seedItem.texts[currentScript].body.trim().split('\n')[0].trim();
       if (firstLine) return firstLine;
-    }
-
-    // 3. Fallback to any text available in texts
-    if (Array.isArray(item.texts) && item.texts.length > 0) {
-      const first = item.texts.find(t => t.body?.trim());
-      if (first?.body?.trim()) {
-        return first.body.trim().split('\n')[0].trim();
-      }
     }
 
     if (item.primaryText?.body?.trim()) {
@@ -382,7 +360,7 @@ export class StudioComponent implements OnInit {
       }
 
       if (Array.isArray(targetAuthor.details) && targetAuthor.details.length > 0) {
-        const detail = targetAuthor.details.find(d => d.scriptId === scriptId);
+        const detail = targetAuthor.details.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, currentScript));
         if (detail?.name?.trim()) {
           return detail.name.trim();
         }
@@ -520,7 +498,7 @@ export class StudioComponent implements OnInit {
     const currentScript = this.scriptService.activeScript();
     if (currentScript === 'ur') {
       if ((a as any).enName?.trim()) return (a as any).enName.trim();
-      const en = a.details?.find(d => d.scriptId === 3);
+      const en = a.details?.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'en'));
       if (en?.name?.trim()) return en.name.trim();
       if (a.primaryName?.trim()) return a.primaryName.trim();
       if ((a as any).name?.trim()) return (a as any).name.trim();
@@ -529,7 +507,7 @@ export class StudioComponent implements OnInit {
       return '';
     } else {
       if ((a as any).urName?.trim()) return (a as any).urName.trim();
-      const ur = a.details?.find(d => d.scriptId === 1);
+      const ur = a.details?.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'ur'));
       if (ur?.name?.trim()) return ur.name.trim();
       return this.getAuthorUrduName(a);
     }
@@ -598,7 +576,7 @@ export class StudioComponent implements OnInit {
   getAuthorUrduName(a: Author): string {
     if ((a as any).urName?.trim()) return (a as any).urName.trim();
     if (Array.isArray(a.details)) {
-      const ur = a.details.find(d => d.scriptId === 1);
+      const ur = a.details.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'ur'));
       if (ur?.name?.trim()) return ur.name.trim();
     }
     const seedPoet = this.seedService.classicalPoets.find(p => p.id === a.id);
@@ -653,17 +631,17 @@ export class StudioComponent implements OnInit {
     this.contentCreationStep.set('editor');
 
     const allTexts = item.texts || item.contentTexts || [];
-    const urText = allTexts.find(t => t.scriptId === 1);
-    const hiText = allTexts.find(t => t.scriptId === 2);
-    const enText = allTexts.find(t => t.scriptId === 3);
+    const urText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+    const hiText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+    const enText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'en'));
 
     if (!urText && !hiText && !enText) {
       this.contentService.filterContentTexts({ contentId: item.id }).subscribe({
         next: (res) => {
           const texts = res.data || [];
-          const ur = texts.find(t => t.scriptId === 1);
-          const hi = texts.find(t => t.scriptId === 2);
-          const en = texts.find(t => t.scriptId === 3);
+          const ur = texts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+          const hi = texts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+          const en = texts.find(t => this.scriptService.isScriptMatch(t, 'en'));
           this.populateContentForm(item, ur, hi, en);
           this.showAddModal.set(true);
         },
@@ -867,6 +845,9 @@ export class StudioComponent implements OnInit {
 
     console.log('Saving content payload:', { id: editId, title: finalTitle, authorId, genreId, themeIds, scriptTexts });
 
+    const existingItem = editId ? this.contents().find(c => c.id === editId) : undefined;
+    const existingTexts = existingItem?.texts || (existingItem as any)?.contentTexts;
+
     this.contentService.saveCompleteContentWithTexts(
       {
         id: editId || undefined,
@@ -875,7 +856,8 @@ export class StudioComponent implements OnInit {
         genreId,
         themeIds
       },
-      scriptTexts
+      scriptTexts,
+      existingTexts
     ).subscribe({
       next: () => {
         this.isSavingContent.set(false);

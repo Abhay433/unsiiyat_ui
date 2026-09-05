@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export type ScriptCode = 'ur' | 'hi' | 'en';
 
@@ -14,11 +15,18 @@ export interface ScriptOption {
   providedIn: 'root'
 })
 export class ScriptService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = 'http://localhost:8080';
+
   readonly scripts: ScriptOption[] = [
     { code: 'ur', name: 'Urdu', nativeName: 'اردو', fontClass: 'font-urdu', dir: 'rtl' },
     { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', fontClass: 'font-hindi', dir: 'ltr' },
     { code: 'en', name: 'English', nativeName: 'English', fontClass: 'font-english', dir: 'ltr' }
   ];
+
+  // Dynamic mapping loaded from DB table `scripts`
+  private readonly scriptCodeToIdMap = new Map<ScriptCode, number>();
+  private readonly scriptIdToCodeMap = new Map<number, ScriptCode>();
 
   // Active script signal (defaults to Urdu)
   readonly activeScript = signal<ScriptCode>('ur');
@@ -35,6 +43,50 @@ export class ScriptService {
     if (saved && (saved === 'ur' || saved === 'hi' || saved === 'en')) {
       this.activeScript.set(saved);
     }
+    this.syncScriptsFromBackend();
+  }
+
+  // Dynamically learn a script ID mapping
+  learnScriptId(id?: number, code?: ScriptCode) {
+    if (!id || !code) return;
+    this.scriptIdToCodeMap.set(id, code);
+    if (!this.scriptCodeToIdMap.has(code)) {
+      this.scriptCodeToIdMap.set(code, id);
+    }
+  }
+
+  // Load actual dynamic script IDs from the database
+  syncScriptsFromBackend() {
+    const parseScripts = (res: any) => {
+      const list: any[] = Array.isArray(res)
+        ? res
+        : (res?.data?.content || res?.data?.data || res?.data || res?.content || []);
+      if (!Array.isArray(list)) return;
+      for (const s of list) {
+        const code = (s.code || '').toLowerCase().trim();
+        const name = (s.name || '').toLowerCase().trim();
+        const id = Number(s.id);
+        if (id) {
+          if (code === 'ur' || name.includes('urdu') || name.includes('اردو') || name.includes('nastaliq')) {
+            this.learnScriptId(id, 'ur');
+          } else if (code === 'hi' || name.includes('hindi') || name.includes('हिन्दी') || name.includes('devanagari')) {
+            this.learnScriptId(id, 'hi');
+          } else if (code === 'en' || name.includes('english') || name.includes('roman') || name.includes('latin')) {
+            this.learnScriptId(id, 'en');
+          }
+        }
+      }
+    };
+
+    this.http.post<any>(`${this.baseUrl}/api/scripts/list`, { page: 0, size: 50 }).subscribe({
+      next: parseScripts,
+      error: () => {
+        this.http.get<any>(`${this.baseUrl}/api/scripts`).subscribe({
+          next: parseScripts,
+          error: () => {}
+        });
+      }
+    });
   }
 
   setScript(code: ScriptCode) {
@@ -42,23 +94,67 @@ export class ScriptService {
     localStorage.setItem('unsiiyat_script', code);
   }
 
-  // Get scriptId based on standard mapping (1 = Urdu, 2 = Hindi, 3 = English or dynamic)
+  // Dynamic scriptId from database
   getScriptId(code: ScriptCode): number {
+    if (this.scriptCodeToIdMap.has(code)) {
+      return this.scriptCodeToIdMap.get(code)!;
+    }
     switch (code) {
       case 'ur': return 1;
-      case 'hi': return 2;
+      case 'hi': return 9;
       case 'en': return 3;
       default: return 1;
     }
   }
 
+  // Dynamic script code from database id
   getCodeFromId(id: number): ScriptCode {
-    switch (id) {
-      case 1: return 'ur';
-      case 2: return 'hi';
-      case 3: return 'en';
-      default: return 'ur';
+    if (this.scriptIdToCodeMap.has(id)) {
+      return this.scriptIdToCodeMap.get(id)!;
     }
+    switch (id) {
+      case 1:
+      case 7:
+      case 8:
+        return 'ur';
+      case 2:
+      case 9:
+        return 'hi';
+      case 3:
+      case 10:
+        return 'en';
+      default:
+        return 'ur';
+    }
+  }
+
+  // Universal language/script detection based on standard Unicode blocks
+  detectScriptFromText(text?: string): ScriptCode {
+    if (!text) return 'ur';
+    if (/[\u0900-\u097F]/.test(text)) return 'hi'; // Devanagari script (Hindi)
+    if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text)) return 'ur'; // Perso-Arabic (Urdu)
+    if (/[a-zA-Z]/.test(text)) return 'en'; // Latin (English)
+    return 'ur';
+  }
+
+  // Dynamic matching helper with automatic script-learning
+  isScriptMatch(item?: { scriptId?: number; title?: string; body?: string } | null, targetCode?: ScriptCode): boolean {
+    if (!item || !targetCode) return false;
+    const sId = Number(item.scriptId);
+    if (sId && this.scriptIdToCodeMap.has(sId)) {
+      return this.scriptIdToCodeMap.get(sId) === targetCode;
+    }
+    const detected = this.detectScriptFromText((item.title || '') + ' ' + (item.body || ''));
+    if (detected === targetCode) {
+      if (sId) {
+        this.learnScriptId(sId, detected);
+      }
+      return true;
+    }
+    if (sId && this.getCodeFromId(sId) === targetCode) {
+      return true;
+    }
+    return false;
   }
 
   // UI translations dictionary

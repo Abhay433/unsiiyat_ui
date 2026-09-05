@@ -7,6 +7,7 @@ import { ApiResponse, PagedResponse } from '../models/api-response.models';
 import { TaxonomyService } from './taxonomy.service';
 import { AuthorService } from './author.service';
 import { Author, AuthorDetail } from '../models/author.models';
+import { ScriptService } from './script.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +16,7 @@ export class ContentService {
   private readonly api = inject(ApiService);
   private readonly taxonomyService = inject(TaxonomyService);
   private readonly authorService = inject(AuthorService);
+  private readonly scriptService = inject(ScriptService);
 
   filterContents(request: ContentFilterRequest = {}): Observable<PagedResponse<Content>> {
     const payload = {
@@ -36,28 +38,47 @@ export class ContentService {
   }
 
   filterContentTexts(request: ContentTextFilterRequest = {}): Observable<PagedResponse<ContentText>> {
-    const payload = {
+    const payload: any = {
       page: request.page ?? 0,
       size: request.size ?? 500,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'asc',
       ...request
     };
+    if (request.contentId !== undefined) {
+      payload.contentId = request.contentId;
+      payload.content_id = request.contentId;
+    }
+    if (request.scriptId !== undefined) {
+      payload.scriptId = request.scriptId;
+      payload.script_id = request.scriptId;
+    }
     return this.api.post<PagedResponse<ContentText>>('/api/content-texts/list', payload);
   }
 
   saveContentText(text: ContentText): Observable<ApiResponse<void>> {
+    const payload: any = {
+      ...text,
+      contentId: text.contentId,
+      content_id: text.contentId,
+      scriptId: text.scriptId,
+      script_id: text.scriptId
+    };
     if (text.id) {
-      return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', text);
+      return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload);
     }
     // If id is not provided, look up existing record for (contentId, scriptId) to perform an UPDATE instead of a duplicate INSERT
     return this.filterContentTexts({ contentId: text.contentId, scriptId: text.scriptId }).pipe(
       switchMap(res => {
-        const existing = (res.data || []).find(t => t.contentId === text.contentId && t.scriptId === text.scriptId);
-        const payload = existing?.id ? { ...text, id: existing.id } : text;
-        return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload);
+        const existing = (res.data || []).find((t: any) => {
+          const cId = t.contentId ?? t.content_id ?? t.content?.id;
+          const sId = t.scriptId ?? t.script_id ?? t.script?.id;
+          return Number(cId) === Number(text.contentId) && Number(sId) === Number(text.scriptId);
+        });
+        const finalPayload = existing?.id ? { ...payload, id: existing.id } : payload;
+        return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', finalPayload);
       }),
-      catchError(() => this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', text))
+      catchError(() => this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload))
     );
   }
 
@@ -67,7 +88,8 @@ export class ContentService {
       ur?: { title: string; body: string };
       hi?: { title: string; body: string };
       en?: { title: string; body: string };
-    }
+    },
+    existingTexts?: ContentText[]
   ): Observable<any> {
     return this.saveContent({
       id: contentData.id,
@@ -82,27 +104,39 @@ export class ContentService {
           return throwError(() => new Error('Failed to get content ID from server response.'));
         }
 
+        const textsList = existingTexts || [];
+        const existingUr = textsList.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+        const existingHi = textsList.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+        const existingEn = textsList.find(t => this.scriptService.isScriptMatch(t, 'en'));
+
+        const urScriptId = existingUr?.scriptId || this.scriptService.getScriptId('ur');
+        const hiScriptId = existingHi?.scriptId || this.scriptService.getScriptId('hi');
+        const enScriptId = existingEn?.scriptId || this.scriptService.getScriptId('en');
+
         const requests: Observable<any>[] = [];
         if (scriptTexts.ur?.body || scriptTexts.ur?.title) {
           requests.push(this.saveContentText({
+            id: existingUr?.id,
             contentId,
-            scriptId: 1,
+            scriptId: urScriptId,
             title: scriptTexts.ur.title || contentData.title,
             body: scriptTexts.ur.body
           }));
         }
         if (scriptTexts.hi?.body || scriptTexts.hi?.title) {
           requests.push(this.saveContentText({
+            id: existingHi?.id,
             contentId,
-            scriptId: 2,
+            scriptId: hiScriptId,
             title: scriptTexts.hi.title || contentData.title,
             body: scriptTexts.hi.body
           }));
         }
         if (scriptTexts.en?.body || scriptTexts.en?.title) {
           requests.push(this.saveContentText({
+            id: existingEn?.id,
             contentId,
-            scriptId: 3,
+            scriptId: enScriptId,
             title: scriptTexts.en.title || contentData.title,
             body: scriptTexts.en.body
           }));
@@ -113,25 +147,37 @@ export class ContentService {
   }
 
   // Get full enriched content listing with authors, genres, themes, and multi-script texts
-  getEnrichedContents(scriptId: number = 1): Observable<Content[]> {
+  getEnrichedContents(scriptId?: number): Observable<Content[]> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const targetCode = this.scriptService.getCodeFromId(sId);
+
     return forkJoin({
       contentsRes: this.filterContents().pipe(catchError(() => of({ data: [] } as any))),
       textsRes: this.filterContentTexts().pipe(catchError(() => of({ data: [] } as any))),
-      genresRes: this.taxonomyService.filterGenres().pipe(catchError(() => of({ data: [] } as any))),
-      themesRes: this.taxonomyService.filterThemes().pipe(catchError(() => of({ data: [] } as any))),
-      authorsRes: this.authorService.getEnrichedAuthors(scriptId).pipe(catchError(() => of([])))
+      genresRes: this.cachedGenres ? of(this.cachedGenres) : this.taxonomyService.filterGenres().pipe(
+        map(res => { this.cachedGenres = res.data || []; return this.cachedGenres; }),
+        catchError(() => of([]))
+      ),
+      themesRes: this.cachedThemes ? of(this.cachedThemes) : this.taxonomyService.filterThemes().pipe(
+        map(res => { this.cachedThemes = res.data || []; return this.cachedThemes; }),
+        catchError(() => of([]))
+      ),
+      authorsRes: this.authorService.getEnrichedAuthors(sId).pipe(catchError(() => of([])))
     }).pipe(
       map(({ contentsRes, textsRes, genresRes, themesRes, authorsRes }) => {
         const contents: Content[] = contentsRes.data || [];
         const texts: ContentText[] = textsRes.data || [];
-        const genres: Genre[] = genresRes.data || [];
-        const themes: Theme[] = themesRes.data || [];
+        const genres: Genre[] = Array.isArray(genresRes) ? genresRes : ((genresRes as any)?.data || []);
+        const themes: Theme[] = Array.isArray(themesRes) ? themesRes : ((themesRes as any)?.data || []);
 
         return contents.map(item => {
           const itemTexts: ContentText[] = (item.contentTexts && item.contentTexts.length > 0)
             ? item.contentTexts
-            : texts.filter(t => t.contentId === item.id);
-          const currentText = itemTexts.find((t: ContentText) => t.scriptId === scriptId) || itemTexts[0] || item.primaryText;
+            : texts.filter(t => {
+                const cId = t.contentId ?? (t as any).content_id ?? (t as any).content?.id;
+                return Number(cId) === Number(item.id);
+              });
+          const currentText = itemTexts.find((t: ContentText) => this.scriptService.isScriptMatch(t, targetCode)) || itemTexts[0] || item.primaryText;
           const author = item.author || authorsRes.find(a => a.id === item.authorId);
           const genre = item.genre || genres.find((g: Genre) => g.id === item.genreId);
           const itemThemes = themes.filter((t: Theme) => item.themeIds?.includes(t.id!));
@@ -154,102 +200,61 @@ export class ContentService {
   private cachedThemes: Theme[] | null = null;
 
   // Page-specific API: Fetch ONLY the requested content, its texts, and its author
-  getContentDetailById(id: number, scriptId: number = 1): Observable<Content | null> {
+  getContentDetailById(id: number, scriptId?: number): Observable<Content | null> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const targetCode = this.scriptService.getCodeFromId(sId);
+
     return forkJoin({
-      contentRes: this.filterContents({ id, size: 1 }).pipe(catchError(() => of({ data: [] } as any))),
-      textsRes: this.filterContentTexts({ contentId: id, size: 10 }).pipe(catchError(() => of({ data: [] } as any))),
-      genres: this.cachedGenres ? of(this.cachedGenres) : this.taxonomyService.filterGenres().pipe(
-        map(res => { this.cachedGenres = res.data || []; return this.cachedGenres; }),
-        catchError(() => of([]))
+      content: this.getEnrichedContents(sId).pipe(
+        map(contents => contents.find(c => Number(c.id) === Number(id)) || null)
       ),
-      themes: this.cachedThemes ? of(this.cachedThemes) : this.taxonomyService.filterThemes().pipe(
-        map(res => { this.cachedThemes = res.data || []; return this.cachedThemes; }),
-        catchError(() => of([]))
+      directTextsRes: this.filterContentTexts({ contentId: id, size: 50 }).pipe(
+        catchError(err => {
+          console.error('[ContentService] Failed to query content_texts directly by contentId:', err);
+          return of({ data: [] } as any);
+        })
       )
     }).pipe(
-      switchMap(({ contentRes, textsRes, genres, themes }) => {
-        const contentList: Content[] = contentRes.data || [];
-        const content = contentList.find(c => c.id === id) || contentList[0];
-        if (!content) {
-          return of(null);
-        }
+      map(({ content, directTextsRes }) => {
+        if (!content) return null;
 
-        const texts: ContentText[] = textsRes.data || [];
-        const currentText = texts.find(t => t.scriptId === scriptId) || texts[0];
-        const genre = genres.find(g => g.id === content.genreId);
-        const itemThemes = themes.filter(t => content.themeIds?.includes(t.id!));
-
-        const authorId = content.authorId;
-        if (authorId) {
-          return forkJoin({
-            authorRes: this.authorService.filterAuthors({ id: authorId, size: 1 }).pipe(catchError(() => of({ data: [] } as any))),
-            detailsRes: this.authorService.filterAuthorDetails({ authorId, size: 10 }).pipe(catchError(() => of({ data: [] } as any)))
-          }).pipe(
-            map(({ authorRes, detailsRes }) => {
-              const authors: Author[] = authorRes.data || [];
-              const authorItem = authors.find((a: Author) => a.id === authorId) || authors[0];
-              const authorDetails: AuthorDetail[] = detailsRes.data || [];
-              const activeDetail = authorDetails.find((d: AuthorDetail) => d.scriptId === scriptId) || authorDetails[0];
-
-              const enrichedAuthor = authorItem ? {
-                ...authorItem,
-                details: authorDetails,
-                primaryName: activeDetail?.name || (scriptId === 1 ? authorItem.urName : (scriptId === 2 ? authorItem.hiName : authorItem.enName)) || authorItem.name || 'Poet',
-                primaryBio: activeDetail?.biography || ''
-              } : undefined;
-
-              return {
-                ...content,
-                genre,
-                author: enrichedAuthor,
-                themes: itemThemes,
-                texts,
-                primaryText: currentText
-              };
-            })
-          );
-        }
-
-        return of({
-          ...content,
-          genre,
-          themes: itemThemes,
-          texts,
-          primaryText: currentText
+        const rawDirect = (directTextsRes?.data || []) as any[];
+        const normalizedDirect: ContentText[] = rawDirect.map(t => {
+          const rawId = Number(t.scriptId ?? t.script_id ?? t.script?.id);
+          const detected = this.scriptService.detectScriptFromText((t.title || '') + ' ' + (t.body || ''));
+          const finalSId = rawId || this.scriptService.getScriptId(detected);
+          if (rawId) {
+            this.scriptService.learnScriptId(rawId, detected);
+          }
+          return {
+            id: t.id,
+            contentId: Number(t.contentId ?? t.content_id ?? t.content?.id ?? id),
+            scriptId: finalSId,
+            title: t.title || '',
+            body: t.body || ''
+          };
         });
+
+        const existingTexts = content.texts || (content as any).contentTexts || [];
+        const finalTexts: ContentText[] = normalizedDirect.length > 0 ? normalizedDirect : existingTexts;
+
+        const currentText = finalTexts.find((t: ContentText) => this.scriptService.isScriptMatch(t, targetCode))
+          || finalTexts[0]
+          || content.primaryText;
+
+        return {
+          ...content,
+          texts: finalTexts,
+          primaryText: currentText
+        };
       })
     );
   }
 
   // Page-specific API for Poet Detail Page: Fetch ONLY poems by this author
-  getContentsByAuthorId(authorId: number, scriptId: number = 1): Observable<Content[]> {
-    return forkJoin({
-      contentsRes: this.filterContents({ authorId, size: 50 }).pipe(catchError(() => of({ data: [] } as any))),
-      textsRes: this.filterContentTexts({ size: 150 }).pipe(catchError(() => of({ data: [] } as any))),
-      genres: this.cachedGenres ? of(this.cachedGenres) : this.taxonomyService.filterGenres().pipe(
-        map(res => { this.cachedGenres = res.data || []; return this.cachedGenres; }),
-        catchError(() => of([]))
-      )
-    }).pipe(
-      map(({ contentsRes, textsRes, genres }) => {
-        const contents: Content[] = contentsRes.data || [];
-        const texts: ContentText[] = textsRes.data || [];
-
-        return contents.map(item => {
-          const itemTexts = (item.contentTexts && item.contentTexts.length > 0)
-            ? item.contentTexts
-            : texts.filter(t => t.contentId === item.id);
-          const currentText = itemTexts.find(t => t.scriptId === scriptId) || itemTexts[0] || item.primaryText;
-          const genre = item.genre || genres.find(g => g.id === item.genreId);
-
-          return {
-            ...item,
-            genre,
-            texts: itemTexts,
-            primaryText: currentText
-          };
-        });
-      })
+  getContentsByAuthorId(authorId: number, scriptId?: number): Observable<Content[]> {
+    return this.getEnrichedContents(scriptId).pipe(
+      map(contents => contents.filter(c => Number(c.authorId) === Number(authorId) || Number(c.author?.id) === Number(authorId)))
     );
   }
 }
