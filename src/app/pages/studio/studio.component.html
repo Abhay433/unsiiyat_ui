@@ -450,20 +450,140 @@
     <div class="admin-modal-card animate-fade-in" (click)="$event.stopPropagation()">
       <div class="modal-top flex-between">
         <h3 class="modal-heading font-display">
-          <span [ngSwitch]="activeTab()">
-            <span *ngSwitchCase="'content'">📜 Publish New Ghazal / Poem</span>
+          <ng-container [ngSwitch]="activeTab()">
+            <ng-container *ngSwitchCase="'content'">
+              <span *ngIf="contentCreationStep() === 'select-genre'">✨ Select Poetic Genre (صنف کا انتخاب)</span>
+              <span *ngIf="contentCreationStep() === 'editor'">📜 Publish {{ getSelectedGenre()?.name || 'Ghazal / Poem' }}</span>
+            </ng-container>
             <span *ngSwitchCase="'genres'">🏷️ Create Literary Genre</span>
             <span *ngSwitchCase="'themes'">✦ Create Poetic Theme</span>
             <span *ngSwitchCase="'authors'">👤 Add Shayar / Poet Profile</span>
             <span *ngSwitchCase="'auth'">🔐 Register Platform Administrator</span>
-          </span>
+          </ng-container>
         </h3>
-        <button class="modal-close" (click)="closeAddModal()">✕</button>
+        <div class="modal-header-actions">
+          <button 
+            *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" 
+            type="button" 
+            class="btn-step-back" 
+            (click)="backToGenreSelection()"
+            title="Return to genre selection">
+            ← Change Genre
+          </button>
+          <button class="modal-close" (click)="closeAddModal()">✕</button>
+        </div>
       </div>
 
       <div class="modal-body">
-        <!-- Add Content Form (Multi-Script, Multi-Theme, Smart Splitter) -->
-        <form *ngIf="activeTab() === 'content'" (submit)="saveContentWithTexts()" class="content-studio-form">
+        <!-- =================================================================== -->
+        <!-- CONTENT CREATION - STEP 1: SELECT GENRE ONLY (DROPDOWN)             -->
+        <!-- =================================================================== -->
+        <div *ngIf="activeTab() === 'content' && contentCreationStep() === 'select-genre'" class="genre-selection-dropdown-step animate-fade-in">
+          <div class="genre-step-intro">
+            <div class="step-pill-indicator">
+              <span class="step-number-badge">Step 1 of 2</span>
+              <span class="step-title-text">Select Poetic Genre (صنف کا انتخاب کریں)</span>
+            </div>
+            <p class="genre-step-subtitle">
+              Aap kis type ka genre create / write karna chahte hain? Dropdown se genre select karein aur continue karein.
+            </p>
+          </div>
+
+          <!-- Genre Selector Box (Genre Only) -->
+          <div class="genre-dropdown-form-box">
+            <div class="form-group">
+              <label class="form-label genre-select-label">
+                Choose Poetic Genre (صنف) <span class="required-star">*</span>
+              </label>
+              
+              <select 
+                class="form-select genre-large-select" 
+                [ngModel]="contentForm().genreId" 
+                (ngModelChange)="onGenreDropdownChange($event)">
+                <option *ngFor="let g of genres()" [value]="g.id">
+                  {{ getGenreIcon(g.slug) }} {{ g.name }} ({{ g.slug | uppercase }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Proceed to Editor Button -->
+            <button 
+              type="button" 
+              class="btn btn-blue btn-lg btn-block proceed-btn" 
+              (click)="proceedToEditorWithSelectedGenre()">
+              <span>Next: Continue to Verse Editor ➔ (آگے بڑھیں)</span>
+            </button>
+          </div>
+
+          <!-- Inline Genre Creator Toggle / Form -->
+          <div class="inline-genre-creator-section">
+            <div class="inline-genre-creator-toggle flex-between" *ngIf="!showInlineGenreCreate()">
+              <span class="creator-prompt-text">Need a custom or new genre?</span>
+              <button type="button" class="btn-secondary-sm" (click)="showInlineGenreCreate.set(true)">
+                <span>+ Create New Genre</span>
+              </button>
+            </div>
+
+            <!-- Inline Genre Creation Mini-Form -->
+            <div *ngIf="showInlineGenreCreate()" class="inline-genre-creator-form animate-fade-in">
+              <div class="inline-form-header flex-between">
+                <strong>✨ Add New Poetic Genre (نئی صنف بنائیں)</strong>
+                <button type="button" class="btn-cancel-mini" (click)="showInlineGenreCreate.set(false)">Cancel</button>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Genre Name (e.g. مرثیہ / Masnavi)</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    placeholder="e.g. مثنوی / Masnavi" 
+                    [ngModel]="inlineGenreName()" 
+                    (ngModelChange)="inlineGenreName.set($event)" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Slug Code (Lowercase)</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    placeholder="e.g. masnavi" 
+                    [ngModel]="inlineGenreSlug()" 
+                    (ngModelChange)="inlineGenreSlug.set($event)" />
+                </div>
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-blue btn-block" 
+                (click)="saveInlineGenreAndContinue()">
+                Create & Proceed to Verse Editor ➔
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- CONTENT CREATION - STEP 2: VERSE & SCRIPT EDITOR (USUAL FORM)       -->
+        <!-- =================================================================== -->
+        <form *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" (submit)="saveContentWithTexts()" class="content-studio-form animate-fade-in">
+          
+          <!-- Selected Genre Active Banner -->
+          <div class="selected-genre-banner flex-between">
+            <div class="genre-banner-left">
+              <span class="genre-banner-icon">{{ getGenreIcon(getSelectedGenre()?.slug) }}</span>
+              <div class="genre-banner-details">
+                <div class="genre-banner-badge-row">
+                  <span class="step-mini-pill">Step 2 of 2</span>
+                  <span class="genre-badge-slug">{{ getSelectedGenre()?.slug | uppercase }}</span>
+                </div>
+                <h4 class="genre-banner-title">
+                  {{ getSelectedGenre()?.name }}
+                </h4>
+              </div>
+            </div>
+            <button type="button" class="btn-change-genre" (click)="backToGenreSelection()">
+              <span>🔄 Change Genre / صنف بدلیں</span>
+            </button>
+          </div>
+
           <!-- 1. General Identification -->
           <div class="form-group">
             <label class="form-label">Poem / Ghazal Master Identifier <span class="required-star">*</span></label>
@@ -476,8 +596,8 @@
               required />
           </div>
 
-          <!-- 2. Author & Genre Selectors -->
-          <div class="form-row">
+          <!-- 2. Author, Genre & Theme Dropdowns Row -->
+          <div class="form-row form-row-3col">
             <div class="form-group">
               <label class="form-label">Shayar / Author <span class="required-star">*</span></label>
               <select class="form-select" [(ngModel)]="contentForm().authorId" name="authorId" required>
@@ -495,26 +615,14 @@
                 </option>
               </select>
             </div>
-          </div>
 
-          <!-- 3. Multi-Theme Interactive Chip Selector -->
-          <div class="form-group theme-selector-group">
-            <div class="flex-between">
-              <label class="form-label">Thematic Moods & Categories (Select all that apply)</label>
-              <span class="selected-theme-badge">
-                {{ contentForm().selectedThemeIds.length }} Selected
-              </span>
-            </div>
-            <div class="modal-theme-chips-grid">
-              <button 
-                type="button"
-                *ngFor="let t of themes()" 
-                class="modal-theme-chip" 
-                [class.selected]="isThemeSelected(t.id)"
-                (click)="toggleThemeSelection(t.id)">
-                <span class="chip-check">{{ isThemeSelected(t.id) ? '✓' : '✦' }}</span>
-                <span class="chip-label">{{ t.name }}</span>
-              </button>
+            <div class="form-group">
+              <label class="form-label">Poetic Theme (موضوع) <span class="required-star">*</span></label>
+              <select class="form-select" [ngModel]="contentForm().selectedThemeIds[0] || (themes()[0]?.id || 1)" (ngModelChange)="onSingleThemeDropdownChange($event)" name="themeId" required>
+                <option *ngFor="let t of themes()" [value]="t.id">
+                  {{ t.name }} ({{ t.slug | uppercase }})
+                </option>
+              </select>
             </div>
           </div>
 
@@ -602,7 +710,7 @@
                 <label class="form-label font-hindi">कलाम / अशआर (Hindi Couplets - 2 lines per Sher)</label>
                 <textarea 
                   class="form-textarea font-hindi" 
-                  rows="6"
+                  rows="6" 
                   placeholder="हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले&#10;बहुत निकले मिरे अरमान लेकिन फिर भी कम निकले&#10;&#10;डरे क्यों मेरा क़ातिल क्या रहेगा उस की गर्दन पर&#10;वो ख़ूँ जो चश्म-ए-तर से उम्र भर यूँ दम-ब-दम निकले" 
                   [ngModel]="contentForm().hiBody" 
                   (ngModelChange)="updateActiveScriptBody($event)"
@@ -626,8 +734,8 @@
                 <label class="form-label font-english">Roman Couplets (2 lines per Sher)</label>
                 <textarea 
                   class="form-textarea font-english" 
-                  rows="6"
-                  placeholder="Hazaron khwahishen aisi ke har khwahish pe dam nikle&#10;Bahut nikle mire armaan lekin phir bhi kam nikle&#10;&#10;Dare kyon mera qaatil kya rahega us ki gardan par&#10;Wo khoon jo chashm-e-tar se umr bhar yoon dam-ba-dam nikle" 
+                  rows="6" 
+                  placeholder="Hazaron khwahishen aisi ke har khwahish pe dam nikle&#10;Bahut nikle mire armaan lekin phir bhi کم nikle&#10;&#10;Dare kyon mera qaatil kya rahega us ki gardan par&#10;Wo khoon jo chashm-e-tar se umr bhar yoon dam-ba-dam nikle" 
                   [ngModel]="contentForm().enBody" 
                   (ngModelChange)="updateActiveScriptBody($event)"
                   name="enBody"></textarea>

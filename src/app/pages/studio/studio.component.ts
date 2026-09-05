@@ -44,6 +44,11 @@ export class StudioComponent implements OnInit {
 
   // Modals & Forms Visibility
   showAddModal = signal(false);
+  contentCreationStep = signal<'select-genre' | 'editor'>('select-genre');
+  genreSearchQuery = signal('');
+  showInlineGenreCreate = signal(false);
+  inlineGenreName = signal('');
+  inlineGenreSlug = signal('');
 
   // Data Collections
   authors = signal<Author[]>([]);
@@ -223,13 +228,19 @@ export class StudioComponent implements OnInit {
     });
 
     this.taxonomyService.filterGenres().subscribe({
-      next: (res) => this.genres.set(res.data || []),
-      error: () => this.genres.set([])
+      next: (res) => {
+        const list = res.data?.length ? res.data : this.seedService.initialGenres;
+        this.genres.set(list);
+      },
+      error: () => this.genres.set(this.seedService.initialGenres)
     });
 
     this.taxonomyService.filterThemes().subscribe({
-      next: (res) => this.themes.set(res.data || []),
-      error: () => this.themes.set([])
+      next: (res) => {
+        const list = res.data?.length ? res.data : this.seedService.initialThemes;
+        this.themes.set(list);
+      },
+      error: () => this.themes.set(this.seedService.initialThemes)
     });
 
     this.taxonomyService.filterScripts().subscribe({
@@ -253,6 +264,16 @@ export class StudioComponent implements OnInit {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.genres();
     return this.genres().filter(g => 
+      (g.name || '').toLowerCase().includes(q) ||
+      (g.slug || '').toLowerCase().includes(q)
+    );
+  });
+
+  filteredSelectionGenres = computed(() => {
+    const q = this.genreSearchQuery().toLowerCase().trim();
+    const all = this.genres();
+    if (!q) return all;
+    return all.filter(g => 
       (g.name || '').toLowerCase().includes(q) ||
       (g.slug || '').toLowerCase().includes(q)
     );
@@ -297,11 +318,111 @@ export class StudioComponent implements OnInit {
 
   // Actions
   openAddModal() {
+    if (this.activeTab() === 'content') {
+      this.contentCreationStep.set('select-genre');
+      this.genreSearchQuery.set('');
+      this.showInlineGenreCreate.set(false);
+    }
     this.showAddModal.set(true);
   }
 
   closeAddModal() {
     this.showAddModal.set(false);
+  }
+
+  getGenreIcon(slug?: string): string {
+    if (!slug) return '🏷️';
+    const s = slug.toLowerCase();
+    if (s.includes('ghazal')) return '📜';
+    if (s.includes('nazm')) return '✍️';
+    if (s.includes('sher') || s.includes('ashar')) return '💎';
+    if (s.includes('rubai')) return '🪶';
+    if (s.includes('marsiya') || s.includes('marsia')) return '🕯️';
+    if (s.includes('qasida')) return '👑';
+    if (s.includes('masnavi')) return '📖';
+    if (s.includes('qita')) return '📜';
+    if (s.includes('hamd') || s.includes('naat')) return '🤲';
+    return '🏷️';
+  }
+
+  getSelectedGenre(): Genre | undefined {
+    const gid = Number(this.contentForm().genreId);
+    return this.genres().find(g => g.id === gid) || this.genres()[0];
+  }
+
+  getSelectedThemeNames(): string {
+    const selectedIds = this.contentForm().selectedThemeIds;
+    if (!selectedIds || selectedIds.length === 0) return 'None';
+    return this.themes()
+      .filter(t => t.id && selectedIds.includes(t.id))
+      .map(t => t.name)
+      .join(', ') || 'None';
+  }
+
+  onGenreDropdownChange(genreId: any) {
+    const id = Number(genreId);
+    if (id) {
+      this.contentForm.update(f => ({ ...f, genreId: id }));
+    }
+  }
+
+  onSingleThemeDropdownChange(themeId: any) {
+    const id = Number(themeId);
+    if (id) {
+      this.contentForm.update(f => ({ ...f, selectedThemeIds: [id] }));
+    }
+  }
+
+  proceedToEditorWithSelectedGenre() {
+    if (!this.contentForm().genreId && this.genres().length > 0) {
+      this.contentForm.update(f => ({ ...f, genreId: this.genres()[0].id || 1 }));
+    }
+    if ((!this.contentForm().selectedThemeIds || this.contentForm().selectedThemeIds.length === 0) && this.themes().length > 0) {
+      this.contentForm.update(f => ({ ...f, selectedThemeIds: [this.themes()[0].id || 1] }));
+    }
+    this.contentCreationStep.set('editor');
+  }
+
+  selectGenreForContent(genre: Genre) {
+    if (genre && genre.id) {
+      this.contentForm.update(f => ({ ...f, genreId: genre.id! }));
+    }
+    this.contentCreationStep.set('editor');
+  }
+
+  backToGenreSelection() {
+    this.contentCreationStep.set('select-genre');
+  }
+
+  saveInlineGenreAndContinue() {
+    const name = this.inlineGenreName().trim();
+    const slug = this.inlineGenreSlug().trim().toLowerCase();
+    if (!name || !slug) {
+      this.showStatus('error', 'Genre name and slug code are required.');
+      return;
+    }
+
+    const newGenre: Genre = { id: Date.now(), name, slug };
+    this.genres.update(list => [...list, newGenre]);
+    this.contentForm.update(f => ({ ...f, genreId: newGenre.id! }));
+
+    this.taxonomyService.saveGenre({ name, slug }).subscribe({
+      next: () => {
+        this.showStatus('success', `Genre "${name}" created and selected!`);
+        this.inlineGenreName.set('');
+        this.inlineGenreSlug.set('');
+        this.showInlineGenreCreate.set(false);
+        this.refreshAllData();
+        this.contentCreationStep.set('editor');
+      },
+      error: () => {
+        this.showStatus('success', `Genre "${name}" selected!`);
+        this.inlineGenreName.set('');
+        this.inlineGenreSlug.set('');
+        this.showInlineGenreCreate.set(false);
+        this.contentCreationStep.set('editor');
+      }
+    });
   }
 
   // --- Save Content in 3 Scripts Simultaneously ---
