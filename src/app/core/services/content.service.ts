@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, catchError } from 'rxjs';
+import { Observable, forkJoin, map, of, catchError, switchMap } from 'rxjs';
 import { ApiService } from './api.service';
 import { Content, ContentText, ContentFilterRequest, ContentTextFilterRequest } from '../models/content.models';
 import { Genre, Theme } from '../models/taxonomy.models';
@@ -43,6 +43,53 @@ export class ContentService {
 
   saveContentText(text: ContentText): Observable<ApiResponse<void>> {
     return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', text);
+  }
+
+  saveCompleteContentWithTexts(
+    contentData: { title: string; authorId?: number; genreId?: number; themeIds?: number[] },
+    scriptTexts: {
+      ur?: { title: string; body: string };
+      hi?: { title: string; body: string };
+      en?: { title: string; body: string };
+    }
+  ): Observable<any> {
+    return this.saveContent({
+      title: contentData.title,
+      authorId: contentData.authorId,
+      genreId: contentData.genreId,
+      themeIds: contentData.themeIds
+    }).pipe(
+      map((res: any) => res?.data?.id || Date.now()),
+      catchError(() => of(Date.now())),
+      switchMap((contentId: number) => {
+        const requests: Observable<any>[] = [];
+        if (scriptTexts.ur?.body || scriptTexts.ur?.title) {
+          requests.push(this.saveContentText({
+            contentId,
+            scriptId: 1,
+            title: scriptTexts.ur.title || contentData.title,
+            body: scriptTexts.ur.body
+          }).pipe(catchError(() => of(null))));
+        }
+        if (scriptTexts.hi?.body || scriptTexts.hi?.title) {
+          requests.push(this.saveContentText({
+            contentId,
+            scriptId: 2,
+            title: scriptTexts.hi.title || contentData.title,
+            body: scriptTexts.hi.body
+          }).pipe(catchError(() => of(null))));
+        }
+        if (scriptTexts.en?.body || scriptTexts.en?.title) {
+          requests.push(this.saveContentText({
+            contentId,
+            scriptId: 3,
+            title: scriptTexts.en.title || contentData.title,
+            body: scriptTexts.en.body
+          }).pipe(catchError(() => of(null))));
+        }
+        return requests.length > 0 ? forkJoin(requests) : of([]);
+      })
+    );
   }
 
   // Get full enriched content listing with authors, genres, themes, and multi-script texts

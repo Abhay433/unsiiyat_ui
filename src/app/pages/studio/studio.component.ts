@@ -78,6 +78,10 @@ export class StudioComponent implements OnInit {
     enBody: ''
   });
 
+  activeScriptEditorTab = signal<'ur' | 'hi' | 'en'>('ur');
+  showCoupletPreview = signal<boolean>(true);
+  isSavingContent = signal<boolean>(false);
+
   genreForm = signal({ name: '', slug: '', description: '' });
   themeForm = signal({ name: '', slug: '', description: '' });
 
@@ -105,6 +109,106 @@ export class StudioComponent implements OnInit {
 
   toggleSidebar() {
     this.isSidebarCollapsed.update(v => !v);
+  }
+
+  // --- Theme Selection Helpers ---
+  isThemeSelected(themeId: number | undefined): boolean {
+    if (!themeId) return false;
+    return this.contentForm().selectedThemeIds.includes(themeId);
+  }
+
+  toggleThemeSelection(themeId: number | undefined) {
+    if (!themeId) return;
+    this.contentForm.update(form => {
+      const current = [...form.selectedThemeIds];
+      const idx = current.indexOf(themeId);
+      if (idx > -1) {
+        current.splice(idx, 1);
+      } else {
+        current.push(themeId);
+      }
+      return { ...form, selectedThemeIds: current };
+    });
+  }
+
+  // --- Smart Couplet Splitter & Line Analyzer ---
+  getActiveScriptBody(): string {
+    const tab = this.activeScriptEditorTab();
+    const f = this.contentForm();
+    if (tab === 'ur') return f.urBody;
+    if (tab === 'hi') return f.hiBody;
+    return f.enBody;
+  }
+
+  getActiveScriptTitle(): string {
+    const tab = this.activeScriptEditorTab();
+    const f = this.contentForm();
+    if (tab === 'ur') return f.urTitle;
+    if (tab === 'hi') return f.hiTitle;
+    return f.enTitle;
+  }
+
+  updateActiveScriptTitle(val: string) {
+    const tab = this.activeScriptEditorTab();
+    this.contentForm.update(f => {
+      if (tab === 'ur') return { ...f, urTitle: val };
+      if (tab === 'hi') return { ...f, hiTitle: val };
+      return { ...f, enTitle: val };
+    });
+  }
+
+  updateActiveScriptBody(val: string) {
+    const tab = this.activeScriptEditorTab();
+    this.contentForm.update(f => {
+      if (tab === 'ur') return { ...f, urBody: val };
+      if (tab === 'hi') return { ...f, hiBody: val };
+      return { ...f, enBody: val };
+    });
+  }
+
+  formatCoupletsForActiveScript() {
+    const tab = this.activeScriptEditorTab();
+    const raw = this.getActiveScriptBody();
+    if (!raw.trim()) return;
+
+    // Split lines, trim each, filter empty
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const couplets: string[] = [];
+    
+    for (let i = 0; i < lines.length; i += 2) {
+      if (i + 1 < lines.length) {
+        couplets.push(`${lines[i]}\n${lines[i + 1]}`);
+      } else {
+        couplets.push(lines[i]);
+      }
+    }
+
+    const formatted = couplets.join('\n\n');
+    this.updateActiveScriptBody(formatted);
+    this.showStatus('success', `✨ Formatted into ${Math.ceil(lines.length / 2)} Ash'ar (${lines.length} Misre).`);
+  }
+
+  getCoupletStats(text: string): { lines: number; couplets: number } {
+    if (!text || !text.trim()) return { lines: 0, couplets: 0 };
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    return {
+      lines: lines.length,
+      couplets: Math.ceil(lines.length / 2)
+    };
+  }
+
+  getParsedCouplets(text: string): string[][] {
+    if (!text || !text.trim()) return [];
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const result: string[][] = [];
+    for (let i = 0; i < lines.length; i += 2) {
+      if (i + 1 < lines.length) {
+        result.push([lines[i], lines[i + 1]]);
+      } else {
+        result.push([lines[i], '']);
+      }
+    }
+    return result;
   }
 
   refreshAllData() {
@@ -200,26 +304,84 @@ export class StudioComponent implements OnInit {
     this.showAddModal.set(false);
   }
 
-  // --- Save Content ---
+  // --- Save Content in 3 Scripts Simultaneously ---
   saveContentWithTexts() {
     const f = this.contentForm();
-    if (!f.title) {
-      this.showStatus('error', 'Please enter a title for the Ghazal / Poem.');
+    if (!f.title.trim()) {
+      this.showStatus('error', 'Please enter an identification title for the Ghazal / Poem.');
       return;
     }
 
-    this.contentService.saveContent({
-      title: f.title,
-      genreId: f.genreId,
-      authorId: f.authorId,
-      themeIds: f.selectedThemeIds
-    }).subscribe({
+    if (!f.authorId) {
+      this.showStatus('error', 'Please select a Shayar / Poet.');
+      return;
+    }
+
+    this.isSavingContent.set(true);
+
+    const scriptTexts = {
+      ur: {
+        title: f.urTitle.trim() || f.title.trim(),
+        body: f.urBody.trim()
+      },
+      hi: {
+        title: f.hiTitle.trim() || f.title.trim(),
+        body: f.hiBody.trim()
+      },
+      en: {
+        title: f.enTitle.trim() || f.title.trim(),
+        body: f.enBody.trim()
+      }
+    };
+
+    this.contentService.saveCompleteContentWithTexts(
+      {
+        title: f.title.trim(),
+        authorId: Number(f.authorId),
+        genreId: Number(f.genreId) || 1,
+        themeIds: f.selectedThemeIds
+      },
+      scriptTexts
+    ).subscribe({
       next: () => {
-        this.showStatus('success', 'Ghazal successfully published to database!');
+        this.isSavingContent.set(false);
+        this.showStatus('success', `🎉 "${f.title}" published successfully across Urdu, Hindi & English!`);
+        
+        // Also ensure fallback seed data contains this new poem for instant offline reactivity
+        const author = this.authors().find(a => a.id === Number(f.authorId));
+        this.seedService.classicalPoems.unshift({
+          id: Date.now(),
+          authorId: Number(f.authorId),
+          genreId: Number(f.genreId) || 1,
+          themeIds: f.selectedThemeIds,
+          title: f.title,
+          texts: {
+            ur: { title: scriptTexts.ur.title, body: scriptTexts.ur.body || scriptTexts.en.body || scriptTexts.hi.body },
+            hi: { title: scriptTexts.hi.title, body: scriptTexts.hi.body || scriptTexts.en.body || scriptTexts.ur.body },
+            en: { title: scriptTexts.en.title, body: scriptTexts.en.body || scriptTexts.hi.body || scriptTexts.ur.body }
+          }
+        });
+
+        this.contentForm.set({
+          title: '',
+          authorId: this.authors()[0]?.id || 1,
+          genreId: this.genres()[0]?.id || 1,
+          selectedThemeIds: [1],
+          urTitle: '',
+          urBody: '',
+          hiTitle: '',
+          hiBody: '',
+          enTitle: '',
+          enBody: ''
+        });
+
         this.closeAddModal();
         this.refreshAllData();
       },
-      error: (err) => this.showStatus('error', err?.error?.message || 'Failed to save content.')
+      error: (err) => {
+        this.isSavingContent.set(false);
+        this.showStatus('error', err?.error?.message || 'Failed to publish content.');
+      }
     });
   }
 

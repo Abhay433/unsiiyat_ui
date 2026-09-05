@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ScriptService, ScriptCode } from '../../core/services/script.service';
 import { ContentService } from '../../core/services/content.service';
 import { AuthorService } from '../../core/services/author.service';
@@ -27,7 +28,7 @@ export interface WordOfTheDay {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, DictionaryModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, DictionaryModalComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
@@ -45,17 +46,25 @@ export class HomeComponent implements OnInit {
   contents = signal<any[]>([]);
   loading = signal(true);
 
-  // Feed Filter Tab
+  // --- Combined Multi-Filter & Search Signals (Part B) ---
+  searchKeyword = signal<string>('');
+  selectedAuthorId = signal<number | 'all'>('all');
+  selectedGenreId = signal<number | 'all'>('all');
+  selectedThemeId = signal<number | 'all'>('all');
+  sortBy = signal<'trending' | 'popular' | 'newest' | 'title'>('trending');
   activeFeedCategory = signal<'all' | 'ishq' | 'dard' | 'zindagi' | 'sufi' | 'inqilab'>('all');
 
-  // Interactive states
+  // Interactive UI states
   copiedHero = signal(false);
   copiedIndex = signal<number | null>(null);
   isPlayingAudio = signal(false);
   audioProgress = signal(0);
   heroFontSize = signal(28); // px
+
+  // Simulated engagement metrics for trending & popular sorting
+  viewCounts = signal<Record<number, number>>({ 1: 14200, 2: 9800, 3: 8400, 4: 6100, 5: 5500 });
   likedItems = signal<Record<number, boolean>>({ 1: true });
-  likeCounts = signal<Record<number, number>>({ 1: 342, 2: 218, 3: 189 });
+  likeCounts = signal<Record<number, number>>({ 1: 342, 2: 218, 3: 189, 4: 154, 5: 128 });
 
   // Dictionary modal trigger
   showDictModal = signal(false);
@@ -161,25 +170,148 @@ export class HomeComponent implements OnInit {
     return this.heroCouplets[lang] || this.heroCouplets['ur'];
   });
 
-  // Filtered feed contents
-  readonly filteredContents = computed(() => {
-    const all = this.contents();
-    const cat = this.activeFeedCategory();
-    if (cat === 'all') return all;
-
-    const themeMap: Record<string, number> = {
-      ishq: 1,
-      dard: 2,
-      zindagi: 4,
-      sufi: 5,
-      inqilab: 7
-    };
-
-    const targetThemeId = themeMap[cat];
-    if (!targetThemeId) return all;
-
-    return all.filter(item => item.themeIds?.includes(targetThemeId));
+  // Active Filter Helpers
+  readonly hasActiveFilters = computed(() => {
+    return (
+      this.searchKeyword().trim() !== '' ||
+      this.selectedAuthorId() !== 'all' ||
+      this.selectedGenreId() !== 'all' ||
+      this.selectedThemeId() !== 'all' ||
+      this.activeFeedCategory() !== 'all'
+    );
   });
+
+  readonly activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.searchKeyword().trim() !== '') count++;
+    if (this.selectedAuthorId() !== 'all') count++;
+    if (this.selectedGenreId() !== 'all') count++;
+    if (this.selectedThemeId() !== 'all') count++;
+    if (this.activeFeedCategory() !== 'all') count++;
+    return count;
+  });
+
+  readonly selectedAuthorName = computed(() => {
+    const id = this.selectedAuthorId();
+    if (id === 'all') return null;
+    const poet = this.poets().find(p => p.id === Number(id));
+    return poet?.primaryName || `Poet #${id}`;
+  });
+
+  readonly selectedGenreName = computed(() => {
+    const id = this.selectedGenreId();
+    if (id === 'all') return null;
+    const g = this.genres().find(genre => genre.id === Number(id));
+    return g?.name || `Genre #${id}`;
+  });
+
+  readonly selectedThemeName = computed(() => {
+    const id = this.selectedThemeId();
+    if (id === 'all') return null;
+    const t = this.themes().find(theme => theme.id === Number(id));
+    return t?.name || `Theme #${id}`;
+  });
+
+  // Filtered & Sorted Feed Contents (Combined Multi-Filter Engine)
+  readonly filteredContents = computed(() => {
+    let list = [...this.contents()];
+
+    // 1. Keyword search (title, couplet lines, poet name)
+    const q = this.searchKeyword().toLowerCase().trim();
+    if (q) {
+      list = list.filter(item => {
+        const titleMatch = (item.title || '').toLowerCase().includes(q) || (item.primaryText?.title || '').toLowerCase().includes(q);
+        const bodyMatch = (item.primaryText?.body || '').toLowerCase().includes(q);
+        const authorMatch = (item.author?.primaryName || item.authorName || '').toLowerCase().includes(q);
+        return titleMatch || bodyMatch || authorMatch;
+      });
+    }
+
+    // 2. Author Filter
+    const authorId = this.selectedAuthorId();
+    if (authorId !== 'all') {
+      list = list.filter(item => item.authorId === Number(authorId));
+    }
+
+    // 3. Genre Filter
+    const genreId = this.selectedGenreId();
+    if (genreId !== 'all') {
+      list = list.filter(item => item.genreId === Number(genreId));
+    }
+
+    // 4. Theme Filter (Dropdown)
+    const themeId = this.selectedThemeId();
+    if (themeId !== 'all') {
+      list = list.filter(item => item.themeIds?.includes(Number(themeId)));
+    }
+
+    // 5. Quick Category Filter Tab
+    const cat = this.activeFeedCategory();
+    if (cat !== 'all') {
+      const themeMap: Record<string, number> = {
+        ishq: 1,
+        dard: 2,
+        zindagi: 4,
+        sufi: 5,
+        inqilab: 7
+      };
+      const targetThemeId = themeMap[cat];
+      if (targetThemeId) {
+        list = list.filter(item => item.themeIds?.includes(targetThemeId));
+      }
+    }
+
+    // 6. Sorting Engine (Trending, Popular, Newest, Title)
+    const sort = this.sortBy();
+    if (sort === 'trending') {
+      list.sort((a, b) => (this.likeCounts()[b.id] || 100) - (this.likeCounts()[a.id] || 100));
+    } else if (sort === 'popular') {
+      list.sort((a, b) => (this.viewCounts()[b.id] || 5000) - (this.viewCounts()[a.id] || 5000));
+    } else if (sort === 'newest') {
+      list.sort((a, b) => (b.id || 0) - (a.id || 0));
+    } else if (sort === 'title') {
+      list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    }
+
+    return list;
+  });
+
+  // Filter Reset & Quick Filter Actions
+  resetAllFilters() {
+    this.searchKeyword.set('');
+    this.selectedAuthorId.set('all');
+    this.selectedGenreId.set('all');
+    this.selectedThemeId.set('all');
+    this.activeFeedCategory.set('all');
+  }
+
+  clearSearch() {
+    this.searchKeyword.set('');
+  }
+
+  clearAuthor() {
+    this.selectedAuthorId.set('all');
+  }
+
+  clearGenre() {
+    this.selectedGenreId.set('all');
+  }
+
+  clearTheme() {
+    this.selectedThemeId.set('all');
+  }
+
+  clearFeedCategory() {
+    this.activeFeedCategory.set('all');
+  }
+
+  setFeedCategory(cat: 'all' | 'ishq' | 'dard' | 'zindagi' | 'sufi' | 'inqilab') {
+    this.activeFeedCategory.set(cat);
+  }
+
+  getViewCount(id?: number): number {
+    return (id && this.viewCounts()[id]) ? this.viewCounts()[id] : 4200;
+  }
 
   constructor() {
     // Re-evaluate localized text on script changes

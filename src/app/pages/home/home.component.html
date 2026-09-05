@@ -162,64 +162,177 @@
     </div>
   </section>
 
-  <!-- Section 3: Treasury Feed with Category Tabs -->
-  <section class="section-padding feed-section">
+  <!-- Section 3: Ghazals Treasury with Combined Multi-Filters (Part B) -->
+  <section class="section-padding feed-section" id="treasury">
     <div class="unsiiyat-container">
       <div class="section-header flex-between">
         <div>
+          <div class="section-badge font-display">TREASURY OF VERSE</div>
           <h2 class="section-title font-display">{{ scriptService.translate('recent_ghazals') }}</h2>
-          <p class="section-subtitle">Curated poetry by themes, classical meters, and emotional moods</p>
+          <p class="section-subtitle">Discover timeless poetry with combined filters across Shayars, Genres, Themes, and popularity</p>
+        </div>
+        
+        <!-- Live Results Count -->
+        <div class="results-counter-badge">
+          <span>📜 {{ filteredContents().length }} Ghazals / Kalam Found</span>
         </div>
       </div>
 
-      <!-- Category Filter Tabs -->
+      <!-- ===================================================================== -->
+      <!-- COMBINED MULTI-FILTER TOOLBAR                                         -->
+      <!-- ===================================================================== -->
+      <div class="combined-filter-bar poetic-card">
+        <div class="filter-controls-grid">
+          <!-- 1. Text Search Input -->
+          <div class="filter-control-item search-input-col">
+            <label class="filter-label font-display">🔍 KEYWORD SEARCH</label>
+            <div class="filter-input-wrap">
+              <input 
+                type="text" 
+                class="filter-input-field" 
+                placeholder="Search title, misra, or poet..." 
+                [ngModel]="searchKeyword()" 
+                (ngModelChange)="searchKeyword.set($event)" />
+              <button *ngIf="searchKeyword()" class="filter-clear-btn" (click)="clearSearch()">✕</button>
+            </div>
+          </div>
+
+          <!-- 2. Shayar / Author Dropdown -->
+          <div class="filter-control-item">
+            <label class="filter-label font-display">👤 SHAYAR / POET</label>
+            <select class="filter-select-field" [ngModel]="selectedAuthorId()" (ngModelChange)="selectedAuthorId.set($event)">
+              <option value="all">All Shayars (تمام شعراء)</option>
+              <option *ngFor="let p of poets()" [value]="p.id">
+                {{ p.primaryName }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 3. Genre Dropdown -->
+          <div class="filter-control-item">
+            <label class="filter-label font-display">🏷️ POETIC GENRE</label>
+            <select class="filter-select-field" [ngModel]="selectedGenreId()" (ngModelChange)="selectedGenreId.set($event)">
+              <option value="all">All Genres (تمام اصناف)</option>
+              <option *ngFor="let g of genres()" [value]="g.id">
+                {{ g.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 4. Theme / Mood Dropdown -->
+          <div class="filter-control-item">
+            <label class="filter-label font-display">✦ THEMATIC MOOD</label>
+            <select class="filter-select-field" [ngModel]="selectedThemeId()" (ngModelChange)="selectedThemeId.set($event)">
+              <option value="all">All Moods (تمام موضوعات)</option>
+              <option *ngFor="let t of themes()" [value]="t.id">
+                {{ t.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 5. Sort By Selector -->
+          <div class="filter-control-item sort-col">
+            <label class="filter-label font-display">📊 SORT BY</label>
+            <select class="filter-select-field sort-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+              <option value="trending">🔥 Trending (Most Liked)</option>
+              <option value="popular">⭐ Most Popular (Views)</option>
+              <option value="newest">⏱️ Newest Heritage</option>
+              <option value="title">🔤 Title (A – Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Active Filter Pills & Reset Action -->
+        <div *ngIf="hasActiveFilters()" class="active-filters-row flex-between animate-fade-in">
+          <div class="active-pills-list">
+            <span class="active-filters-title font-display">Active Filters ({{ activeFiltersCount() }}):</span>
+
+            <!-- Search Pill -->
+            <button *ngIf="searchKeyword()" class="active-filter-pill" (click)="clearSearch()">
+              <span>Query: "{{ searchKeyword() }}"</span>
+              <span class="pill-remove">✕</span>
+            </button>
+
+            <!-- Shayar Pill -->
+            <button *ngIf="selectedAuthorId() !== 'all'" class="active-filter-pill" (click)="clearAuthor()">
+              <span>Shayar: {{ selectedAuthorName() }}</span>
+              <span class="pill-remove">✕</span>
+            </button>
+
+            <!-- Genre Pill -->
+            <button *ngIf="selectedGenreId() !== 'all'" class="active-filter-pill" (click)="clearGenre()">
+              <span>Genre: {{ selectedGenreName() }}</span>
+              <span class="pill-remove">✕</span>
+            </button>
+
+            <!-- Theme Pill -->
+            <button *ngIf="selectedThemeId() !== 'all'" class="active-filter-pill" (click)="clearTheme()">
+              <span>Mood: {{ selectedThemeName() }}</span>
+              <span class="pill-remove">✕</span>
+            </button>
+
+            <!-- Quick Category Pill -->
+            <button *ngIf="activeFeedCategory() !== 'all'" class="active-filter-pill" (click)="clearFeedCategory()">
+              <span>Category: {{ activeFeedCategory() | uppercase }}</span>
+              <span class="pill-remove">✕</span>
+            </button>
+          </div>
+
+          <!-- Reset All Button -->
+          <button class="reset-filters-btn" (click)="resetAllFilters()">
+            <span>🔄 Reset All Filters</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Category Filter Pills -->
       <div class="feed-tabs-row">
         <button 
           class="feed-tab-btn" 
           [class.active]="activeFeedCategory() === 'all'" 
-          (click)="activeFeedCategory.set('all')">
+          (click)="setFeedCategory('all')">
           All Ghazals (تمام کلام)
         </button>
         <button 
           class="feed-tab-btn" 
           [class.active]="activeFeedCategory() === 'ishq'" 
-          (click)="activeFeedCategory.set('ishq')">
+          (click)="setFeedCategory('ishq')">
           💖 Ishq & Romance (عشق)
         </button>
         <button 
           class="feed-tab-btn" 
           [class.active]="activeFeedCategory() === 'dard'" 
-          (click)="activeFeedCategory.set('dard')">
+          (click)="setFeedCategory('dard')">
           💔 Dard & Longing (درد)
         </button>
         <button 
           class="feed-tab-btn" 
           [class.active]="activeFeedCategory() === 'zindagi'" 
-          (click)="activeFeedCategory.set('zindagi')">
+          (click)="setFeedCategory('zindagi')">
           🌿 Life & Philosophy (زندگی)
         </button>
         <button 
           class="feed-tab-btn" 
           [class.active]="activeFeedCategory() === 'sufi'" 
-          (click)="activeFeedCategory.set('sufi')">
+          (click)="setFeedCategory('sufi')">
           🕯️ Sufism & Mysticism (تصوف)
         </button>
         <button 
           class="feed-tab-btn" 
           [class.active]="activeFeedCategory() === 'inqilab'" 
-          (click)="activeFeedCategory.set('inqilab')">
+          (click)="setFeedCategory('inqilab')">
           🚩 Revolution & Hope (انقلاب)
         </button>
       </div>
 
       <!-- Ghazals Feed Grid -->
-      <div class="ghazals-feed-grid">
+      <div *ngIf="filteredContents().length > 0" class="ghazals-feed-grid">
         <div *ngFor="let item of filteredContents(); let idx = index" class="ghazal-card poetic-card">
           <div class="ghazal-card-header flex-between">
             <span class="ghazal-poet-badge font-english">
               👤 {{ item.author?.primaryName || item.authorName || 'Classical Shayar' }}
             </span>
-            <span class="badge">Ghazal</span>
+            <span class="badge">{{ item.genre?.name || 'Ghazal' }}</span>
           </div>
 
           <h3 class="ghazal-card-title" [ngClass]="scriptService.fontClass()">
@@ -252,6 +365,18 @@
             </a>
           </div>
         </div>
+      </div>
+
+      <!-- Empty State when no results match -->
+      <div *ngIf="filteredContents().length === 0" class="empty-feed-card poetic-card animate-fade-in">
+        <div class="empty-icon">📜</div>
+        <h3 class="empty-title font-display">No Poetry Matches Your Filters</h3>
+        <p class="empty-desc">
+          Try loosening your search query, selecting different thematic moods, or clearing author/genre restrictions.
+        </p>
+        <button class="btn btn-gold btn-sm" (click)="resetAllFilters()">
+          🔄 Reset All Filters
+        </button>
       </div>
     </div>
   </section>

@@ -462,23 +462,201 @@
       </div>
 
       <div class="modal-body">
-        <!-- Add Content Form -->
-        <form *ngIf="activeTab() === 'content'" (submit)="saveContentWithTexts()">
+        <!-- Add Content Form (Multi-Script, Multi-Theme, Smart Splitter) -->
+        <form *ngIf="activeTab() === 'content'" (submit)="saveContentWithTexts()" class="content-studio-form">
+          <!-- 1. General Identification -->
           <div class="form-group">
-            <label class="form-label">Poem Title (Identifier)</label>
-            <input type="text" class="form-input" placeholder="e.g. Hazaron Khwahishen Aisi" [(ngModel)]="contentForm().title" name="title" required />
+            <label class="form-label">Poem / Ghazal Master Identifier <span class="required-star">*</span></label>
+            <input 
+              type="text" 
+              class="form-input" 
+              placeholder="e.g. Hazaron Khwahishen Aisi / گلوں میں رنگ بھرے" 
+              [(ngModel)]="contentForm().title" 
+              name="title" 
+              required />
           </div>
+
+          <!-- 2. Author & Genre Selectors -->
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Author ID</label>
-              <input type="number" class="form-input" [(ngModel)]="contentForm().authorId" name="authorId" />
+              <label class="form-label">Shayar / Author <span class="required-star">*</span></label>
+              <select class="form-select" [(ngModel)]="contentForm().authorId" name="authorId" required>
+                <option *ngFor="let a of authors()" [value]="a.id">
+                  {{ a.primaryName }} ({{ getAuthorUrduName(a) }})
+                </option>
+              </select>
             </div>
+
             <div class="form-group">
-              <label class="form-label">Genre ID (1=Ghazal, 2=Nazm)</label>
-              <input type="number" class="form-input" [(ngModel)]="contentForm().genreId" name="genreId" />
+              <label class="form-label">Poetic Genre (صنف) <span class="required-star">*</span></label>
+              <select class="form-select" [(ngModel)]="contentForm().genreId" name="genreId" required>
+                <option *ngFor="let g of genres()" [value]="g.id">
+                  {{ g.name }} ({{ g.slug | uppercase }})
+                </option>
+              </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-blue btn-block">Publish Ghazal to Database</button>
+
+          <!-- 3. Multi-Theme Interactive Chip Selector -->
+          <div class="form-group theme-selector-group">
+            <div class="flex-between">
+              <label class="form-label">Thematic Moods & Categories (Select all that apply)</label>
+              <span class="selected-theme-badge">
+                {{ contentForm().selectedThemeIds.length }} Selected
+              </span>
+            </div>
+            <div class="modal-theme-chips-grid">
+              <button 
+                type="button"
+                *ngFor="let t of themes()" 
+                class="modal-theme-chip" 
+                [class.selected]="isThemeSelected(t.id)"
+                (click)="toggleThemeSelection(t.id)">
+                <span class="chip-check">{{ isThemeSelected(t.id) ? '✓' : '✦' }}</span>
+                <span class="chip-label">{{ t.name }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Multi-Script Verse Editor Tabs -->
+          <div class="form-group script-editor-card">
+            <div class="script-tabs-header flex-between">
+              <div class="script-tab-btns">
+                <button 
+                  type="button" 
+                  class="script-tab-switch-btn" 
+                  [class.active]="activeScriptEditorTab() === 'ur'" 
+                  (click)="activeScriptEditorTab.set('ur')">
+                  🇵🇰 اردو (Urdu Nastaliq)
+                </button>
+                <button 
+                  type="button" 
+                  class="script-tab-switch-btn" 
+                  [class.active]="activeScriptEditorTab() === 'hi'" 
+                  (click)="activeScriptEditorTab.set('hi')">
+                  🇮🇳 हिन्दी (Hindi Devanagari)
+                </button>
+                <button 
+                  type="button" 
+                  class="script-tab-switch-btn" 
+                  [class.active]="activeScriptEditorTab() === 'en'" 
+                  (click)="activeScriptEditorTab.set('en')">
+                  🌍 English (Roman Script)
+                </button>
+              </div>
+
+              <!-- Couplet Metrics & Smart Splitter Trigger -->
+              <div class="smart-splitter-toolbar">
+                <span class="couplet-counter-badge">
+                  📊 {{ getCoupletStats(getActiveScriptBody()).couplets }} Ash'ar ({{ getCoupletStats(getActiveScriptBody()).lines }} Misre)
+                </span>
+                <button 
+                  type="button" 
+                  class="btn-format-splitter" 
+                  (click)="formatCoupletsForActiveScript()"
+                  title="Auto-format couplets: remove empty lines and standardize 2-line misra spacing">
+                  🪄 Smart Split Couplets
+                </button>
+              </div>
+            </div>
+
+            <!-- Urdu Editor Pane -->
+            <div *ngIf="activeScriptEditorTab() === 'ur'" class="script-pane animate-fade-in">
+              <div class="form-group">
+                <label class="form-label font-urdu">اردو عنوان (Urdu Ghazal Title)</label>
+                <input 
+                  type="text" 
+                  class="form-input font-urdu text-right" 
+                  dir="rtl"
+                  placeholder="مثال: ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے" 
+                  [ngModel]="contentForm().urTitle" 
+                  (ngModelChange)="updateActiveScriptTitle($event)"
+                  name="urTitle" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-urdu">کلام / اشعار (Urdu Couplets - 2 lines per Sher)</label>
+                <textarea 
+                  class="form-textarea font-urdu text-right" 
+                  dir="rtl"
+                  rows="6"
+                  placeholder="ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے&#10;بہت نکلے مرے ارمان لیکن پھر بھی کم نکلے&#10;&#10;ڈرے کیوں میرا قاتل کیا رہے گا اس کی گردن پر&#10;وہ خوں جو چشمِ تر سے عمر بھر یوں دم بدم نکلے" 
+                  [ngModel]="contentForm().urBody" 
+                  (ngModelChange)="updateActiveScriptBody($event)"
+                  name="urBody"></textarea>
+              </div>
+            </div>
+
+            <!-- Hindi Editor Pane -->
+            <div *ngIf="activeScriptEditorTab() === 'hi'" class="script-pane animate-fade-in">
+              <div class="form-group">
+                <label class="form-label font-hindi">हिन्दी शीर्षक (Hindi Ghazal Title)</label>
+                <input 
+                  type="text" 
+                  class="form-input font-hindi" 
+                  placeholder="उदा: हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले" 
+                  [ngModel]="contentForm().hiTitle" 
+                  (ngModelChange)="updateActiveScriptTitle($event)"
+                  name="hiTitle" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-hindi">कलाम / अशआर (Hindi Couplets - 2 lines per Sher)</label>
+                <textarea 
+                  class="form-textarea font-hindi" 
+                  rows="6"
+                  placeholder="हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले&#10;बहुत निकले मिरे अरमान लेकिन फिर भी कम निकले&#10;&#10;डरे क्यों मेरा क़ातिल क्या रहेगा उस की गर्दन पर&#10;वो ख़ूँ जो चश्म-ए-तर से उम्र भर यूँ दम-ब-दम निकले" 
+                  [ngModel]="contentForm().hiBody" 
+                  (ngModelChange)="updateActiveScriptBody($event)"
+                  name="hiBody"></textarea>
+              </div>
+            </div>
+
+            <!-- English Editor Pane -->
+            <div *ngIf="activeScriptEditorTab() === 'en'" class="script-pane animate-fade-in">
+              <div class="form-group">
+                <label class="form-label font-english">English Title (Romanized)</label>
+                <input 
+                  type="text" 
+                  class="form-input font-english" 
+                  placeholder="e.g. Hazaron Khwahishen Aisi Ke Har Khwahish Pe Dam Nikle" 
+                  [ngModel]="contentForm().enTitle" 
+                  (ngModelChange)="updateActiveScriptTitle($event)"
+                  name="enTitle" />
+              </div>
+              <div class="form-group">
+                <label class="form-label font-english">Roman Couplets (2 lines per Sher)</label>
+                <textarea 
+                  class="form-textarea font-english" 
+                  rows="6"
+                  placeholder="Hazaron khwahishen aisi ke har khwahish pe dam nikle&#10;Bahut nikle mire armaan lekin phir bhi kam nikle&#10;&#10;Dare kyon mera qaatil kya rahega us ki gardan par&#10;Wo khoon jo chashm-e-tar se umr bhar yoon dam-ba-dam nikle" 
+                  [ngModel]="contentForm().enBody" 
+                  (ngModelChange)="updateActiveScriptBody($event)"
+                  name="enBody"></textarea>
+              </div>
+            </div>
+
+            <!-- 5. Live Couplet Preview Visualizer -->
+            <div *ngIf="getParsedCouplets(getActiveScriptBody()).length > 0" class="couplet-live-preview-box">
+              <div class="preview-header flex-between">
+                <span class="preview-label font-display">👁️ LIVE READER PREVIEW ({{ activeScriptEditorTab() | uppercase }})</span>
+                <button type="button" class="preview-toggle-btn" (click)="showCoupletPreview.update(v => !v)">
+                  {{ showCoupletPreview() ? 'Collapse Preview' : 'Expand Preview' }}
+                </button>
+              </div>
+
+              <div *ngIf="showCoupletPreview()" class="preview-couplets-list" [ngClass]="activeScriptEditorTab() === 'ur' ? 'font-urdu' : (activeScriptEditorTab() === 'hi' ? 'font-hindi' : 'font-english')">
+                <div *ngFor="let pair of getParsedCouplets(getActiveScriptBody()); let idx = index" class="preview-sher-card">
+                  <span class="preview-sher-num font-display">Sher #{{ idx + 1 }}</span>
+                  <p class="preview-misra line-1">{{ pair[0] }}</p>
+                  <p *ngIf="pair[1]" class="preview-misra line-2">{{ pair[1] }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-blue btn-block btn-lg" [disabled]="isSavingContent()">
+            <span>{{ isSavingContent() ? '⏳ Publishing across 3 Scripts...' : '🚀 Publish Ghazal in 3 Scripts Simultaneously' }}</span>
+          </button>
         </form>
 
         <!-- Add Genre Form -->
