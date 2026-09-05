@@ -428,54 +428,60 @@ export class StudioComponent implements OnInit {
   // --- Save Content in 3 Scripts Simultaneously ---
   saveContentWithTexts() {
     const f = this.contentForm();
-    if (!f.title.trim()) {
-      this.showStatus('error', 'Please enter an identification title for the Ghazal / Poem.');
+    
+    // Auto-derive title from master title, script titles, or first verse line
+    const firstLine = (f.urBody || f.hiBody || f.enBody || '').split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
+    const finalTitle = (f.title || f.urTitle || f.hiTitle || f.enTitle || firstLine || 'Untitled Kalam').trim();
+
+    if (!f.urBody.trim() && !f.hiBody.trim() && !f.enBody.trim() && !f.urTitle.trim() && !f.hiTitle.trim() && !f.enTitle.trim()) {
+      this.showStatus('error', 'Please enter some poetry verses (اشعار / کلام) before publishing.');
       return;
     }
 
-    if (!f.authorId) {
-      this.showStatus('error', 'Please select a Shayar / Poet.');
-      return;
-    }
+    const authorId = Number(f.authorId) || this.authors()[0]?.id || 1;
+    const genreId = Number(f.genreId) || this.genres()[0]?.id || 1;
+    const themeIds = f.selectedThemeIds && f.selectedThemeIds.length > 0 ? f.selectedThemeIds : [this.themes()[0]?.id || 1];
 
     this.isSavingContent.set(true);
 
     const scriptTexts = {
       ur: {
-        title: f.urTitle.trim() || f.title.trim(),
+        title: f.urTitle.trim() || finalTitle,
         body: f.urBody.trim()
       },
       hi: {
-        title: f.hiTitle.trim() || f.title.trim(),
+        title: f.hiTitle.trim() || finalTitle,
         body: f.hiBody.trim()
       },
       en: {
-        title: f.enTitle.trim() || f.title.trim(),
+        title: f.enTitle.trim() || finalTitle,
         body: f.enBody.trim()
       }
     };
 
+    console.log('Publishing content payload:', { title: finalTitle, authorId, genreId, themeIds, scriptTexts });
+
     this.contentService.saveCompleteContentWithTexts(
       {
-        title: f.title.trim(),
-        authorId: Number(f.authorId),
-        genreId: Number(f.genreId) || 1,
-        themeIds: f.selectedThemeIds
+        title: finalTitle,
+        authorId,
+        genreId,
+        themeIds
       },
       scriptTexts
     ).subscribe({
       next: () => {
         this.isSavingContent.set(false);
-        this.showStatus('success', `🎉 "${f.title}" published successfully across Urdu, Hindi & English!`);
+        this.showStatus('success', `🎉 "${finalTitle}" published successfully across Urdu, Hindi & English!`);
         
         // Also ensure fallback seed data contains this new poem for instant offline reactivity
-        const author = this.authors().find(a => a.id === Number(f.authorId));
+        const author = this.authors().find(a => a.id === authorId);
         this.seedService.classicalPoems.unshift({
           id: Date.now(),
-          authorId: Number(f.authorId),
-          genreId: Number(f.genreId) || 1,
-          themeIds: f.selectedThemeIds,
-          title: f.title,
+          authorId,
+          genreId,
+          themeIds,
+          title: finalTitle,
           texts: {
             ur: { title: scriptTexts.ur.title, body: scriptTexts.ur.body || scriptTexts.en.body || scriptTexts.hi.body },
             hi: { title: scriptTexts.hi.title, body: scriptTexts.hi.body || scriptTexts.en.body || scriptTexts.ur.body },
@@ -487,7 +493,7 @@ export class StudioComponent implements OnInit {
           title: '',
           authorId: this.authors()[0]?.id || 1,
           genreId: this.genres()[0]?.id || 1,
-          selectedThemeIds: [1],
+          selectedThemeIds: [this.themes()[0]?.id || 1],
           urTitle: '',
           urBody: '',
           hiTitle: '',
@@ -501,7 +507,8 @@ export class StudioComponent implements OnInit {
       },
       error: (err) => {
         this.isSavingContent.set(false);
-        this.showStatus('error', err?.error?.message || 'Failed to publish content.');
+        console.error('Failed to publish content:', err);
+        this.showStatus('error', err?.error?.message || err?.message || 'Failed to publish content.');
       }
     });
   }

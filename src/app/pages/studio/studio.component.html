@@ -15,7 +15,8 @@
     </div>
 
     <!-- Collapse Toggle Button on Border -->
-    <button class="sidebar-collapse-toggle" (click)="toggleSidebar()" [title]="isSidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
+    <button class="sidebar-collapse-toggle" (click)="toggleSidebar()"
+      [title]="isSidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
       <span>{{ isSidebarCollapsed() ? '›' : '‹' }}</span>
     </button>
 
@@ -27,68 +28,44 @@
 
       <nav class="sidebar-nav">
         <!-- 1. Content / Ghazals -->
-        <button 
-          class="nav-item-btn" 
-          [class.active]="activeTab() === 'content'" 
-          (click)="activeTab.set('content'); searchQuery.set('')"
-          title="Content (Ghazals & Poems)">
+        <button class="nav-item-btn" [class.active]="activeTab() === 'content'"
+          (click)="activeTab.set('content'); searchQuery.set('')" title="Content (Ghazals & Poems)">
           <span class="nav-icon">📜</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Content</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contents().length > 0">{{ contents().length }}</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contents().length > 0">{{ contents().length
+            }}</span>
         </button>
 
         <!-- 2. Genres -->
-        <button 
-          class="nav-item-btn" 
-          [class.active]="activeTab() === 'genres'" 
-          (click)="activeTab.set('genres'); searchQuery.set('')"
-          title="Genres">
+        <button class="nav-item-btn" [class.active]="activeTab() === 'genres'"
+          (click)="activeTab.set('genres'); searchQuery.set('')" title="Genres">
           <span class="nav-icon">🏷️</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Genres</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && genres().length > 0">{{ genres().length }}</span>
         </button>
 
         <!-- 3. Themes -->
-        <button 
-          class="nav-item-btn" 
-          [class.active]="activeTab() === 'themes'" 
-          (click)="activeTab.set('themes'); searchQuery.set('')"
-          title="Themes">
+        <button class="nav-item-btn" [class.active]="activeTab() === 'themes'"
+          (click)="activeTab.set('themes'); searchQuery.set('')" title="Themes">
           <span class="nav-icon">✦</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Themes</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && themes().length > 0">{{ themes().length }}</span>
         </button>
 
         <!-- 4. Authors / Poets -->
-        <button 
-          class="nav-item-btn" 
-          [class.active]="activeTab() === 'authors'" 
-          (click)="activeTab.set('authors'); searchQuery.set('')"
-          title="Authors & Poets">
+        <button class="nav-item-btn" [class.active]="activeTab() === 'authors'"
+          (click)="activeTab.set('authors'); searchQuery.set('')" title="Authors & Poets">
           <span class="nav-icon">👤</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Authors / Poets</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && authors().length > 0">{{ authors().length }}</span>
         </button>
 
         <!-- 5. Auth / Platform Admins -->
-        <button 
-          class="nav-item-btn" 
-          [class.active]="activeTab() === 'auth'" 
-          (click)="activeTab.set('auth'); searchQuery.set('')"
-          title="Platform Admins">
+        <button class="nav-item-btn" [class.active]="activeTab() === 'auth'"
+          (click)="activeTab.set('auth'); searchQuery.set('')" title="Platform Admins">
           <span class="nav-icon">🔐</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Platform Admins</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed()">{{ adminUsers().length }}</span>
-        </button>
-
-        <!-- 6. Database Seeder -->
-        <button 
-          class="nav-item-btn" 
-          [class.active]="activeTab() === 'seed'" 
-          (click)="activeTab.set('seed')"
-          title="Database Seeder">
-          <span class="nav-icon">⚡</span>
-          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Database Seeder</span>
         </button>
       </nav>
 
@@ -121,7 +98,8 @@
   <!-- ========================================================================= -->
   <main class="admin-main-workspace">
     <!-- Status Alert Banner -->
-    <div *ngIf="statusMsg()" class="status-toast-bar animate-fade-in" [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
+    <div *ngIf="statusMsg()" class="status-toast-bar animate-fade-in"
+      [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
       <span class="status-icon">{{ statusMsg()?.type === 'success' ? '✓' : '⚠️' }}</span>
       <span class="status-text">{{ statusMsg()?.text }}</span>
     </div>
@@ -169,12 +147,8 @@
     <div *ngIf="activeTab() !== 'seed'" class="table-search-bar-wrap">
       <div class="table-search-box">
         <span class="search-lens">🔍</span>
-        <input 
-          type="text" 
-          class="table-search-input" 
-          placeholder="Search by name, title, or code..." 
-          [ngModel]="searchQuery()" 
-          (ngModelChange)="searchQuery.set($event)" />
+        <input type="text" class="table-search-input" placeholder="Search by name, title, or code..."
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
         <button *ngIf="searchQuery()" type="button" class="clear-search-btn" (click)="searchQuery.set('')">✕</button>
       </div>
     </div>
@@ -209,13 +183,15 @@
                   <span class="author-tag">👤 {{ item.author?.primaryName || ('Author #' + item.authorId) }}</span>
                 </td>
                 <td>
-                  <span class="pill-badge pill-genre">{{ item.genreId === 1 ? 'Ghazal' : (item.genreId === 2 ? 'Nazm' : 'Rubai') }}</span>
+                  <span class="pill-badge pill-genre">{{ item.genreId === 1 ? 'Ghazal' : (item.genreId === 2 ? 'Nazm' :
+                    'Rubai') }}</span>
                 </td>
                 <td>
                   <span class="status-pill status-active">Published</span>
                 </td>
                 <td style="text-align: right;">
-                  <a [routerLink]="['/content', item.id]" target="_blank" class="table-action-btn" title="View in Reading Room">
+                  <a [routerLink]="['/content', item.id]" target="_blank" class="table-action-btn"
+                    title="View in Reading Room">
                     👁️ View
                   </a>
                 </td>
@@ -257,7 +233,9 @@
                   <span class="pill-badge pill-code">{{ g.slug }}</span>
                 </td>
                 <td class="col-desc">
-                  {{ g.slug === 'ghazal' ? 'Classical rhymed stanzas with Matla, Maqta, Radif & Qafiya.' : (g.slug === 'nazm' ? 'Thematic descriptive poem with a unified subject matter.' : 'Classical poetic verse form.') }}
+                  {{ g.slug === 'ghazal' ? 'Classical rhymed stanzas with Matla, Maqta, Radif & Qafiya.' : (g.slug ===
+                  'nazm' ? 'Thematic descriptive poem with a unified subject matter.' : 'Classical poetic verse form.')
+                  }}
                 </td>
                 <td style="text-align: right;">
                   <span class="status-pill status-active">Active</span>
@@ -423,7 +401,9 @@
           <span class="seed-engine-emblem">⚡</span>
           <h2 class="seed-title font-display">1-Click Rekhta Database Seeder</h2>
           <p class="seed-desc">
-            Synchronize and populate your backend with classical Shayars (Mirza Ghalib, Faiz Ahmad Faiz, Jaun Elia, Allama Iqbal, Ahmad Faraz), Genres, Themes, and authentic poetry in Urdu Nastaliq, Hindi Devanagari, and English.
+            Synchronize and populate your backend with classical Shayars (Mirza Ghalib, Faiz Ahmad Faiz, Jaun Elia,
+            Allama Iqbal, Ahmad Faraz), Genres, Themes, and authentic poetry in Urdu Nastaliq, Hindi Devanagari, and
+            English.
           </p>
           <button class="btn btn-blue btn-lg seed-execute-btn" (click)="runDatabaseSeed()" [disabled]="isSeeding()">
             <span>{{ isSeeding() ? '⏳ Populating Backend Database...' : '🚀 Execute Rekhta Database Seed' }}</span>
@@ -453,7 +433,8 @@
           <ng-container [ngSwitch]="activeTab()">
             <ng-container *ngSwitchCase="'content'">
               <span *ngIf="contentCreationStep() === 'select-genre'">✨ Select Poetic Genre (صنف کا انتخاب)</span>
-              <span *ngIf="contentCreationStep() === 'editor'">📜 Publish {{ getSelectedGenre()?.name || 'Ghazal / Poem' }}</span>
+              <span *ngIf="contentCreationStep() === 'editor'">📜 Publish {{ getSelectedGenre()?.name || 'Ghazal / Poem'
+                }}</span>
             </ng-container>
             <span *ngSwitchCase="'genres'">🏷️ Create Literary Genre</span>
             <span *ngSwitchCase="'themes'">✦ Create Poetic Theme</span>
@@ -462,12 +443,8 @@
           </ng-container>
         </h3>
         <div class="modal-header-actions">
-          <button 
-            *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" 
-            type="button" 
-            class="btn-step-back" 
-            (click)="backToGenreSelection()"
-            title="Return to genre selection">
+          <button *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" type="button"
+            class="btn-step-back" (click)="backToGenreSelection()" title="Return to genre selection">
             ← Change Genre
           </button>
           <button class="modal-close" (click)="closeAddModal()">✕</button>
@@ -478,14 +455,16 @@
         <!-- =================================================================== -->
         <!-- CONTENT CREATION - STEP 1: SELECT GENRE ONLY (DROPDOWN)             -->
         <!-- =================================================================== -->
-        <div *ngIf="activeTab() === 'content' && contentCreationStep() === 'select-genre'" class="genre-selection-dropdown-step animate-fade-in">
+        <div *ngIf="activeTab() === 'content' && contentCreationStep() === 'select-genre'"
+          class="genre-selection-dropdown-step animate-fade-in">
           <div class="genre-step-intro">
             <div class="step-pill-indicator">
               <span class="step-number-badge">Step 1 of 2</span>
               <span class="step-title-text">Select Poetic Genre (صنف کا انتخاب کریں)</span>
             </div>
             <p class="genre-step-subtitle">
-              Aap kis type ka genre create / write karna chahte hain? Dropdown se genre select karein aur continue karein.
+              Aap kis type ka genre create / write karna chahte hain? Dropdown se genre select karein aur continue
+              karein.
             </p>
           </div>
 
@@ -495,10 +474,8 @@
               <label class="form-label genre-select-label">
                 Choose Poetic Genre (صنف) <span class="required-star">*</span>
               </label>
-              
-              <select 
-                class="form-select genre-large-select" 
-                [ngModel]="contentForm().genreId" 
+
+              <select class="form-select genre-large-select" [ngModel]="contentForm().genreId"
                 (ngModelChange)="onGenreDropdownChange($event)">
                 <option *ngFor="let g of genres()" [value]="g.id">
                   {{ getGenreIcon(g.slug) }} {{ g.name }} ({{ g.slug | uppercase }})
@@ -507,9 +484,7 @@
             </div>
 
             <!-- Proceed to Editor Button -->
-            <button 
-              type="button" 
-              class="btn btn-blue btn-lg btn-block proceed-btn" 
+            <button type="button" class="btn btn-blue btn-lg btn-block proceed-btn"
               (click)="proceedToEditorWithSelectedGenre()">
               <span>Next: Continue to Verse Editor ➔ (آگے بڑھیں)</span>
             </button>
@@ -533,27 +508,16 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Genre Name (e.g. مرثیہ / Masnavi)</label>
-                  <input 
-                    type="text" 
-                    class="form-input" 
-                    placeholder="e.g. مثنوی / Masnavi" 
-                    [ngModel]="inlineGenreName()" 
+                  <input type="text" class="form-input" placeholder="e.g. مثنوی / Masnavi" [ngModel]="inlineGenreName()"
                     (ngModelChange)="inlineGenreName.set($event)" />
                 </div>
                 <div class="form-group">
                   <label class="form-label">Slug Code (Lowercase)</label>
-                  <input 
-                    type="text" 
-                    class="form-input" 
-                    placeholder="e.g. masnavi" 
-                    [ngModel]="inlineGenreSlug()" 
+                  <input type="text" class="form-input" placeholder="e.g. masnavi" [ngModel]="inlineGenreSlug()"
                     (ngModelChange)="inlineGenreSlug.set($event)" />
                 </div>
               </div>
-              <button 
-                type="button" 
-                class="btn btn-blue btn-block" 
-                (click)="saveInlineGenreAndContinue()">
+              <button type="button" class="btn btn-blue btn-block" (click)="saveInlineGenreAndContinue()">
                 Create & Proceed to Verse Editor ➔
               </button>
             </div>
@@ -563,8 +527,9 @@
         <!-- =================================================================== -->
         <!-- CONTENT CREATION - STEP 2: VERSE & SCRIPT EDITOR (USUAL FORM)       -->
         <!-- =================================================================== -->
-        <form *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" (submit)="saveContentWithTexts()" class="content-studio-form animate-fade-in">
-          
+        <form *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" (submit)="saveContentWithTexts()"
+          class="content-studio-form animate-fade-in">
+
           <!-- Selected Genre Active Banner -->
           <div class="selected-genre-banner flex-between">
             <div class="genre-banner-left">
@@ -585,7 +550,7 @@
           </div>
 
           <!-- 1. General Identification -->
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label class="form-label">Poem / Ghazal Master Identifier <span class="required-star">*</span></label>
             <input 
               type="text" 
@@ -594,7 +559,7 @@
               [(ngModel)]="contentForm().title" 
               name="title" 
               required />
-          </div>
+          </div> -->
 
           <!-- 2. Author, Genre & Theme Dropdowns Row -->
           <div class="form-row form-row-3col">
@@ -618,7 +583,8 @@
 
             <div class="form-group">
               <label class="form-label">Poetic Theme (موضوع) <span class="required-star">*</span></label>
-              <select class="form-select" [ngModel]="contentForm().selectedThemeIds[0] || (themes()[0]?.id || 1)" (ngModelChange)="onSingleThemeDropdownChange($event)" name="themeId" required>
+              <select class="form-select" [ngModel]="contentForm().selectedThemeIds[0] || (themes()[0]?.id || 1)"
+                (ngModelChange)="onSingleThemeDropdownChange($event)" name="themeId" required>
                 <option *ngFor="let t of themes()" [value]="t.id">
                   {{ t.name }} ({{ t.slug | uppercase }})
                 </option>
@@ -630,24 +596,15 @@
           <div class="form-group script-editor-card">
             <div class="script-tabs-header flex-between">
               <div class="script-tab-btns">
-                <button 
-                  type="button" 
-                  class="script-tab-switch-btn" 
-                  [class.active]="activeScriptEditorTab() === 'ur'" 
+                <button type="button" class="script-tab-switch-btn" [class.active]="activeScriptEditorTab() === 'ur'"
                   (click)="activeScriptEditorTab.set('ur')">
                   🇵🇰 اردو (Urdu Nastaliq)
                 </button>
-                <button 
-                  type="button" 
-                  class="script-tab-switch-btn" 
-                  [class.active]="activeScriptEditorTab() === 'hi'" 
+                <button type="button" class="script-tab-switch-btn" [class.active]="activeScriptEditorTab() === 'hi'"
                   (click)="activeScriptEditorTab.set('hi')">
                   🇮🇳 हिन्दी (Hindi Devanagari)
                 </button>
-                <button 
-                  type="button" 
-                  class="script-tab-switch-btn" 
-                  [class.active]="activeScriptEditorTab() === 'en'" 
+                <button type="button" class="script-tab-switch-btn" [class.active]="activeScriptEditorTab() === 'en'"
                   (click)="activeScriptEditorTab.set('en')">
                   🌍 English (Roman Script)
                 </button>
@@ -656,12 +613,10 @@
               <!-- Couplet Metrics & Smart Splitter Trigger -->
               <div class="smart-splitter-toolbar">
                 <span class="couplet-counter-badge">
-                  📊 {{ getCoupletStats(getActiveScriptBody()).couplets }} Ash'ar ({{ getCoupletStats(getActiveScriptBody()).lines }} Misre)
+                  📊 {{ getCoupletStats(getActiveScriptBody()).couplets }} Ash'ar ({{
+                  getCoupletStats(getActiveScriptBody()).lines }} Misre)
                 </span>
-                <button 
-                  type="button" 
-                  class="btn-format-splitter" 
-                  (click)="formatCoupletsForActiveScript()"
+                <button type="button" class="btn-format-splitter" (click)="formatCoupletsForActiveScript()"
                   title="Auto-format couplets: remove empty lines and standardize 2-line misra spacing">
                   🪄 Smart Split Couplets
                 </button>
@@ -672,24 +627,15 @@
             <div *ngIf="activeScriptEditorTab() === 'ur'" class="script-pane animate-fade-in">
               <div class="form-group">
                 <label class="form-label font-urdu">اردو عنوان (Urdu Ghazal Title)</label>
-                <input 
-                  type="text" 
-                  class="form-input font-urdu text-right" 
-                  dir="rtl"
-                  placeholder="مثال: ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے" 
-                  [ngModel]="contentForm().urTitle" 
-                  (ngModelChange)="updateActiveScriptTitle($event)"
-                  name="urTitle" />
+                <input type="text" class="form-input font-urdu text-right" dir="rtl"
+                  placeholder="مثال: ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے" [ngModel]="contentForm().urTitle"
+                  (ngModelChange)="updateActiveScriptTitle($event)" name="urTitle" />
               </div>
               <div class="form-group">
                 <label class="form-label font-urdu">کلام / اشعار (Urdu Couplets - 2 lines per Sher)</label>
-                <textarea 
-                  class="form-textarea font-urdu text-right" 
-                  dir="rtl"
-                  rows="6"
-                  placeholder="ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے&#10;بہت نکلے مرے ارمان لیکن پھر بھی کم نکلے&#10;&#10;ڈرے کیوں میرا قاتل کیا رہے گا اس کی گردن پر&#10;وہ خوں جو چشمِ تر سے عمر بھر یوں دم بدم نکلے" 
-                  [ngModel]="contentForm().urBody" 
-                  (ngModelChange)="updateActiveScriptBody($event)"
+                <textarea class="form-textarea font-urdu text-right" dir="rtl" rows="6"
+                  placeholder="ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے&#10;بہت نکلے مرے ارمان لیکن پھر بھی کم نکلے&#10;&#10;ڈرے کیوں میرا قاتل کیا رہے گا اس کی گردن پر&#10;وہ خوں جو چشمِ تر سے عمر بھر یوں دم بدم نکلے"
+                  [ngModel]="contentForm().urBody" (ngModelChange)="updateActiveScriptBody($event)"
                   name="urBody"></textarea>
               </div>
             </div>
@@ -698,22 +644,15 @@
             <div *ngIf="activeScriptEditorTab() === 'hi'" class="script-pane animate-fade-in">
               <div class="form-group">
                 <label class="form-label font-hindi">हिन्दी शीर्षक (Hindi Ghazal Title)</label>
-                <input 
-                  type="text" 
-                  class="form-input font-hindi" 
-                  placeholder="उदा: हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले" 
-                  [ngModel]="contentForm().hiTitle" 
-                  (ngModelChange)="updateActiveScriptTitle($event)"
-                  name="hiTitle" />
+                <input type="text" class="form-input font-hindi"
+                  placeholder="उदा: हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले" [ngModel]="contentForm().hiTitle"
+                  (ngModelChange)="updateActiveScriptTitle($event)" name="hiTitle" />
               </div>
               <div class="form-group">
                 <label class="form-label font-hindi">कलाम / अशआर (Hindi Couplets - 2 lines per Sher)</label>
-                <textarea 
-                  class="form-textarea font-hindi" 
-                  rows="6" 
-                  placeholder="हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले&#10;बहुत निकले मिरे अरमान लेकिन फिर भी कम निकले&#10;&#10;डरे क्यों मेरा क़ातिल क्या रहेगा उस की गर्दन पर&#10;वो ख़ूँ जो चश्म-ए-तर से उम्र भर यूँ दम-ब-दम निकले" 
-                  [ngModel]="contentForm().hiBody" 
-                  (ngModelChange)="updateActiveScriptBody($event)"
+                <textarea class="form-textarea font-hindi" rows="6"
+                  placeholder="हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले&#10;बहुत निकले मिरे अरमान लेकिन फिर भी कम निकले&#10;&#10;डरे क्यों मेरा क़ातिल क्या रहेगा उस की गर्दन पर&#10;वो ख़ूँ जो चश्म-ए-तर से उम्र भर यूँ दम-ब-दम निकले"
+                  [ngModel]="contentForm().hiBody" (ngModelChange)="updateActiveScriptBody($event)"
                   name="hiBody"></textarea>
               </div>
             </div>
@@ -722,22 +661,15 @@
             <div *ngIf="activeScriptEditorTab() === 'en'" class="script-pane animate-fade-in">
               <div class="form-group">
                 <label class="form-label font-english">English Title (Romanized)</label>
-                <input 
-                  type="text" 
-                  class="form-input font-english" 
-                  placeholder="e.g. Hazaron Khwahishen Aisi Ke Har Khwahish Pe Dam Nikle" 
-                  [ngModel]="contentForm().enTitle" 
-                  (ngModelChange)="updateActiveScriptTitle($event)"
-                  name="enTitle" />
+                <input type="text" class="form-input font-english"
+                  placeholder="e.g. Hazaron Khwahishen Aisi Ke Har Khwahish Pe Dam Nikle"
+                  [ngModel]="contentForm().enTitle" (ngModelChange)="updateActiveScriptTitle($event)" name="enTitle" />
               </div>
               <div class="form-group">
                 <label class="form-label font-english">Roman Couplets (2 lines per Sher)</label>
-                <textarea 
-                  class="form-textarea font-english" 
-                  rows="6" 
-                  placeholder="Hazaron khwahishen aisi ke har khwahish pe dam nikle&#10;Bahut nikle mire armaan lekin phir bhi کم nikle&#10;&#10;Dare kyon mera qaatil kya rahega us ki gardan par&#10;Wo khoon jo chashm-e-tar se umr bhar yoon dam-ba-dam nikle" 
-                  [ngModel]="contentForm().enBody" 
-                  (ngModelChange)="updateActiveScriptBody($event)"
+                <textarea class="form-textarea font-english" rows="6"
+                  placeholder="Hazaron khwahishen aisi ke har khwahish pe dam nikle&#10;Bahut nikle mire armaan lekin phir bhi کم nikle&#10;&#10;Dare kyon mera qaatil kya rahega us ki gardan par&#10;Wo khoon jo chashm-e-tar se umr bhar yoon dam-ba-dam nikle"
+                  [ngModel]="contentForm().enBody" (ngModelChange)="updateActiveScriptBody($event)"
                   name="enBody"></textarea>
               </div>
             </div>
@@ -745,14 +677,17 @@
             <!-- 5. Live Couplet Preview Visualizer -->
             <div *ngIf="getParsedCouplets(getActiveScriptBody()).length > 0" class="couplet-live-preview-box">
               <div class="preview-header flex-between">
-                <span class="preview-label font-display">👁️ LIVE READER PREVIEW ({{ activeScriptEditorTab() | uppercase }})</span>
+                <span class="preview-label font-display">👁️ LIVE READER PREVIEW ({{ activeScriptEditorTab() | uppercase
+                  }})</span>
                 <button type="button" class="preview-toggle-btn" (click)="showCoupletPreview.update(v => !v)">
                   {{ showCoupletPreview() ? 'Collapse Preview' : 'Expand Preview' }}
                 </button>
               </div>
 
-              <div *ngIf="showCoupletPreview()" class="preview-couplets-list" [ngClass]="activeScriptEditorTab() === 'ur' ? 'font-urdu' : (activeScriptEditorTab() === 'hi' ? 'font-hindi' : 'font-english')">
-                <div *ngFor="let pair of getParsedCouplets(getActiveScriptBody()); let idx = index" class="preview-sher-card">
+              <div *ngIf="showCoupletPreview()" class="preview-couplets-list"
+                [ngClass]="activeScriptEditorTab() === 'ur' ? 'font-urdu' : (activeScriptEditorTab() === 'hi' ? 'font-hindi' : 'font-english')">
+                <div *ngFor="let pair of getParsedCouplets(getActiveScriptBody()); let idx = index"
+                  class="preview-sher-card">
                   <span class="preview-sher-num font-display">Sher #{{ idx + 1 }}</span>
                   <p class="preview-misra line-1">{{ pair[0] }}</p>
                   <p *ngIf="pair[1]" class="preview-misra line-2">{{ pair[1] }}</p>
@@ -763,7 +698,8 @@
 
           <!-- Submit Button -->
           <button type="submit" class="btn btn-blue btn-block btn-lg" [disabled]="isSavingContent()">
-            <span>{{ isSavingContent() ? '⏳ Publishing across 3 Scripts...' : '🚀 Publish Ghazal in 3 Scripts Simultaneously' }}</span>
+            <span>{{ isSavingContent() ? '⏳ Publishing across 3 Scripts...' : '🚀 Publish Ghazal in 3 Scripts
+              Simultaneously' }}</span>
           </button>
         </form>
 
@@ -771,11 +707,13 @@
         <form *ngIf="activeTab() === 'genres'" (submit)="saveGenre()">
           <div class="form-group">
             <label class="form-label">Genre Name (اردو / हिन्दी)</label>
-            <input type="text" class="form-input font-urdu" placeholder="e.g. مرثیہ / Rubaiyat" [(ngModel)]="genreForm().name" name="name" required />
+            <input type="text" class="form-input font-urdu" placeholder="e.g. مرثیہ / Rubaiyat"
+              [(ngModel)]="genreForm().name" name="name" required />
           </div>
           <div class="form-group">
             <label class="form-label">Slug Code (Lowercase)</label>
-            <input type="text" class="form-input" placeholder="e.g. marsiya" [(ngModel)]="genreForm().slug" name="slug" required />
+            <input type="text" class="form-input" placeholder="e.g. marsiya" [(ngModel)]="genreForm().slug" name="slug"
+              required />
           </div>
           <button type="submit" class="btn btn-blue btn-block">Save Genre</button>
         </form>
@@ -784,11 +722,13 @@
         <form *ngIf="activeTab() === 'themes'" (submit)="saveTheme()">
           <div class="form-group">
             <label class="form-label">Theme / Mood Name (اردو / हिन्दी)</label>
-            <input type="text" class="form-input font-urdu" placeholder="e.g. تصوف / Sufism" [(ngModel)]="themeForm().name" name="name" required />
+            <input type="text" class="form-input font-urdu" placeholder="e.g. تصوف / Sufism"
+              [(ngModel)]="themeForm().name" name="name" required />
           </div>
           <div class="form-group">
             <label class="form-label">Slug Code</label>
-            <input type="text" class="form-input" placeholder="e.g. sufi" [(ngModel)]="themeForm().slug" name="slug" required />
+            <input type="text" class="form-input" placeholder="e.g. sufi" [(ngModel)]="themeForm().slug" name="slug"
+              required />
           </div>
           <button type="submit" class="btn btn-blue btn-block">Save Theme</button>
         </form>
@@ -807,15 +747,18 @@
           </div>
           <div class="form-group">
             <label class="form-label">Urdu Name (اردو نام)</label>
-            <input type="text" class="form-input font-urdu" placeholder="مثال: مرزا غالب" [(ngModel)]="poetForm().urName" name="urName" />
+            <input type="text" class="form-input font-urdu" placeholder="مثال: مرزا غالب"
+              [(ngModel)]="poetForm().urName" name="urName" />
           </div>
           <div class="form-group">
             <label class="form-label">Hindi Name (हिन्दी नाम)</label>
-            <input type="text" class="form-input font-hindi" placeholder="उदा: मिर्ज़ा ग़ालिब" [(ngModel)]="poetForm().hiName" name="hiName" />
+            <input type="text" class="form-input font-hindi" placeholder="उदा: मिर्ज़ा ग़ालिब"
+              [(ngModel)]="poetForm().hiName" name="hiName" />
           </div>
           <div class="form-group">
             <label class="form-label">English Name</label>
-            <input type="text" class="form-input font-english" placeholder="e.g. Mirza Ghalib" [(ngModel)]="poetForm().enName" name="enName" />
+            <input type="text" class="form-input font-english" placeholder="e.g. Mirza Ghalib"
+              [(ngModel)]="poetForm().enName" name="enName" />
           </div>
           <button type="submit" class="btn btn-blue btn-block">Save Shayar</button>
         </form>
@@ -824,11 +767,13 @@
         <form *ngIf="activeTab() === 'auth'" (submit)="saveAdminUser()">
           <div class="form-group">
             <label class="form-label">Full Name</label>
-            <input type="text" class="form-input" placeholder="e.g. Diwan Security Officer" [(ngModel)]="newAdminForm().name" name="name" required />
+            <input type="text" class="form-input" placeholder="e.g. Diwan Security Officer"
+              [(ngModel)]="newAdminForm().name" name="name" required />
           </div>
           <div class="form-group">
             <label class="form-label">Email Address</label>
-            <input type="email" class="form-input" placeholder="admin@unsiiyat.org" [(ngModel)]="newAdminForm().email" name="email" required />
+            <input type="email" class="form-input" placeholder="admin@unsiiyat.org" [(ngModel)]="newAdminForm().email"
+              name="email" required />
           </div>
           <div class="form-group">
             <label class="form-label">Role</label>
