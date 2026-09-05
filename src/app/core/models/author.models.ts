@@ -28,6 +28,7 @@ export interface AuthorDetail {
 }
 
 export interface AuthorFilterRequest extends BaseFilterRequest {
+  id?: number;
   birthDate?: string;
   deathDate?: string;
 }

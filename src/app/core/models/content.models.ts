@@ -29,6 +29,7 @@ export interface ContentText {
 }
 
 export interface ContentFilterRequest extends BaseFilterRequest {
+  id?: number;
   genreId?: number;
   authorId?: number;
   title?: string;

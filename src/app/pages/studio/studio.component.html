@@ -198,8 +198,7 @@
                   </span>
                 </td>
                 <td style="text-align: right;">
-                  <a [routerLink]="['/content', item.id]" target="_blank" class="table-action-btn"
-                    title="View in Reading Room">
+                  <a [routerLink]="['/content', item.id]" class="table-action-btn" title="View in Reading Room">
                     👁️ {{ scriptService.activeScript() === 'ur' ? 'دیکھیں' : (scriptService.activeScript() === 'hi' ?
                     'देखें' : 'View') }}
                   </a>
@@ -348,8 +347,7 @@
                 </td>
                 <td style="text-align: right;">
                   <div class="table-actions-wrapper">
-                    <a [routerLink]="['/poet', a.id]" target="_blank" class="table-action-btn"
-                      title="View Shayar Profile">
+                    <a [routerLink]="['/poet', a.id]" class="table-action-btn" title="View Shayar Profile">
                       👁️ {{ scriptService.activeScript() === 'ur' ? 'سوانح حیات' : (scriptService.activeScript() ===
                       'hi'
                       ? 'जीवनी देखें' : 'View Bio') }}

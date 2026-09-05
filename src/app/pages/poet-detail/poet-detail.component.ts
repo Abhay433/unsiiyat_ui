@@ -61,10 +61,9 @@ export class PoetDetailComponent implements OnInit {
       error: () => this.setFallbackPoet(id)
     });
 
-    this.contentService.getEnrichedContents(scriptId).subscribe({
-      next: (contents) => {
-        const filtered = contents.filter(c => c.authorId === id);
-        if (filtered.length > 0) {
+    this.contentService.getContentsByAuthorId(id, scriptId).subscribe({
+      next: (filtered) => {
+        if (filtered && filtered.length > 0) {
           this.poetContents.set(filtered);
         } else {
           this.setFallbackContents(id);
