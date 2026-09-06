@@ -86,6 +86,33 @@ export class StudioComponent implements OnInit {
   seedLogs = signal<string[]>([]);
   isSeeding = signal(false);
 
+  // Pagination State (Size = 10 per module)
+  readonly Math = Math;
+  readonly pageSize = 10;
+
+  contentPage = signal<number>(0);
+  contentTotalElements = signal<number>(0);
+  contentTotalPages = signal<number>(1);
+
+  genrePage = signal<number>(0);
+  genreTotalElements = signal<number>(0);
+  genreTotalPages = signal<number>(1);
+
+  themePage = signal<number>(0);
+  themeTotalElements = signal<number>(0);
+  themeTotalPages = signal<number>(1);
+
+  authorPage = signal<number>(0);
+  authorTotalElements = signal<number>(0);
+  authorTotalPages = signal<number>(1);
+
+  adminPage = signal<number>(0);
+  readonly adminTotalPages = computed(() => Math.ceil(this.filteredAdmins().length / this.pageSize) || 1);
+  readonly pagedAdmins = computed(() => {
+    const start = this.adminPage() * this.pageSize;
+    return this.filteredAdmins().slice(start, start + this.pageSize);
+  });
+
   editingContentId = signal<number | null>(null);
   editingGenreId = signal<number | null>(null);
   editingThemeId = signal<number | null>(null);
@@ -290,39 +317,71 @@ export class StudioComponent implements OnInit {
     }
   }
 
-  loadContents(scriptId?: number) {
+  loadContents(scriptId?: number, page: number = this.contentPage()) {
     const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
-    this.contentService.getEnrichedContents(currentScriptId).subscribe({
-      next: (res) => this.contents.set(res),
-      error: () => this.contents.set([])
+    this.contentService.getEnrichedContentsPaged(currentScriptId, { page, size: this.pageSize }).subscribe({
+      next: (res) => {
+        this.contents.set(res.data || []);
+        this.contentTotalElements.set(res.totalElements ?? res.data?.length ?? 0);
+        this.contentTotalPages.set(res.totalPages || (res.data?.length ? 1 : 1));
+        this.contentPage.set(res.page ?? page);
+      },
+      error: () => {
+        this.contents.set([]);
+        this.contentTotalElements.set(0);
+        this.contentTotalPages.set(1);
+      }
     });
   }
 
-  loadGenres() {
-    this.taxonomyService.filterGenres().subscribe({
+  loadGenres(page: number = this.genrePage()) {
+    this.taxonomyService.filterGenres({ page, size: this.pageSize }).subscribe({
       next: (res) => {
         const list = res.data?.length ? res.data : this.seedService.initialGenres;
         this.genres.set(list);
+        this.genreTotalElements.set(res.totalElements ?? list.length);
+        this.genreTotalPages.set(res.totalPages || 1);
+        this.genrePage.set(res.page ?? page);
       },
-      error: () => this.genres.set(this.seedService.initialGenres)
+      error: () => {
+        this.genres.set(this.seedService.initialGenres);
+        this.genreTotalElements.set(this.seedService.initialGenres.length);
+        this.genreTotalPages.set(1);
+      }
     });
   }
 
-  loadThemes() {
-    this.taxonomyService.filterThemes().subscribe({
+  loadThemes(page: number = this.themePage()) {
+    this.taxonomyService.filterThemes({ page, size: this.pageSize }).subscribe({
       next: (res) => {
         const list = res.data?.length ? res.data : this.seedService.initialThemes;
         this.themes.set(list);
+        this.themeTotalElements.set(res.totalElements ?? list.length);
+        this.themeTotalPages.set(res.totalPages || 1);
+        this.themePage.set(res.page ?? page);
       },
-      error: () => this.themes.set(this.seedService.initialThemes)
+      error: () => {
+        this.themes.set(this.seedService.initialThemes);
+        this.themeTotalElements.set(this.seedService.initialThemes.length);
+        this.themeTotalPages.set(1);
+      }
     });
   }
 
-  loadAuthors(scriptId?: number) {
+  loadAuthors(scriptId?: number, page: number = this.authorPage()) {
     const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
-    this.authorService.getEnrichedAuthors(currentScriptId).subscribe({
-      next: (res) => this.authors.set(res),
-      error: () => this.authors.set([])
+    this.authorService.getEnrichedAuthorsPaged(currentScriptId, { page, size: this.pageSize }).subscribe({
+      next: (res) => {
+        this.authors.set(res.data || []);
+        this.authorTotalElements.set(res.totalElements ?? res.data?.length ?? 0);
+        this.authorTotalPages.set(res.totalPages || 1);
+        this.authorPage.set(res.page ?? page);
+      },
+      error: () => {
+        this.authors.set([]);
+        this.authorTotalElements.set(0);
+        this.authorTotalPages.set(1);
+      }
     });
   }
 
@@ -331,6 +390,49 @@ export class StudioComponent implements OnInit {
       next: (res) => this.scripts.set(res.data || []),
       error: () => this.scripts.set([])
     });
+  }
+
+  // --- Pagination Event Handlers ---
+  onContentPageChange(newPage: number) {
+    if (newPage < 0 || newPage >= this.contentTotalPages() || newPage === this.contentPage()) return;
+    this.contentPage.set(newPage);
+    this.loadContents(undefined, newPage);
+  }
+
+  onGenrePageChange(newPage: number) {
+    if (newPage < 0 || newPage >= this.genreTotalPages() || newPage === this.genrePage()) return;
+    this.genrePage.set(newPage);
+    this.loadGenres(newPage);
+  }
+
+  onThemePageChange(newPage: number) {
+    if (newPage < 0 || newPage >= this.themeTotalPages() || newPage === this.themePage()) return;
+    this.themePage.set(newPage);
+    this.loadThemes(newPage);
+  }
+
+  onAuthorPageChange(newPage: number) {
+    if (newPage < 0 || newPage >= this.authorTotalPages() || newPage === this.authorPage()) return;
+    this.authorPage.set(newPage);
+    this.loadAuthors(undefined, newPage);
+  }
+
+  onAdminPageChange(newPage: number) {
+    if (newPage < 0 || newPage >= this.adminTotalPages() || newPage === this.adminPage()) return;
+    this.adminPage.set(newPage);
+  }
+
+  getPageNumbers(currentPage: number, totalPages: number): number[] {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i);
+    }
+    const start = Math.max(0, Math.min(currentPage - 2, totalPages - 5));
+    const end = Math.min(totalPages, start + 5);
+    const pages: number[] = [];
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   loadSupportingModalData() {

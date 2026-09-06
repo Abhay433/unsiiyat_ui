@@ -32,8 +32,7 @@
           (click)="switchTab('content')" title="Content (Ghazals & Poems)">
           <span class="nav-icon">📜</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Content</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contents().length > 0">{{ contents().length
-            }}</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contentTotalElements() > 0">{{ contentTotalElements() }}</span>
         </button>
 
         <!-- 2. Genres -->
@@ -41,7 +40,7 @@
           (click)="switchTab('genres')" title="Genres">
           <span class="nav-icon">🏷️</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Genres</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && genres().length > 0">{{ genres().length }}</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && genreTotalElements() > 0">{{ genreTotalElements() }}</span>
         </button>
 
         <!-- 3. Themes -->
@@ -49,7 +48,7 @@
           (click)="switchTab('themes')" title="Themes">
           <span class="nav-icon">✦</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Themes</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && themes().length > 0">{{ themes().length }}</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && themeTotalElements() > 0">{{ themeTotalElements() }}</span>
         </button>
 
         <!-- 4. Authors / Poets -->
@@ -57,7 +56,7 @@
           (click)="switchTab('authors')" title="Authors & Poets">
           <span class="nav-icon">👤</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Authors / Poets</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && authors().length > 0">{{ authors().length }}</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && authorTotalElements() > 0">{{ authorTotalElements() }}</span>
         </button>
 
         <!-- 5. Auth / Platform Admins -->
@@ -220,6 +219,30 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls for Content -->
+        <div class="table-pagination-footer" *ngIf="contentTotalElements() > pageSize">
+          <div class="pagination-info">
+            Showing <span>{{ contentPage() * pageSize + 1 }}</span> – <span>{{ Math.min((contentPage() + 1) * pageSize, contentTotalElements()) }}</span> of <span>{{ contentTotalElements() }}</span> poems
+          </div>
+          <div class="pagination-controls">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="contentPage() === 0" (click)="onContentPageChange(contentPage() - 1)">
+              ‹ Prev
+            </button>
+            <div class="pagination-pages">
+              <button *ngFor="let p of getPageNumbers(contentPage(), contentTotalPages())" 
+                type="button" 
+                class="pagination-page-btn" 
+                [class.active]="p === contentPage()" 
+                (click)="onContentPageChange(p)">
+                {{ p + 1 }}
+              </button>
+            </div>
+            <button type="button" class="pagination-btn pagination-next" [disabled]="contentPage() >= contentTotalPages() - 1" (click)="onContentPageChange(contentPage() + 1)">
+              Next ›
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -272,6 +295,30 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls for Genres -->
+        <div class="table-pagination-footer" *ngIf="genreTotalElements() > pageSize">
+          <div class="pagination-info">
+            Showing <span>{{ genrePage() * pageSize + 1 }}</span> – <span>{{ Math.min((genrePage() + 1) * pageSize, genreTotalElements()) }}</span> of <span>{{ genreTotalElements() }}</span> genres
+          </div>
+          <div class="pagination-controls">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="genrePage() === 0" (click)="onGenrePageChange(genrePage() - 1)">
+              ‹ Prev
+            </button>
+            <div class="pagination-pages">
+              <button *ngFor="let p of getPageNumbers(genrePage(), genreTotalPages())" 
+                type="button" 
+                class="pagination-page-btn" 
+                [class.active]="p === genrePage()" 
+                (click)="onGenrePageChange(p)">
+                {{ p + 1 }}
+              </button>
+            </div>
+            <button type="button" class="pagination-btn pagination-next" [disabled]="genrePage() >= genreTotalPages() - 1" (click)="onGenrePageChange(genrePage() + 1)">
+              Next ›
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -323,6 +370,30 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Controls for Themes -->
+        <div class="table-pagination-footer" *ngIf="themeTotalElements() > pageSize">
+          <div class="pagination-info">
+            Showing <span>{{ themePage() * pageSize + 1 }}</span> – <span>{{ Math.min((themePage() + 1) * pageSize, themeTotalElements()) }}</span> of <span>{{ themeTotalElements() }}</span> themes
+          </div>
+          <div class="pagination-controls">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="themePage() === 0" (click)="onThemePageChange(themePage() - 1)">
+              ‹ Prev
+            </button>
+            <div class="pagination-pages">
+              <button *ngFor="let p of getPageNumbers(themePage(), themeTotalPages())" 
+                type="button" 
+                class="pagination-page-btn" 
+                [class.active]="p === themePage()" 
+                (click)="onThemePageChange(p)">
+                {{ p + 1 }}
+              </button>
+            </div>
+            <button type="button" class="pagination-btn pagination-next" [disabled]="themePage() >= themeTotalPages() - 1" (click)="onThemePageChange(themePage() + 1)">
+              Next ›
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -390,6 +461,30 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls for Authors -->
+        <div class="table-pagination-footer" *ngIf="authorTotalElements() > pageSize">
+          <div class="pagination-info">
+            Showing <span>{{ authorPage() * pageSize + 1 }}</span> – <span>{{ Math.min((authorPage() + 1) * pageSize, authorTotalElements()) }}</span> of <span>{{ authorTotalElements() }}</span> shayars
+          </div>
+          <div class="pagination-controls">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="authorPage() === 0" (click)="onAuthorPageChange(authorPage() - 1)">
+              ‹ Prev
+            </button>
+            <div class="pagination-pages">
+              <button *ngFor="let p of getPageNumbers(authorPage(), authorTotalPages())" 
+                type="button" 
+                class="pagination-page-btn" 
+                [class.active]="p === authorPage()" 
+                (click)="onAuthorPageChange(p)">
+                {{ p + 1 }}
+              </button>
+            </div>
+            <button type="button" class="pagination-btn pagination-next" [disabled]="authorPage() >= authorTotalPages() - 1" (click)="onAuthorPageChange(authorPage() + 1)">
+              Next ›
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -410,7 +505,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let u of filteredAdmins()">
+              <tr *ngFor="let u of pagedAdmins()">
                 <td class="col-main">
                   <div class="admin-user-cell">
                     <span class="crown-icon">👑</span>
@@ -433,6 +528,30 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination Controls for Admins -->
+        <div class="table-pagination-footer" *ngIf="filteredAdmins().length > pageSize">
+          <div class="pagination-info">
+            Showing <span>{{ adminPage() * pageSize + 1 }}</span> – <span>{{ Math.min((adminPage() + 1) * pageSize, filteredAdmins().length) }}</span> of <span>{{ filteredAdmins().length }}</span> administrators
+          </div>
+          <div class="pagination-controls">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="adminPage() === 0" (click)="onAdminPageChange(adminPage() - 1)">
+              ‹ Prev
+            </button>
+            <div class="pagination-pages">
+              <button *ngFor="let p of getPageNumbers(adminPage(), adminTotalPages())" 
+                type="button" 
+                class="pagination-page-btn" 
+                [class.active]="p === adminPage()" 
+                (click)="onAdminPageChange(p)">
+                {{ p + 1 }}
+              </button>
+            </div>
+            <button type="button" class="pagination-btn pagination-next" [disabled]="adminPage() >= adminTotalPages() - 1" (click)="onAdminPageChange(adminPage() + 1)">
+              Next ›
+            </button>
+          </div>
         </div>
       </div>
     </div>

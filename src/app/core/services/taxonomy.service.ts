@@ -14,7 +14,7 @@ export class TaxonomyService {
   filterGenres(request: GenreFilterRequest = {}): Observable<PagedResponse<Genre>> {
     const payload = {
       page: request.page ?? 0,
-      size: request.size ?? 50,
+      size: request.size ?? 10,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'asc',
       ...request
@@ -34,7 +34,7 @@ export class TaxonomyService {
   filterThemes(request: ThemeFilterRequest = {}): Observable<PagedResponse<Theme>> {
     const payload = {
       page: request.page ?? 0,
-      size: request.size ?? 50,
+      size: request.size ?? 10,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'asc',
       ...request

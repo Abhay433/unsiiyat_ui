@@ -15,7 +15,7 @@ export class AuthorService {
   filterAuthors(request: AuthorFilterRequest = {}): Observable<PagedResponse<Author>> {
     const payload = {
       page: request.page ?? 0,
-      size: request.size ?? 200,
+      size: request.size ?? 10,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'asc',
       ...request
@@ -46,18 +46,24 @@ export class AuthorService {
     return this.api.post<ApiResponse<void>>('/api/author-details/addOrUpdate', detail);
   }
 
-  // Helper to load authors enriched with their multi-script details dynamically
-  getEnrichedAuthors(scriptId?: number): Observable<Author[]> {
+  // Helper to load authors enriched with their multi-script details dynamically (Paged)
+  getEnrichedAuthorsPaged(scriptId?: number, request: AuthorFilterRequest = {}): Observable<PagedResponse<Author>> {
+    const filterReq: AuthorFilterRequest = {
+      page: request.page ?? 0,
+      size: request.size ?? 10,
+      ...request
+    };
+
     return forkJoin({
-      authorsRes: this.filterAuthors().pipe(catchError(() => of({ data: [] } as any))),
-      detailsRes: this.filterAuthorDetails().pipe(catchError(() => of({ data: [] } as any)))
+      authorsRes: this.filterAuthors(filterReq).pipe(catchError(() => of({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, last: true } as any))),
+      detailsRes: this.filterAuthorDetails({ size: 500 }).pipe(catchError(() => of({ data: [] } as any)))
     }).pipe(
       map(({ authorsRes, detailsRes }) => {
-        const authors: Author[] = authorsRes.data || [];
+        const rawAuthors: Author[] = authorsRes.data || [];
         const details: AuthorDetail[] = detailsRes.data || [];
         const targetCode = scriptId ? this.scriptService.getCodeFromId(scriptId) : this.scriptService.activeScript();
 
-        return authors.map(author => {
+        const enriched = rawAuthors.map(author => {
           const authorDetails = (author.details && author.details.length > 0) 
             ? author.details 
             : details.filter(d => d.authorId === author.id);
@@ -76,7 +82,22 @@ export class AuthorService {
             primaryBio: currentDetail?.biography || ''
           };
         });
+
+        return {
+          success: authorsRes.success ?? true,
+          message: authorsRes.message || 'Authors fetched successfully',
+          data: enriched,
+          page: authorsRes.page ?? 0,
+          size: authorsRes.size ?? 10,
+          totalElements: authorsRes.totalElements ?? enriched.length,
+          totalPages: authorsRes.totalPages || (enriched.length > 0 ? 1 : 1),
+          last: authorsRes.last ?? true
+        };
       })
     );
+  }
+
+  getEnrichedAuthors(scriptId?: number): Observable<Author[]> {
+    return this.getEnrichedAuthorsPaged(scriptId, { size: 100 }).pipe(map(res => res.data));
   }
 }

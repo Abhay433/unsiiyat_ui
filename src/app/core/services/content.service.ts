@@ -21,7 +21,7 @@ export class ContentService {
   filterContents(request: ContentFilterRequest = {}): Observable<PagedResponse<Content>> {
     const payload = {
       page: request.page ?? 0,
-      size: request.size ?? 200,
+      size: request.size ?? 10,
       sortBy: request.sortBy ?? 'id',
       sortDirection: request.sortDirection ?? 'desc',
       ...request
@@ -56,27 +56,28 @@ export class ContentService {
     return this.api.post<PagedResponse<ContentText>>('/api/content-texts/list', payload);
   }
 
-  saveContentText(text: ContentText): Observable<ApiResponse<void>> {
-    const payload: any = {
-      ...text,
-      contentId: text.contentId,
-      content_id: text.contentId,
-      scriptId: text.scriptId,
-      script_id: text.scriptId
+  saveContentText(contentText: { id?: number; contentId: number; scriptId: number; title: string; body: string }): Observable<ApiResponse<void>> {
+    const payload = {
+      id: contentText.id,
+      contentId: contentText.contentId,
+      scriptId: contentText.scriptId,
+      title: contentText.title,
+      body: contentText.body
     };
-    if (text.id) {
-      return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload);
-    }
-    // If id is not provided, look up existing record for (contentId, scriptId) to perform an UPDATE instead of a duplicate INSERT
-    return this.filterContentTexts({ contentId: text.contentId, scriptId: text.scriptId }).pipe(
-      switchMap(res => {
-        const existing = (res.data || []).find((t: any) => {
-          const cId = t.contentId ?? t.content_id ?? t.content?.id;
-          const sId = t.scriptId ?? t.script_id ?? t.script?.id;
-          return Number(cId) === Number(text.contentId) && Number(sId) === Number(text.scriptId);
-        });
-        const finalPayload = existing?.id ? { ...payload, id: existing.id } : payload;
-        return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', finalPayload);
+
+    return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload).pipe(
+      catchError((err) => {
+        if (err?.status === 400 || err?.status === 404) {
+          const fallbackPayload = {
+            id: contentText.id,
+            content: { id: contentText.contentId },
+            script: { id: contentText.scriptId },
+            title: contentText.title,
+            body: contentText.body
+          };
+          return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', fallbackPayload);
+        }
+        return throwError(() => err);
       }),
       catchError(() => this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload))
     );
@@ -120,7 +121,7 @@ export class ContentService {
             contentId,
             scriptId: urScriptId,
             title: scriptTexts.ur.title || contentData.title,
-            body: scriptTexts.ur.body
+            body: scriptTexts.ur.body || ''
           }));
         }
         if (scriptTexts.hi?.body || scriptTexts.hi?.title) {
@@ -129,7 +130,7 @@ export class ContentService {
             contentId,
             scriptId: hiScriptId,
             title: scriptTexts.hi.title || contentData.title,
-            body: scriptTexts.hi.body
+            body: scriptTexts.hi.body || ''
           }));
         }
         if (scriptTexts.en?.body || scriptTexts.en?.title) {
@@ -138,7 +139,7 @@ export class ContentService {
             contentId,
             scriptId: enScriptId,
             title: scriptTexts.en.title || contentData.title,
-            body: scriptTexts.en.body
+            body: scriptTexts.en.body || ''
           }));
         }
         return requests.length > 0 ? forkJoin(requests) : of([]);
@@ -146,31 +147,36 @@ export class ContentService {
     );
   }
 
-  // Get full enriched content listing with authors, genres, themes, and multi-script texts
-  getEnrichedContents(scriptId?: number): Observable<Content[]> {
+  // Get full enriched content listing with authors, genres, themes, and multi-script texts (Paged)
+  getEnrichedContentsPaged(scriptId?: number, request: ContentFilterRequest = {}): Observable<PagedResponse<Content>> {
     const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
     const targetCode = this.scriptService.getCodeFromId(sId);
+    const filterReq: ContentFilterRequest = {
+      page: request.page ?? 0,
+      size: request.size ?? 10,
+      ...request
+    };
 
     return forkJoin({
-      contentsRes: this.filterContents().pipe(catchError(() => of({ data: [] } as any))),
-      textsRes: this.filterContentTexts().pipe(catchError(() => of({ data: [] } as any))),
-      genresRes: this.cachedGenres ? of(this.cachedGenres) : this.taxonomyService.filterGenres().pipe(
+      contentsRes: this.filterContents(filterReq).pipe(catchError(() => of({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, last: true } as any))),
+      textsRes: this.filterContentTexts({ size: 200 }).pipe(catchError(() => of({ data: [] } as any))),
+      genresRes: this.cachedGenres ? of(this.cachedGenres) : this.taxonomyService.filterGenres({ size: 100 }).pipe(
         map(res => { this.cachedGenres = res.data || []; return this.cachedGenres; }),
         catchError(() => of([]))
       ),
-      themesRes: this.cachedThemes ? of(this.cachedThemes) : this.taxonomyService.filterThemes().pipe(
+      themesRes: this.cachedThemes ? of(this.cachedThemes) : this.taxonomyService.filterThemes({ size: 100 }).pipe(
         map(res => { this.cachedThemes = res.data || []; return this.cachedThemes; }),
         catchError(() => of([]))
       ),
       authorsRes: this.authorService.getEnrichedAuthors(sId).pipe(catchError(() => of([])))
     }).pipe(
       map(({ contentsRes, textsRes, genresRes, themesRes, authorsRes }) => {
-        const contents: Content[] = contentsRes.data || [];
+        const rawContents: Content[] = contentsRes.data || [];
         const texts: ContentText[] = textsRes.data || [];
         const genres: Genre[] = Array.isArray(genresRes) ? genresRes : ((genresRes as any)?.data || []);
         const themes: Theme[] = Array.isArray(themesRes) ? themesRes : ((themesRes as any)?.data || []);
 
-        return contents.map(item => {
+        const enriched = rawContents.map(item => {
           const itemTexts: ContentText[] = (item.contentTexts && item.contentTexts.length > 0)
             ? item.contentTexts
             : texts.filter(t => {
@@ -191,8 +197,23 @@ export class ContentService {
             primaryText: currentText
           };
         });
+
+        return {
+          success: contentsRes.success ?? true,
+          message: contentsRes.message || 'Contents fetched successfully',
+          data: enriched,
+          page: contentsRes.page ?? 0,
+          size: contentsRes.size ?? 10,
+          totalElements: contentsRes.totalElements ?? enriched.length,
+          totalPages: contentsRes.totalPages || (enriched.length > 0 ? 1 : 1),
+          last: contentsRes.last ?? true
+        };
       })
     );
+  }
+
+  getEnrichedContents(scriptId?: number): Observable<Content[]> {
+    return this.getEnrichedContentsPaged(scriptId, { size: 100 }).pipe(map(res => res.data));
   }
 
   // In-memory caching for taxonomy to prevent redundant network calls across views
