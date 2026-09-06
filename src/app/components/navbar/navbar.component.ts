@@ -141,11 +141,13 @@ export class NavbarComponent implements OnInit {
   }
 
   onSearch(event: Event) {
-    event.preventDefault();
+    if (event) {
+      event.preventDefault();
+    }
     const query = this.searchQuery().trim();
     if (query) {
       this.isSearchOpen.set(false);
-      this.router.navigate(['/poets'], { queryParams: { q: query } });
+      this.router.navigate(['/search'], { queryParams: { q: query } });
     }
   }
 

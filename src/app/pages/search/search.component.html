@@ -1,0 +1,272 @@
+<div class="search-page-wrapper">
+  <!-- Top Search Banner -->
+  <section class="search-hero">
+    <div class="unsiiyat-container">
+      <div class="search-hero-content">
+        <span class="hero-subtext font-display">UNSIIYAT LITERARY DISCOVERY</span>
+        <h1 class="hero-title font-display">
+          Search the <span class="gold-gradient-text">Poetic Realm</span>
+        </h1>
+        <p class="hero-desc">
+          Explore classical ghazals, renowned shayars, poetic couplets, and terminology across Urdu, Hindi & English.
+        </p>
+
+        <!-- Big Search Bar -->
+        <form class="search-bar-form" (submit)="onSearchSubmit()">
+          <div class="search-input-wrap">
+            <span class="search-lead-icon">🔍</span>
+            <input
+              type="text"
+              class="search-main-input"
+              [(ngModel)]="query"
+              name="searchQuery"
+              placeholder="Search by poem title, poet name, or keyword (e.g. jaan, farar, zohaib)..."
+              autocomplete="off"
+            />
+            <button *ngIf="query()" type="button" class="search-clear-action" (click)="query.set('')">✕</button>
+            <button type="submit" class="btn btn-gold search-submit-btn" [disabled]="loading()">
+              <span *ngIf="!loading()">Search</span>
+              <span *ngIf="loading()">Searching...</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Search Status & Script Meta Ribbon -->
+        <div *ngIf="searchData()" class="search-meta-ribbon">
+          <div class="meta-item">
+            <span class="meta-label">Query:</span>
+            <span class="meta-value font-mono">"{{ searchData()?.text }}"</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Detected Script:</span>
+            <span class="script-badge" [class.badge-ur]="searchData()?.detectedScript === 'ur'" [class.badge-hi]="searchData()?.detectedScript === 'hi'">
+              🌐 {{ searchData()?.detectedLanguage }} ({{ searchData()?.detectedScript }})
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Total Authors:</span>
+            <span class="meta-value">{{ searchData()?.authors?.length || 0 }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Genre Sections:</span>
+            <span class="meta-value">{{ searchData()?.resultsByGenre?.length || 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Results Container -->
+  <main class="unsiiyat-container search-results-body">
+    <!-- Loading State -->
+    <div *ngIf="loading()" class="search-loading-state">
+      <div class="poetic-spinner">✒️</div>
+      <p class="loading-text font-display">Searching manuscripts & collections...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorMessage() && !loading()" class="search-error-state poetic-card">
+      <span class="error-icon">⚠️</span>
+      <p>{{ errorMessage() }}</p>
+    </div>
+
+    <!-- No Results State -->
+    <div *ngIf="hasSearched() && !loading() && searchData() && searchData()?.authors?.length === 0 && searchData()?.resultsByGenre?.length === 0" class="search-empty-state poetic-card">
+      <div class="empty-emblem">📜</div>
+      <h3 class="empty-title font-display">No Matches Discovered</h3>
+      <p class="empty-desc">
+        We could not find any poets or poems matching <span class="empty-query">"{{ searchData()?.text }}"</span>.
+      </p>
+      <div class="empty-suggestions">
+        <span>Try searching for:</span>
+        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('jaan'); onSearchSubmit()">jaan</button>
+        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('farar'); onSearchSubmit()">farar</button>
+        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('Zohaib'); onSearchSubmit()">Zohaib</button>
+        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('Ghalib'); onSearchSubmit()">Ghalib</button>
+      </div>
+    </div>
+
+    <!-- 1. AUTHOR SECTION (Author Pehle) -->
+    <section *ngIf="searchData() && searchData()!.authors && searchData()!.authors.length > 0" class="results-section authors-section">
+      <div class="section-header-block">
+        <div class="header-left">
+          <span class="section-icon-badge">👤</span>
+          <div>
+            <h2 class="section-heading font-display">
+              Poets & Shayars <span class="font-urdu heading-native">شعراء / रचनाकार</span>
+            </h2>
+            <p class="section-subtext">Renowned literary figures matching your search</p>
+          </div>
+        </div>
+        <span class="count-pill">{{ searchData()!.authors.length }} Poets Found</span>
+      </div>
+
+      <!-- Authors Cards Grid -->
+      <div class="authors-grid">
+        <div *ngFor="let author of searchData()!.authors" class="author-result-card poetic-card">
+          <div class="author-card-top">
+            <div class="author-avatar-wrap">
+              <span class="author-initial font-display">{{ getAuthorInitial(author) }}</span>
+            </div>
+            <div class="author-main-info">
+              <h3 class="author-title font-display" [ngClass]="scriptService.fontClass()">
+                {{ getAuthorName(author) }}
+              </h3>
+              <div class="author-meta-line">
+                <span class="meta-tag">Master Shayar</span>
+                <span *ngIf="author.birthDate" class="era-tag">
+                  {{ author.birthDate.slice(0, 4) }} <ng-container *ngIf="author.deathDate">– {{ author.deathDate.slice(0, 4) }}</ng-container>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-script Names Pill Row -->
+          <div class="author-scripts-preview">
+            <span *ngIf="author.urName" class="script-subtag font-urdu" title="Urdu Script">{{ author.urName }}</span>
+            <span *ngIf="author.hiName" class="script-subtag font-hindi" title="Hindi Script">{{ author.hiName }}</span>
+            <span *ngIf="author.enName" class="script-subtag font-sans" title="English / Latin">{{ author.enName }}</span>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-action-row">
+            <a [routerLink]="['/poet', author.id]" class="btn btn-outline-gold btn-sm">
+              View Poet Profile →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Load More Button (Dummy) -->
+      <div class="section-load-more-wrap">
+        <button type="button" class="btn btn-secondary-load" (click)="loadMore('authors')">
+          <span>Load More Poets</span>
+          <span class="load-icon">▾</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. GENRE-WISE CONTENT SECTIONS (Alag Alag Section Hoga) -->
+    <ng-container *ngIf="searchData() && searchData()!.resultsByGenre && searchData()!.resultsByGenre.length > 0">
+      <section *ngFor="let genreGroup of searchData()!.resultsByGenre" class="results-section genre-content-section">
+        <!-- Genre Header -->
+        <div class="section-header-block">
+          <div class="header-left">
+            <span class="section-icon-badge">📜</span>
+            <div>
+              <h2 class="section-heading font-display">
+                {{ genreGroup.genreName }}
+                <span class="heading-genre-slug font-mono">({{ genreGroup.genreSlug }})</span>
+              </h2>
+              <p class="section-subtext">Poetic works categorized under {{ genreGroup.genreName | lowercase }}</p>
+            </div>
+          </div>
+          <span class="count-pill">{{ genreGroup.totalCount }} {{ genreGroup.genreName }} Found</span>
+        </div>
+
+        <!-- Content Cards Grid -->
+        <div class="contents-grid">
+          <div *ngFor="let poem of genreGroup.contents" class="content-result-card poetic-card">
+            <!-- Card Header: Title & Poet -->
+            <div class="content-card-head">
+              <div class="content-heading-group">
+                <span class="genre-mini-pill">{{ genreGroup.genreName }}</span>
+                <h3 class="content-poem-title" [ngClass]="scriptService.fontClass()">
+                  {{ getContentTitle(poem) }}
+                </h3>
+              </div>
+              <div class="content-poet-byline">
+                <span class="poet-pen-icon">✒️</span>
+                <span class="poet-name">{{ getAuthorName(poem.author) }}</span>
+              </div>
+            </div>
+
+            <!-- First Two Lines of Body (Couplet Preview) -->
+            <div class="couplet-preview-box">
+              <div class="couplet-ornament">❝</div>
+              <div class="couplet-lines" [ngClass]="scriptService.fontClass()">
+                <ng-container *ngIf="getFirstTwoLines(poem).length > 0; else noLinesBlock">
+                  <p class="couplet-line line-1">{{ getFirstTwoLines(poem)[0] }}</p>
+                  <p *ngIf="getFirstTwoLines(poem).length > 1" class="couplet-line line-2">{{ getFirstTwoLines(poem)[1] }}</p>
+                </ng-container>
+                <ng-template #noLinesBlock>
+                  <p class="couplet-line muted-fallback">View full verses inside...</p>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- Card Bottom Action -->
+            <div class="content-card-footer">
+              <a [routerLink]="['/content', poem.id]" class="btn btn-read-poem">
+                <span>Read Full {{ genreGroup.genreName }}</span>
+                <span class="arrow-icon">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Load More Button (Dummy) -->
+        <div class="section-load-more-wrap">
+          <button type="button" class="btn btn-secondary-load" (click)="loadMore(genreGroup.genreName)">
+            <span>Load More {{ genreGroup.genreName }}</span>
+            <span class="load-icon">▾</span>
+          </button>
+        </div>
+      </section>
+    </ng-container>
+
+    <!-- 3. WORD MEANING / DICTIONARY SECTION (Static for now at the end) -->
+    <section class="results-section dictionary-section">
+      <div class="section-header-block">
+        <div class="header-left">
+          <span class="section-icon-badge">📖</span>
+          <div>
+            <h2 class="section-heading font-display">
+              Poetic Dictionary & Word Meanings
+              <span class="font-urdu heading-native">الفاظ و معانی / लफ़्ज़ व मानी</span>
+            </h2>
+            <p class="section-subtext">Classical Urdu & Hindi vocabulary, literary nuances, and metrical contexts</p>
+          </div>
+        </div>
+        <span class="count-pill">Lughat Glossary</span>
+      </div>
+
+      <!-- Dictionary Cards Grid -->
+      <div class="dictionary-grid">
+        <div *ngFor="let item of staticWordMeanings" class="dictionary-word-card poetic-card">
+          <div class="word-card-top">
+            <div class="word-head-block">
+              <h3 class="word-title font-display">{{ item.word }}</h3>
+              <span class="word-roman font-mono">[{{ item.transliteration }}]</span>
+            </div>
+            <span class="part-of-speech-badge">{{ item.partOfSpeech }}</span>
+          </div>
+
+          <p class="word-definition">{{ item.definition }}</p>
+
+          <div class="word-synonyms-block">
+            <span class="synonym-label">Synonyms:</span>
+            <span class="synonym-text">{{ item.synonyms }}</span>
+          </div>
+
+          <!-- Example Couplet Reference -->
+          <div class="word-example-quote">
+            <span class="quote-tag">Literary Reference:</span>
+            <p class="quote-verse" [ngClass]="scriptService.fontClass()">
+              {{ item.exampleCouplet }}
+            </p>
+            <span class="quote-poet">— {{ item.poet }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Load More Button (Dummy) -->
+      <div class="section-load-more-wrap">
+        <button type="button" class="btn btn-secondary-load" (click)="loadMore('words')">
+          <span>Load More Words</span>
+          <span class="load-icon">▾</span>
+        </button>
+      </div>
+    </section>
+  </main>
+</div>

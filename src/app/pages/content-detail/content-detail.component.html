@@ -1,15 +1,14 @@
 <div class="reader-view unsiiyat-container animate-fade-in" *ngIf="content()">
-  <!-- Reading Control Center (Sticky Bar) -->
-  <div class="reader-control-bar poetic-card">
-    <div class="control-left">
+  <!-- Minimal Top Header: Navigation, Edit Kalam & Language Switcher -->
+  <div class="reader-top-nav animate-fade-in">
+    <div class="nav-left">
       <!-- Back Navigation -->
-      <a routerLink="/" class="back-link">&larr; Home</a>
-      <span class="divider-dot">•</span>
-      <!-- Genre Badge -->
-      <span class="pill-badge pill-genre">{{ getGenreName() }}</span>
+      <button type="button" class="back-link" (click)="goBack()" title="Go Back">
+        &larr; Back
+      </button>
       <span class="divider-dot">•</span>
 
-      <!-- Toggle Edit Button -->
+      <!-- Edit Kalam Button (Preserved for edit purpose) -->
       <button *ngIf="!isEditing()" type="button" class="btn-edit-kalam-pill" (click)="startEditing()"
         title="Edit this poem directly on this page">
         <span class="edit-icon">✏️</span>
@@ -22,7 +21,7 @@
       </span>
     </div>
 
-    <!-- Center Controls: Script Switcher Tabs (when reading) or Language editor tabs (when editing) -->
+    <!-- Script Switcher Tabs (when reading) or Language editor tabs (when editing) -->
     <div class="reader-script-tabs" *ngIf="!isEditing()">
       <button *ngFor="let s of scriptService.scripts" class="reader-script-btn"
         [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s.code)">
@@ -45,62 +44,18 @@
       </button>
     </div>
 
-    <div class="control-right">
-      <!-- When Editing: Top Save & Cancel -->
-      <ng-container *ngIf="isEditing()">
-        <button type="button" class="tool-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" (click)="deleteCurrentContent()" title="Delete this Kalam">
-          🗑️ Delete
-        </button>
-        <button type="button" class="tool-btn cancel-edit-btn" (click)="cancelEditing()">
-          ✕ Cancel
-        </button>
-        <button type="button" class="btn-save-kalam-top" (click)="saveEditedContent()" [disabled]="isSaving()">
-          <span *ngIf="isSaving()" class="btn-spinner"></span>
-          <span>💾 Save Changes</span>
-        </button>
-      </ng-container>
-
-      <!-- When Reading: Standard Tools -->
-      <ng-container *ngIf="!isEditing()">
-        <!-- Font Resizer -->
-        <div class="font-resizer">
-          <button class="tool-btn" (click)="changeFontSize(-2)" title="Decrease font size">A-</button>
-          <button class="tool-btn" (click)="changeFontSize(2)" title="Increase font size">A+</button>
-        </div>
-
-        <!-- Dictionary Lookup Trigger -->
-        <button class="tool-btn dict-btn" (click)="openDictionary('')" title="Search Word in Dictionary">
-          📖 {{ scriptService.translate('meaning_title') }}
-        </button>
-
-        <!-- Audio Button with Waveform -->
-        <button class="tool-btn audio-btn" [class.active]="isPlayingAudio()" (click)="toggleAudio()"
-          title="Listen to Recitation">
-          <div *ngIf="isPlayingAudio()" class="audio-waveform">
-            <span class="waveform-bar"></span>
-            <span class="waveform-bar"></span>
-            <span class="waveform-bar"></span>
-          </div>
-          <span>{{ isPlayingAudio() ? 'Reciting (0:' + (audioSeconds() < 10 ? '0' : '' ) + audioSeconds() + ')'
-              : '▶ Recitation' }}</span>
-        </button>
-
-        <!-- Bookmark Button -->
-        <button class="tool-btn bookmark-btn" [class.bookmarked]="isBookmarked()" (click)="toggleBookmark()"
-          title="Bookmark Ghazal">
-          {{ isBookmarked() ? '★ Saved' : '☆ Save' }}
-        </button>
-
-        <!-- Share Button -->
-        <button class="tool-btn share-btn" (click)="shareKalam()" title="Share Link">
-          🔗 Share
-        </button>
-
-        <!-- Full Ghazal Copy -->
-        <button class="tool-btn copy-all-btn" (click)="copyFullGhazal()" title="Copy entire ghazal">
-          {{ copiedIndex() === -1 ? '✓ Copied' : '📋 Copy All' }}
-        </button>
-      </ng-container>
+    <!-- When Editing: Top Save & Cancel Actions -->
+    <div class="nav-right" *ngIf="isEditing()">
+      <button type="button" class="tool-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" (click)="deleteCurrentContent()" title="Delete this Kalam">
+        🗑️ Delete
+      </button>
+      <button type="button" class="tool-btn cancel-edit-btn" (click)="cancelEditing()">
+        ✕ Cancel
+      </button>
+      <button type="button" class="btn-save-kalam-top" (click)="saveEditedContent()" [disabled]="isSaving()">
+        <span *ngIf="isSaving()" class="btn-spinner"></span>
+        <span>💾 Save Changes</span>
+      </button>
     </div>
   </div>
 

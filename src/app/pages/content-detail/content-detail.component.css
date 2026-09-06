@@ -9,30 +9,28 @@
   margin: 0 auto;
 }
 
-/* Floating Control Center Bar */
-.reader-control-bar {
+/* Minimal Top Header - Borderless, Clean & Unboxed */
+.reader-top-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
-  margin-bottom: 16px;
-  position: sticky;
-  top: 72px;
-  z-index: 100;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: var(--bg-glass-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  gap: 12px;
+  padding: 8px 0 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-card);
+  gap: 16px;
   flex-wrap: wrap;
 }
 
-.control-left {
+.nav-left {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .back-link {
@@ -40,6 +38,14 @@
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 600;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
   transition: all var(--transition-fast);
 }
 
@@ -232,12 +238,12 @@
    ========================================================================== */
 
 .rekhta-reading-card {
-  padding: 40px 48px 60px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  margin-top: 16px;
+  padding: 20px 0 60px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  margin-top: 8px;
   position: relative;
 }
 

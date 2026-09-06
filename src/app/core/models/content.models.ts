@@ -50,3 +50,5 @@ export interface Couplet {
   secondLine: string;
   meaning?: string;
 }
+
+export type ContentDto = Content;

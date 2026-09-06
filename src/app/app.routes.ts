@@ -7,10 +7,12 @@ import { GenresComponent } from './pages/genres/genres.component';
 import { ThemesComponent } from './pages/themes/themes.component';
 import { StudioComponent } from './pages/studio/studio.component';
 import { AdminLoginComponent } from './pages/admin-login/admin-login.component';
+import { SearchComponent } from './pages/search/search.component';
 import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent, title: 'Unsiiyat (انسیت) - Urdu & Hindi Poetry Realm' },
+  { path: 'search', component: SearchComponent, title: 'Search - Unsiiyat Poetry Realm' },
   { path: 'poets', component: PoetsComponent, title: 'Shayars & Poets - Unsiiyat' },
   { path: 'poet/:id', component: PoetDetailComponent, title: 'Poet Biography & Ghazals - Unsiiyat' },
   { path: 'content/:id', component: ContentDetailComponent, title: 'Ghazal Reader - Unsiiyat' },
@@ -21,4 +23,3 @@ export const routes: Routes = [
   { path: 'studio', component: StudioComponent, canActivate: [adminGuard], title: 'Unsiiyat Studio & Admin' },
   { path: '**', redirectTo: '' }
 ];
-

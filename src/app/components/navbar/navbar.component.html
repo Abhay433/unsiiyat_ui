@@ -78,6 +78,9 @@
               </div>
             </div>
           </div>
+          <div *ngIf="searchQuery()" class="dropdown-footer-all" (click)="onSearch($event)">
+            <span>Explore all results for <strong>"{{ searchQuery() }}"</strong> →</span>
+          </div>
         </div>
       </div>
 

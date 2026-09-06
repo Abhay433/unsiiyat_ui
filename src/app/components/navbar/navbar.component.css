@@ -405,3 +405,19 @@
     display: none;
   }
 }
+
+.dropdown-footer-all {
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  color: var(--accent-gold);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.dropdown-footer-all:hover {
+  background: var(--bg-card-hover);
+  color: var(--accent-gold-light);
+}

@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ScriptService, ScriptCode } from '../../core/services/script.service';
@@ -23,6 +23,15 @@ export class ContentDetailComponent implements OnInit {
   readonly seedService = inject(SeedDataService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
+
+  goBack() {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
 
   contentId = signal<number>(1);
   content = signal<any>(null);

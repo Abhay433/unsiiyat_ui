@@ -1,0 +1,726 @@
+/* ==========================================================================
+   UNSIIYAT - SEARCH RESULTS PAGE STYLING
+   ========================================================================== */
+
+.search-page-wrapper {
+  min-height: 100vh;
+  padding-bottom: 5rem;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Hero & Search Bar
+   -------------------------------------------------------------------------- */
+.search-hero {
+  position: relative;
+  padding: 4rem 1.5rem 3rem;
+  background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12) 0%, rgba(245, 158, 11, 0.05) 45%, transparent 75%),
+              var(--bg-primary);
+  border-bottom: 1px solid var(--border-card);
+  text-align: center;
+}
+
+.search-hero-content {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.hero-subtext {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  line-height: 1.2;
+}
+
+.hero-desc {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Big Search Bar Form */
+.search-bar-form {
+  margin-bottom: 1.5rem;
+}
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card-highlight);
+  border-radius: var(--radius-full);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  padding: 0.4rem 0.5rem 0.4rem 1.25rem;
+  transition: var(--transition-fast);
+}
+
+.search-input-wrap:focus-within {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-glow), 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.search-lead-icon {
+  font-size: 1.15rem;
+  margin-right: 0.75rem;
+  color: var(--text-muted);
+}
+
+.search-main-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.search-main-input::placeholder {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.search-clear-action {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  transition: color 0.15s;
+}
+
+.search-clear-action:hover {
+  color: var(--accent-ruby);
+}
+
+.search-submit-btn {
+  border-radius: var(--radius-full);
+  padding: 0.65rem 1.6rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Metadata Ribbon */
+.search-meta-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.meta-label {
+  color: var(--text-muted);
+}
+
+.meta-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.script-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue-light);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 0.15rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.script-badge.badge-ur {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-gold-light);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.script-badge.badge-hi {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan-light);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   Body & Section Architecture
+   -------------------------------------------------------------------------- */
+.search-results-body {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+/* Section Header Block */
+.section-header-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-icon-badge {
+  font-size: 1.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-card);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.2rem 0;
+  letter-spacing: 0.02em;
+}
+
+.heading-native {
+  font-size: 1.15rem;
+  color: var(--accent-gold);
+  margin-left: 0.5rem;
+  font-weight: 400;
+}
+
+.heading-genre-slug {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.section-subtext {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.count-pill {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   1. Authors Grid
+   -------------------------------------------------------------------------- */
+.authors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.author-result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.author-result-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-gold);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(245, 158, 11, 0.1);
+}
+
+.author-card-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.author-avatar-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border: 2px solid var(--border-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.author-initial {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent-gold-light);
+}
+
+.author-main-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.author-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.author-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.meta-tag {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent-blue-light);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-xs);
+  font-weight: 500;
+}
+
+.author-scripts-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.script-subtag {
+  font-size: 0.8rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.card-action-row {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   2. Content Grid (Genre Sections)
+   -------------------------------------------------------------------------- */
+.contents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
+
+.content-result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.content-result-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-blue);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.12);
+}
+
+.content-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.genre-mini-pill {
+  align-self: flex-start;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+
+.content-poem-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0.2rem 0 0 0;
+  line-height: 1.4;
+}
+
+.content-poet-byline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.poet-pen-icon {
+  font-size: 0.85rem;
+}
+
+.poet-name {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Couplet Box - First 2 lines of body */
+.couplet-preview-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  position: relative;
+}
+
+.couplet-ornament {
+  position: absolute;
+  top: -6px;
+  right: 12px;
+  font-size: 1.8rem;
+  color: rgba(245, 158, 11, 0.18);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.couplet-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.couplet-line {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0;
+  font-style: italic;
+}
+
+.couplet-line.line-1 {
+  font-weight: 500;
+}
+
+.couplet-line.line-2 {
+  color: var(--text-secondary);
+}
+
+.couplet-line.muted-fallback {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.content-card-footer {
+  margin-top: auto;
+}
+
+.btn-read-poem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-blue-light);
+  text-decoration: none;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.btn-read-poem:hover {
+  color: var(--accent-cyan-light);
+  transform: translateX(4px);
+}
+
+/* --------------------------------------------------------------------------
+   3. Poetic Dictionary & Word Meanings (Static)
+   -------------------------------------------------------------------------- */
+.dictionary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.dictionary-word-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dictionary-word-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-card-highlight);
+}
+
+.word-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.word-head-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.word-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--accent-gold-light);
+  margin: 0;
+}
+
+.word-roman {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.part-of-speech-badge {
+  font-size: 0.7rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
+.word-definition {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.word-synonyms-block {
+  font-size: 0.8rem;
+  display: flex;
+  gap: 0.4rem;
+  color: var(--text-muted);
+}
+
+.synonym-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.word-example-quote {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--border-card);
+}
+
+.quote-tag {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.quote-verse {
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem 0;
+  white-space: pre-line;
+}
+
+.quote-poet {
+  display: block;
+  font-size: 0.75rem;
+  text-align: right;
+  color: var(--accent-gold);
+}
+
+/* --------------------------------------------------------------------------
+   Load More Section Wrap (Dummy buttons)
+   -------------------------------------------------------------------------- */
+.section-load-more-wrap {
+  margin-top: 1.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-secondary-load {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-card);
+  color: var(--text-secondary);
+  padding: 0.6rem 1.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-load:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-card-highlight);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.load-icon {
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-secondary-load:hover .load-icon {
+  transform: translateY(2px);
+}
+
+/* --------------------------------------------------------------------------
+   Loading, Empty, and Error States
+   -------------------------------------------------------------------------- */
+.search-loading-state,
+.search-empty-state,
+.search-error-state {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+}
+
+.poetic-spinner {
+  font-size: 2.5rem;
+  animation: floatBounce 1.5s infinite ease-in-out;
+  margin-bottom: 1rem;
+}
+
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-10deg); }
+}
+
+.loading-text {
+  font-size: 1.15rem;
+  color: var(--accent-gold);
+}
+
+.search-empty-state {
+  max-width: 550px;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+}
+
+.empty-emblem {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.empty-title {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.empty-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.empty-query {
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.empty-suggestions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Layout
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .search-hero {
+    padding: 2.5rem 1rem 2rem;
+  }
+
+  .section-header-block {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .contents-grid,
+  .authors-grid,
+  .dictionary-grid {
+    grid-template-columns: 1fr;
+  }
+}

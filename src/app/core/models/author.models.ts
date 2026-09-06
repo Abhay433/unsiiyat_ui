@@ -39,3 +39,5 @@ export interface AuthorDetailFilterRequest extends BaseFilterRequest {
   scriptId?: number;
   name?: string;
 }
+
+export type AuthorDto = Author;
