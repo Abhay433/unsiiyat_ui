@@ -61,7 +61,7 @@ export class AdminLoginComponent implements OnInit {
         this.loading.set(false);
         if (res.success && res.data) {
           const role = res.data.role?.toUpperCase();
-          if (role === 'ADMIN') {
+          if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'PLATFORM_ADMIN') {
             this.successMsg.set('Admin credentials verified. Welcome to Unsiiyat Studio.');
             setTimeout(() => {
               this.router.navigateByUrl(this.returnUrl());

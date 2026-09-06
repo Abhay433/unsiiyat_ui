@@ -79,12 +79,25 @@
 
     <!-- Sidebar Bottom User Profile -->
     <div class="sidebar-user-footer">
-      <div class="user-avatar-circle">
-        <span>👑</span>
+      <div class="user-avatar-circle" (click)="triggerProfilePhotoUpload(profilePhotoInput)" title="Click to upload profile photo">
+        <img *ngIf="authService.currentUser()?.profilePictureUrl" 
+             [src]="authService.currentUser()?.profilePictureUrl" 
+             alt="Profile" 
+             class="user-avatar-img" />
+        <span *ngIf="!authService.currentUser()?.profilePictureUrl">👑</span>
+        <div class="user-avatar-overlay">
+          <span *ngIf="!isUploadingProfilePhoto()">📷</span>
+          <span *ngIf="isUploadingProfilePhoto()" class="upload-spin">⏳</span>
+        </div>
       </div>
+      <input type="file" #profilePhotoInput hidden accept="image/*" (change)="onProfilePhotoSelected($event)" />
+
       <div class="user-details-text" *ngIf="!isSidebarCollapsed()">
         <span class="user-profile-name">{{ authService.currentUser()?.name || 'Administrator' }}</span>
-        <span class="user-profile-role">Platform Admin</span>
+        <span class="user-profile-role">
+          Platform Admin
+          <span class="change-photo-badge" (click)="triggerProfilePhotoUpload(profilePhotoInput)">• 📷 Photo</span>
+        </span>
       </div>
       <button *ngIf="!isSidebarCollapsed()" class="user-logout-icon-btn" (click)="logoutAdmin()" title="Sign Out Admin">
         <span>🚪</span>
@@ -481,7 +494,8 @@
                 <td class="col-main">
                   <div class="poet-table-identity">
                     <div class="poet-mini-avatar">
-                      <span>👤</span>
+                      <img *ngIf="getAuthorAvatarUrl(a)" [src]="getAuthorAvatarUrl(a)" [alt]="a.primaryName" class="poet-table-avatar-img" />
+                      <span *ngIf="!getAuthorAvatarUrl(a)">👤</span>
                     </div>
                     <div>
                       <strong class="poet-table-name" [ngClass]="scriptService.fontClass()">
@@ -555,6 +569,39 @@
     <!-- TAB 5: AUTH / PLATFORM ADMINS MANAGEMENT                                -->
     <!-- ======================================================================= -->
     <div *ngIf="activeTab() === 'auth'" class="tab-view-container animate-fade-in">
+      
+      <!-- Current Admin Profile Card with Photo Upload -->
+      <div class="admin-profile-banner-card">
+        <div class="admin-banner-avatar-wrap">
+          <div class="admin-banner-avatar" (click)="triggerProfilePhotoUpload(profilePhotoInputAuth)" title="Click to upload profile photo">
+            <img *ngIf="authService.currentUser()?.profilePictureUrl" 
+                 [src]="authService.currentUser()?.profilePictureUrl" 
+                 alt="Profile" 
+                 class="admin-banner-avatar-img" />
+            <span *ngIf="!authService.currentUser()?.profilePictureUrl" class="admin-banner-crown">👑</span>
+            <div class="admin-banner-avatar-overlay">
+              <span *ngIf="!isUploadingProfilePhoto()">📷</span>
+              <span *ngIf="isUploadingProfilePhoto()" class="upload-spin">⏳</span>
+            </div>
+          </div>
+          <input type="file" #profilePhotoInputAuth hidden accept="image/*" (change)="onProfilePhotoSelected($event)" />
+        </div>
+
+        <div class="admin-banner-info">
+          <div class="admin-banner-name-row">
+            <h2 class="admin-banner-name">{{ authService.currentUser()?.name || 'Platform Administrator' }}</h2>
+            <span class="pill-badge pill-admin">Super Admin</span>
+          </div>
+          <p class="admin-banner-email">📧 {{ authService.currentUser()?.email || 'admin@unsiiyat.org' }}</p>
+          <div class="admin-banner-actions">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="triggerProfilePhotoUpload(profilePhotoInputAuth)" [disabled]="isUploadingProfilePhoto()">
+              <span>📷 {{ authService.currentUser()?.profilePictureUrl ? 'Change Profile Photo' : 'Upload Profile Photo' }}</span>
+            </button>
+            <span class="admin-upload-note" *ngIf="isUploadingProfilePhoto()">Uploading to Cloudflare R2...</span>
+          </div>
+        </div>
+      </div>
+
       <div class="admin-data-card">
         <div class="table-responsive">
           <table class="quill-table">
@@ -571,7 +618,11 @@
               <tr *ngFor="let u of pagedAdmins()">
                 <td class="col-main">
                   <div class="admin-user-cell">
-                    <span class="crown-icon">👑</span>
+                    <img *ngIf="authService.currentUser()?.profilePictureUrl && u.email === authService.currentUser()?.email" 
+                         [src]="authService.currentUser()?.profilePictureUrl" 
+                         alt="Profile" 
+                         class="admin-table-avatar-img" />
+                    <span *ngIf="!authService.currentUser()?.profilePictureUrl || u.email !== authService.currentUser()?.email" class="crown-icon">👑</span>
                     <strong>{{ u.name }}</strong>
                   </div>
                 </td>
@@ -1039,21 +1090,24 @@
         <!-- Add Admin User Form -->
         <form *ngIf="activeTab() === 'auth'" (submit)="saveAdminUser()">
           <div class="form-group">
-            <label class="form-label">Full Name</label>
+            <label class="form-label">Full Name <span class="required-star">*</span></label>
             <input type="text" class="form-input" placeholder="e.g. Diwan Security Officer"
               [(ngModel)]="newAdminForm().name" name="name" required />
           </div>
           <div class="form-group">
-            <label class="form-label">Email Address</label>
+            <label class="form-label">Email Address <span class="required-star">*</span></label>
             <input type="email" class="form-input" placeholder="admin@unsiiyat.org" [(ngModel)]="newAdminForm().email"
               name="email" required />
           </div>
           <div class="form-group">
+            <label class="form-label">Password <span class="required-star">*</span></label>
+            <input type="password" class="form-input" placeholder="Min. 6 characters"
+              [(ngModel)]="newAdminForm().password" name="password" minlength="6" required />
+          </div>
+          <div class="form-group">
             <label class="form-label">Role</label>
-            <select class="form-select" [(ngModel)]="newAdminForm().role" name="role">
-              <option value="PLATFORM_ADMIN">PLATFORM_ADMIN</option>
-              <option value="CONTENT_EDITOR">CONTENT_EDITOR</option>
-              <option value="MODERATOR">MODERATOR</option>
+            <select class="form-select" [(ngModel)]="newAdminForm().role" name="role" disabled>
+              <option value="ADMIN">ADMIN (Default)</option>
             </select>
           </div>
           <button type="submit" class="btn btn-blue btn-block">Create Administrator</button>

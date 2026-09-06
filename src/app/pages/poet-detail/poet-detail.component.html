@@ -1,4 +1,11 @@
 <div class="poet-detail-view unsiiyat-container animate-fade-in" *ngIf="poet()">
+  <!-- Status Alert Banner -->
+  <div *ngIf="uploadStatusMsg()" class="status-toast-bar animate-fade-in"
+    [class.alert-success]="uploadStatusMsg()?.type === 'success'" [class.alert-error]="uploadStatusMsg()?.type === 'error'">
+    <span class="status-icon">{{ uploadStatusMsg()?.type === 'success' ? '✓' : '⚠️' }}</span>
+    <span class="status-text">{{ uploadStatusMsg()?.text }}</span>
+  </div>
+
   <!-- Back Nav -->
   <div class="detail-nav-bar flex-between">
     <a routerLink="/poets" class="back-link">&larr; Back to All Poets (تمام شعراء)</a>
@@ -8,8 +15,18 @@
   <!-- Hero Profile Banner -->
   <div class="poet-hero-banner poetic-card">
     <div class="poet-hero-flex">
-      <div class="poet-portrait-ring-lg">
-        <img [src]="poet().avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet().primaryName" />
+      <div class="poet-portrait-wrap">
+        <div class="poet-portrait-ring-lg" (click)="triggerPhotoUpload(authorPhotoInput)" title="Click to upload/change author photo">
+          <img [src]="poet().avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet().primaryName" />
+          <div class="poet-portrait-overlay">
+            <span *ngIf="!isUploading()">📷 Change Photo</span>
+            <span *ngIf="isUploading()" class="poet-upload-spin">⏳</span>
+          </div>
+        </div>
+        <input type="file" #authorPhotoInput hidden accept="image/*" (change)="onAuthorPhotoSelected($event)" />
+        <button type="button" class="btn-poet-upload-pill" (click)="triggerPhotoUpload(authorPhotoInput)" [disabled]="isUploading()">
+          <span>📷 {{ isUploading() ? 'Uploading...' : 'Upload Photo' }}</span>
+        </button>
       </div>
 
       <div class="poet-hero-details">

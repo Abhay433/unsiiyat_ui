@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, catchError, switchMap, throwError } from 'rxjs';
+import { Observable, forkJoin, map, of, catchError, switchMap, throwError, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { Content, ContentText, ContentFilterRequest, ContentTextFilterRequest } from '../models/content.models';
 import { Genre, Theme } from '../models/taxonomy.models';
@@ -18,6 +18,12 @@ export class ContentService {
   private readonly authorService = inject(AuthorService);
   private readonly scriptService = inject(ScriptService);
 
+  private cachedTexts: ContentText[] | null = null;
+
+  clearCache() {
+    this.cachedTexts = null;
+  }
+
   filterContents(request: ContentFilterRequest = {}): Observable<PagedResponse<Content>> {
     const payload = {
       page: request.page ?? 0,
@@ -30,11 +36,15 @@ export class ContentService {
   }
 
   saveContent(content: Content): Observable<ApiResponse<Content>> {
-    return this.api.post<ApiResponse<Content>>('/api/contents/addOrUpdate', content);
+    return this.api.post<ApiResponse<Content>>('/api/contents/addOrUpdate', content).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   deleteContent(content: { id: number }): Observable<ApiResponse<string>> {
-    return this.api.post<ApiResponse<string>>('/api/contents/delete', content);
+    return this.api.post<ApiResponse<string>>('/api/contents/delete', content).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   filterContentTexts(request: ContentTextFilterRequest = {}): Observable<PagedResponse<ContentText>> {
@@ -66,6 +76,7 @@ export class ContentService {
     };
 
     return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload).pipe(
+      tap(() => this.clearCache()),
       catchError((err) => {
         if (err?.status === 400 || err?.status === 404) {
           const fallbackPayload = {
@@ -75,11 +86,15 @@ export class ContentService {
             title: contentText.title,
             body: contentText.body
           };
-          return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', fallbackPayload);
+          return this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', fallbackPayload).pipe(
+            tap(() => this.clearCache())
+          );
         }
         return throwError(() => err);
       }),
-      catchError(() => this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload))
+      catchError(() => this.api.post<ApiResponse<void>>('/api/content-texts/addOrUpdate', payload).pipe(
+        tap(() => this.clearCache())
+      ))
     );
   }
 
@@ -157,36 +172,34 @@ export class ContentService {
       ...request
     };
 
+    const texts$ = this.cachedTexts 
+      ? of(this.cachedTexts) 
+      : this.filterContentTexts({ size: 200 }).pipe(
+          map(res => { this.cachedTexts = res.data || []; return this.cachedTexts; }),
+          catchError(() => of([]))
+        );
+
     return forkJoin({
       contentsRes: this.filterContents(filterReq).pipe(catchError(() => of({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, last: true } as any))),
-      textsRes: this.filterContentTexts({ size: 200 }).pipe(catchError(() => of({ data: [] } as any))),
-      genresRes: this.cachedGenres ? of(this.cachedGenres) : this.taxonomyService.filterGenres({ size: 100 }).pipe(
-        map(res => { this.cachedGenres = res.data || []; return this.cachedGenres; }),
-        catchError(() => of([]))
-      ),
-      themesRes: this.cachedThemes ? of(this.cachedThemes) : this.taxonomyService.filterThemes({ size: 100 }).pipe(
-        map(res => { this.cachedThemes = res.data || []; return this.cachedThemes; }),
-        catchError(() => of([]))
-      ),
-      authorsRes: this.authorService.getEnrichedAuthors(sId).pipe(catchError(() => of([])))
+      texts: texts$,
+      genres: this.taxonomyService.getAllGenres().pipe(catchError(() => of([]))),
+      themes: this.taxonomyService.getAllThemes().pipe(catchError(() => of([]))),
+      authors: this.authorService.getEnrichedAuthors(sId).pipe(catchError(() => of([])))
     }).pipe(
-      map(({ contentsRes, textsRes, genresRes, themesRes, authorsRes }) => {
+      map(({ contentsRes, texts, genres, themes, authors }) => {
         const rawContents: Content[] = contentsRes.data || [];
-        const texts: ContentText[] = textsRes.data || [];
-        const genres: Genre[] = Array.isArray(genresRes) ? genresRes : ((genresRes as any)?.data || []);
-        const themes: Theme[] = Array.isArray(themesRes) ? themesRes : ((themesRes as any)?.data || []);
 
         const enriched = rawContents.map(item => {
           const itemTexts: ContentText[] = (item.contentTexts && item.contentTexts.length > 0)
             ? item.contentTexts
-            : texts.filter(t => {
+            : (texts || []).filter(t => {
                 const cId = t.contentId ?? (t as any).content_id ?? (t as any).content?.id;
                 return Number(cId) === Number(item.id);
               });
           const currentText = itemTexts.find((t: ContentText) => this.scriptService.isScriptMatch(t, targetCode)) || itemTexts[0] || item.primaryText;
-          const author = item.author || authorsRes.find(a => a.id === item.authorId);
-          const genre = item.genre || genres.find((g: Genre) => g.id === item.genreId);
-          const itemThemes = themes.filter((t: Theme) => item.themeIds?.includes(t.id!));
+          const author = item.author || (authors || []).find(a => a.id === item.authorId);
+          const genre = item.genre || (genres || []).find((g: Genre) => g.id === item.genreId);
+          const itemThemes = (themes || []).filter((t: Theme) => item.themeIds?.includes(t.id!));
 
           return {
             ...item,
@@ -216,9 +229,6 @@ export class ContentService {
     return this.getEnrichedContentsPaged(scriptId, { size: 100 }).pipe(map(res => res.data));
   }
 
-  // In-memory caching for taxonomy to prevent redundant network calls across views
-  private cachedGenres: Genre[] | null = null;
-  private cachedThemes: Theme[] | null = null;
 
   // Page-specific API: Fetch ONLY the requested content, its texts, and its author
   getContentDetailById(id: number, scriptId?: number): Observable<Content | null> {

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, catchError } from 'rxjs';
+import { Observable, forkJoin, map, of, catchError, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { ScriptService } from './script.service';
 import { Author, AuthorDetail, AuthorFilterRequest, AuthorDetailFilterRequest } from '../models/author.models';
@@ -11,6 +11,12 @@ import { ApiResponse, PagedResponse } from '../models/api-response.models';
 export class AuthorService {
   private readonly api = inject(ApiService);
   private readonly scriptService = inject(ScriptService);
+
+  private cachedEnrichedAuthors: Record<string, Author[]> = {};
+
+  clearCache() {
+    this.cachedEnrichedAuthors = {};
+  }
 
   filterAuthors(request: AuthorFilterRequest = {}): Observable<PagedResponse<Author>> {
     const payload = {
@@ -24,11 +30,15 @@ export class AuthorService {
   }
 
   saveAuthor(author: Author): Observable<ApiResponse<Author>> {
-    return this.api.post<ApiResponse<Author>>('/api/authors/addOrUpdate', author);
+    return this.api.post<ApiResponse<Author>>('/api/authors/addOrUpdate', author).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   deleteAuthor(author: { id: number }): Observable<ApiResponse<string>> {
-    return this.api.post<ApiResponse<string>>('/api/authors/delete', author);
+    return this.api.post<ApiResponse<string>>('/api/authors/delete', author).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   filterAuthorDetails(request: AuthorDetailFilterRequest = {}): Observable<PagedResponse<AuthorDetail>> {
@@ -43,7 +53,9 @@ export class AuthorService {
   }
 
   saveAuthorDetail(detail: AuthorDetail): Observable<ApiResponse<void>> {
-    return this.api.post<ApiResponse<void>>('/api/author-details/addOrUpdate', detail);
+    return this.api.post<ApiResponse<void>>('/api/author-details/addOrUpdate', detail).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   // Helper to load authors enriched with their multi-script details dynamically (Paged)
@@ -97,7 +109,18 @@ export class AuthorService {
     );
   }
 
-  getEnrichedAuthors(scriptId?: number): Observable<Author[]> {
-    return this.getEnrichedAuthorsPaged(scriptId, { size: 100 }).pipe(map(res => res.data));
+  getEnrichedAuthors(scriptId?: number, forceRefresh = false): Observable<Author[]> {
+    const key = scriptId ? String(scriptId) : 'default';
+    if (!forceRefresh && this.cachedEnrichedAuthors[key] && this.cachedEnrichedAuthors[key].length > 0) {
+      return of(this.cachedEnrichedAuthors[key]);
+    }
+    return this.getEnrichedAuthorsPaged(scriptId, { size: 100 }).pipe(
+      map(res => {
+        const list = res.data || [];
+        this.cachedEnrichedAuthors[key] = list;
+        return list;
+      })
+    );
   }
 }
+

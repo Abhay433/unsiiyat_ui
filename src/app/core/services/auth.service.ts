@@ -15,8 +15,8 @@ export class AuthService {
 
   readonly isAuthenticated = computed(() => !!this.token());
   readonly isAdmin = computed(() => {
-    const role = this.currentUser()?.role;
-    return !!role && role.toUpperCase() === 'ADMIN';
+    const role = this.currentUser()?.role?.toUpperCase();
+    return role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'PLATFORM_ADMIN';
   });
 
   login(credentials: LoginRequest): Observable<ApiResponse<LoginResponse>> {
@@ -46,11 +46,22 @@ export class AuthService {
     this.currentUser.set(null);
   }
 
+  updateProfilePicture(photoUrl: string) {
+    const current = this.currentUser();
+    const updated: CurrentUser = current
+      ? { ...current, profilePictureUrl: photoUrl }
+      : { name: 'Administrator', email: 'admin@unsiiyat.org', role: 'ADMIN', profilePictureUrl: photoUrl };
+
+    localStorage.setItem('unsiiyat_user', JSON.stringify(updated));
+    this.currentUser.set(updated);
+  }
+
   private setSession(authData: LoginResponse) {
     const user: CurrentUser = {
       name: authData.name || authData.email,
       email: authData.email,
-      role: authData.role || 'USER'
+      role: authData.role || 'USER',
+      profilePictureUrl: authData.profilePictureUrl
     };
 
     localStorage.setItem('unsiiyat_token', authData.token);

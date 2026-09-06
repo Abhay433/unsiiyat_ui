@@ -9,6 +9,7 @@ import { ContentService } from '../../core/services/content.service';
 import { TaxonomyService } from '../../core/services/taxonomy.service';
 import { SeedDataService } from '../../core/services/seed-data.service';
 import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
 import { Genre, Theme, Script } from '../../core/models/taxonomy.models';
 import { Author } from '../../core/models/author.models';
 import { Content, ContentText } from '../../core/models/content.models';
@@ -32,6 +33,7 @@ export interface AdminUserItem {
 export class StudioComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly authorService = inject(AuthorService);
@@ -39,11 +41,25 @@ export class StudioComponent implements OnInit {
   private readonly taxonomyService = inject(TaxonomyService);
   readonly seedService = inject(SeedDataService);
 
+  private lastObservedScript: ScriptCode | null = null;
+
   constructor() {
     effect(() => {
-      // Reactively reload active tab data whenever header script changes (Urdu, Hindi, English)
+      // Reactively reload active tab data ONLY when header script actually changes (Urdu, Hindi, English)
       const currentScript = this.scriptService.activeScript();
       const scriptId = this.scriptService.getScriptId(currentScript);
+
+      if (this.lastObservedScript === null) {
+        // Initial run: skip to let ngOnInit handle clean initial loading
+        this.lastObservedScript = currentScript;
+        return;
+      }
+
+      if (this.lastObservedScript === currentScript) {
+        return;
+      }
+      this.lastObservedScript = currentScript;
+
       untracked(() => {
         if (this.activeTab() === 'content') {
           this.loadContents(scriptId);
@@ -80,8 +96,8 @@ export class StudioComponent implements OnInit {
   // Data Collections
   authors = signal<Author[]>([]);
   contents = signal<Content[]>([]);
-  genres = signal<Genre[]>([]);
-  themes = signal<Theme[]>([]);
+  genres = signal<Genre[]>(this.seedService.initialGenres);
+  themes = signal<Theme[]>(this.seedService.initialThemes);
   scripts = signal<Script[]>([]);
 
   // Platform Admins List
@@ -176,26 +192,16 @@ export class StudioComponent implements OnInit {
     name: '',
     email: '',
     password: '',
-    role: 'PLATFORM_ADMIN'
+    role: 'ADMIN'
   });
 
   ngOnInit() {
     this.loadActiveTabData();
-    if (this.genres().length === 0) {
-      this.taxonomyService.filterGenres({ page: 0, size: 50 }).subscribe({
-        next: (res) => this.genres.set(res.data || []),
-        error: () => this.genres.set(this.seedService.initialGenres)
-      });
-    }
-    if (this.authors().length === 0) {
-      this.loadAuthors();
-    }
     this.route.queryParams.subscribe(params => {
       const editId = Number(params['editContentId']);
       if (editId) {
-        this.contentService.getEnrichedContents().subscribe({
-          next: (contents) => {
-            const item = contents.find(c => c.id === editId);
+        this.contentService.getContentDetailById(editId).subscribe({
+          next: (item) => {
             if (item) {
               this.openEditContentModal(item);
             }
@@ -327,15 +333,6 @@ export class StudioComponent implements OnInit {
     switch (tab) {
       case 'content':
         this.loadContents(scriptId);
-        if (this.genres().length === 0) {
-          this.taxonomyService.filterGenres({ page: 0, size: 50 }).subscribe({
-            next: (res) => this.genres.set(res.data || []),
-            error: () => this.genres.set(this.seedService.initialGenres)
-          });
-        }
-        if (this.authors().length === 0) {
-          this.loadAuthors(scriptId);
-        }
         break;
       case 'genres':
         this.loadGenres();
@@ -347,7 +344,9 @@ export class StudioComponent implements OnInit {
         this.loadAuthors(scriptId);
         break;
       case 'seed':
+        break;
       case 'auth':
+        this.loadAdmins();
         break;
     }
   }
@@ -471,8 +470,12 @@ export class StudioComponent implements OnInit {
   }
 
   loadSupportingModalData() {
-    if (this.genres().length === 0) this.loadGenres();
-    if (this.themes().length === 0) this.loadThemes();
+    this.taxonomyService.getAllGenres().subscribe({
+      next: (g) => { if (g && g.length) this.genres.set(g); }
+    });
+    this.taxonomyService.getAllThemes().subscribe({
+      next: (t) => { if (t && t.length) this.themes.set(t); }
+    });
     if (this.scripts().length === 0) this.loadScripts();
 
     if (this.allModalAuthors().length === 0) {
@@ -837,6 +840,11 @@ export class StudioComponent implements OnInit {
       return matchPrimary || matchActiveName || matchDetails;
     });
   });
+
+  getAuthorAvatarUrl(a: Author): string | null {
+    if (!a?.id) return null;
+    return localStorage.getItem(`author_avatar_${a.id}`) || a.avatarUrl || null;
+  }
 
   getAuthorUrduName(a: Author): string {
     if ((a as any).urName?.trim()) return (a as any).urName.trim();
@@ -1465,26 +1473,52 @@ export class StudioComponent implements OnInit {
   }
 
   // --- Save New Admin ---
+  loadAdmins() {
+    this.userService.getAdmins().subscribe({
+      next: (res) => {
+        if (res.data) {
+          const mapped: AdminUserItem[] = res.data.map(u => ({
+            id: u.id,
+            name: u.name || 'Administrator',
+            email: u.email,
+            role: u.role || 'ADMIN',
+            status: u.isActive !== false ? 'ACTIVE' : 'OFFLINE',
+            lastActive: 'Active'
+          }));
+          this.adminUsers.set(mapped);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  // --- Save New Admin ---
   saveAdminUser() {
     const f = this.newAdminForm();
     if (!f.email || !f.name) {
       this.showStatus('error', 'Name and email are required.');
       return;
     }
+    if (!f.password || f.password.length < 6) {
+      this.showStatus('error', 'Password must be at least 6 characters.');
+      return;
+    }
 
-    const newUser: AdminUserItem = {
-      id: this.adminUsers().length + 1,
-      name: f.name,
-      email: f.email,
-      role: f.role,
-      status: 'ACTIVE',
-      lastActive: 'Just registered'
-    };
-
-    this.adminUsers.update(list => [...list, newUser]);
-    this.showStatus('success', `Admin user "${f.name}" created successfully!`);
-    this.newAdminForm.set({ name: '', email: '', password: '', role: 'PLATFORM_ADMIN' });
-    this.closeAddModal();
+    this.userService.addAdminUser({
+      name: f.name.trim(),
+      email: f.email.trim(),
+      password: f.password
+    }).subscribe({
+      next: () => {
+        this.showStatus('success', `Admin user "${f.name}" created successfully!`);
+        this.newAdminForm.set({ name: '', email: '', password: '', role: 'ADMIN' });
+        this.closeAddModal();
+        this.loadAdmins();
+      },
+      error: (err) => {
+        this.showStatus('error', err?.error?.message || 'Failed to create admin user.');
+      }
+    });
   }
 
   // --- Run Database Seeder ---
@@ -1504,6 +1538,56 @@ export class StudioComponent implements OnInit {
         this.isSeeding.set(false);
         this.showStatus('success', 'All Rekhta classics populated into database successfully!');
         this.refreshAllData();
+      }
+    });
+  }
+
+  // --- Profile Photo Upload ---
+  isUploadingProfilePhoto = signal<boolean>(false);
+
+  triggerProfilePhotoUpload(fileInput?: HTMLInputElement) {
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  onProfilePhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    // Validate image format
+    if (!file.type.startsWith('image/')) {
+      this.showStatus('error', 'Please select an image file (PNG, JPG, WebP, etc.).');
+      input.value = '';
+      return;
+    }
+
+    // Limit size to 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      this.showStatus('error', 'Image size must be less than 5MB.');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingProfilePhoto.set(true);
+    this.userService.uploadProfilePhoto(file).subscribe({
+      next: (res) => {
+        this.isUploadingProfilePhoto.set(false);
+        const photoUrl = res.data;
+        if (photoUrl) {
+          this.authService.updateProfilePicture(photoUrl);
+          this.showStatus('success', 'Profile photo updated successfully!');
+        } else {
+          this.showStatus('success', 'Profile photo updated!');
+        }
+        input.value = '';
+      },
+      error: (err) => {
+        this.isUploadingProfilePhoto.set(false);
+        const msg = err?.error?.message || err?.message || 'Failed to upload profile photo.';
+        this.showStatus('error', msg);
+        input.value = '';
       }
     });
   }
