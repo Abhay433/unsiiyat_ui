@@ -195,21 +195,21 @@ export class HomeComponent implements OnInit {
     const id = this.selectedAuthorId();
     if (id === 'all') return null;
     const poet = this.poets().find(p => p.id === Number(id));
-    return poet?.primaryName || `Poet #${id}`;
+    return poet?.primaryName || 'Selected Poet';
   });
 
   readonly selectedGenreName = computed(() => {
     const id = this.selectedGenreId();
     if (id === 'all') return null;
     const g = this.genres().find(genre => genre.id === Number(id));
-    return g?.name || `Genre #${id}`;
+    return g?.name || 'Selected Genre';
   });
 
   readonly selectedThemeName = computed(() => {
     const id = this.selectedThemeId();
     if (id === 'all') return null;
     const t = this.themes().find(theme => theme.id === Number(id));
-    return t?.name || `Theme #${id}`;
+    return t?.name || 'Selected Theme';
   });
 
   // Filtered & Sorted Feed Contents (Combined Multi-Filter Engine)

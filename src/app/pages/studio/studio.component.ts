@@ -391,7 +391,7 @@ export class StudioComponent implements OnInit {
       if (seedPoet?.details?.[currentScript]?.name?.trim()) {
         return seedPoet.details[currentScript].name.trim();
       }
-      return `Poet #${authorId}`;
+      return 'Shayar';
     }
 
     return 'Shayar';
@@ -859,7 +859,7 @@ export class StudioComponent implements OnInit {
 
   // --- Delete Content ---
   deleteContent(item: Content) {
-    const title = item.title || this.getContentTitleForActiveScript(item) || `Poem #${item.id}`;
+    const title = item.title || this.getContentTitleForActiveScript(item) || 'Untitled Kalam';
     if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
       return;
     }
@@ -1006,7 +1006,7 @@ export class StudioComponent implements OnInit {
 
   // --- Delete Genre ---
   deleteGenre(genre: Genre) {
-    const genreName = this.getGenreNameForActiveScript(genre.id, genre) || `Genre #${genre.id}`;
+    const genreName = this.getGenreNameForActiveScript(genre.id, genre) || genre.name || 'Genre';
     if (!confirm(`Are you sure you want to delete genre "${genreName}"? This action cannot be undone.`)) {
       return;
     }
@@ -1030,7 +1030,7 @@ export class StudioComponent implements OnInit {
 
   // --- Delete Theme ---
   deleteTheme(theme: Theme) {
-    const themeName = this.getThemeNameForActiveScript(theme) || `Theme #${theme.id}`;
+    const themeName = this.getThemeNameForActiveScript(theme) || theme.name || 'Theme';
     if (!confirm(`Are you sure you want to delete theme "${themeName}"? This action cannot be undone.`)) {
       return;
     }
@@ -1054,7 +1054,7 @@ export class StudioComponent implements OnInit {
 
   // --- Delete Author ---
   deleteAuthor(author: Author) {
-    const authorName = this.getAuthorNameForActiveScript(author, author.id) || `Poet #${author.id}`;
+    const authorName = this.getAuthorNameForActiveScript(author, author.id) || author.primaryName || 'Shayar';
     if (!confirm(`Are you sure you want to delete "${authorName}"? This action cannot be undone.`)) {
       return;
     }

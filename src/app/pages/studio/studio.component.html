@@ -162,7 +162,6 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th style="width: 80px;">ID</th>
                 <th>Poem Title</th>
                 <th>Author / Shayar</th>
                 <th>Genre</th>
@@ -172,7 +171,6 @@
             </thead>
             <tbody>
               <tr *ngFor="let item of filteredContents()">
-                <td class="col-id">#{{ item.id }}</td>
                 <td class="col-main">
                   <div class="main-cell-title" [ngClass]="getContentFontClass(item)" [dir]="getContentDirection(item)">
                     {{ getContentTitleForActiveScript(item) }}
@@ -215,7 +213,7 @@
                 </td>
               </tr>
               <tr *ngIf="filteredContents().length === 0">
-                <td colspan="6" class="empty-table-cell">
+                <td colspan="5" class="empty-table-cell">
                   No content records match "{{ searchQuery() }}".
                 </td>
               </tr>
@@ -234,7 +232,6 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th style="width: 80px;">ID</th>
                 <th>Genre Name</th>
                 <th>Code / Slug</th>
                 <th>Description</th>
@@ -243,7 +240,6 @@
             </thead>
             <tbody>
               <tr *ngFor="let g of filteredGenres()">
-                <td class="col-id">#{{ g.id }}</td>
                 <td class="col-main font-lg" [ngClass]="scriptService.fontClass()">
                   <strong>{{ getGenreNameForActiveScript(g.id, g) }}</strong>
                 </td>
@@ -269,7 +265,7 @@
                 </td>
               </tr>
               <tr *ngIf="filteredGenres().length === 0">
-                <td colspan="5" class="empty-table-cell">
+                <td colspan="4" class="empty-table-cell">
                   No genres found matching "{{ searchQuery() }}".
                 </td>
               </tr>
@@ -288,7 +284,6 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th style="width: 80px;">ID</th>
                 <th>Theme / Mood Name</th>
                 <th>Slug Code</th>
                 <th>Heritage Category</th>
@@ -297,7 +292,6 @@
             </thead>
             <tbody>
               <tr *ngFor="let t of filteredThemes()">
-                <td class="col-id">#{{ t.id }}</td>
                 <td class="col-main font-lg" [ngClass]="scriptService.fontClass()">
                   <strong>{{ getThemeNameForActiveScript(t) }}</strong>
                 </td>
@@ -323,7 +317,7 @@
                 </td>
               </tr>
               <tr *ngIf="filteredThemes().length === 0">
-                <td colspan="5" class="empty-table-cell">
+                <td colspan="4" class="empty-table-cell">
                   No themes found matching "{{ searchQuery() }}".
                 </td>
               </tr>
@@ -342,7 +336,6 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th style="width: 80px;">ID</th>
                 <th>Shayar Name</th>
                 <th>Lifespan</th>
                 <th>Era / Tradition</th>
@@ -351,7 +344,6 @@
             </thead>
             <tbody>
               <tr *ngFor="let a of filteredAuthors()">
-                <td class="col-id">#{{ a.id }}</td>
                 <td class="col-main">
                   <div class="poet-table-identity">
                     <div class="poet-mini-avatar">
@@ -391,7 +383,7 @@
                 </td>
               </tr>
               <tr *ngIf="filteredAuthors().length === 0">
-                <td colspan="5" class="empty-table-cell">
+                <td colspan="4" class="empty-table-cell">
                   No authors found matching "{{ searchQuery() }}".
                 </td>
               </tr>
@@ -410,7 +402,6 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th style="width: 80px;">ID</th>
                 <th>Administrator Name</th>
                 <th>Email Address</th>
                 <th>Role & Permissions</th>
@@ -420,7 +411,6 @@
             </thead>
             <tbody>
               <tr *ngFor="let u of filteredAdmins()">
-                <td class="col-id">#{{ u.id }}</td>
                 <td class="col-main">
                   <div class="admin-user-cell">
                     <span class="crown-icon">👑</span>
@@ -437,7 +427,7 @@
                 <td style="text-align: right; color: var(--text-muted);">{{ u.lastActive }}</td>
               </tr>
               <tr *ngIf="filteredAdmins().length === 0">
-                <td colspan="6" class="empty-table-cell">
+                <td colspan="5" class="empty-table-cell">
                   No administrators found matching "{{ searchQuery() }}".
                 </td>
               </tr>

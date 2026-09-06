@@ -67,7 +67,7 @@ export class AuthorService {
             || (targetCode === 'ur' ? author.urName : (targetCode === 'hi' ? author.hiName : author.enName))
             || author.primaryName 
             || author.name 
-            || `Poet #${author.id}`;
+            || 'Unknown Poet';
 
           return {
             ...author,
