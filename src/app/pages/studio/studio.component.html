@@ -29,7 +29,7 @@
       <nav class="sidebar-nav">
         <!-- 1. Content / Ghazals -->
         <button class="nav-item-btn" [class.active]="activeTab() === 'content'"
-          (click)="activeTab.set('content'); searchQuery.set('')" title="Content (Ghazals & Poems)">
+          (click)="switchTab('content')" title="Content (Ghazals & Poems)">
           <span class="nav-icon">📜</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Content</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contents().length > 0">{{ contents().length
@@ -38,7 +38,7 @@
 
         <!-- 2. Genres -->
         <button class="nav-item-btn" [class.active]="activeTab() === 'genres'"
-          (click)="activeTab.set('genres'); searchQuery.set('')" title="Genres">
+          (click)="switchTab('genres')" title="Genres">
           <span class="nav-icon">🏷️</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Genres</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && genres().length > 0">{{ genres().length }}</span>
@@ -46,7 +46,7 @@
 
         <!-- 3. Themes -->
         <button class="nav-item-btn" [class.active]="activeTab() === 'themes'"
-          (click)="activeTab.set('themes'); searchQuery.set('')" title="Themes">
+          (click)="switchTab('themes')" title="Themes">
           <span class="nav-icon">✦</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Themes</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && themes().length > 0">{{ themes().length }}</span>
@@ -54,7 +54,7 @@
 
         <!-- 4. Authors / Poets -->
         <button class="nav-item-btn" [class.active]="activeTab() === 'authors'"
-          (click)="activeTab.set('authors'); searchQuery.set('')" title="Authors & Poets">
+          (click)="switchTab('authors')" title="Authors & Poets">
           <span class="nav-icon">👤</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Authors / Poets</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed() && authors().length > 0">{{ authors().length }}</span>
@@ -62,7 +62,7 @@
 
         <!-- 5. Auth / Platform Admins -->
         <button class="nav-item-btn" [class.active]="activeTab() === 'auth'"
-          (click)="activeTab.set('auth'); searchQuery.set('')" title="Platform Admins">
+          (click)="switchTab('auth')" title="Platform Admins">
           <span class="nav-icon">🔐</span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Platform Admins</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed()">{{ adminUsers().length }}</span>

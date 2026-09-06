@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -41,10 +41,16 @@ export class StudioComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      // Reactively reload enriched data whenever header script changes (Urdu, Hindi, English)
+      // Reactively reload active tab data whenever header script changes (Urdu, Hindi, English)
       const currentScript = this.scriptService.activeScript();
       const scriptId = this.scriptService.getScriptId(currentScript);
-      this.refreshAllData(scriptId);
+      untracked(() => {
+        if (this.activeTab() === 'content') {
+          this.loadContents(scriptId);
+        } else if (this.activeTab() === 'authors') {
+          this.loadAuthors(scriptId);
+        }
+      });
     });
   }
 
@@ -137,7 +143,7 @@ export class StudioComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.refreshAllData();
+    this.loadActiveTabData();
     this.route.queryParams.subscribe(params => {
       const editId = Number(params['editContentId']);
       if (editId) {
@@ -257,19 +263,42 @@ export class StudioComponent implements OnInit {
     return result;
   }
 
-  refreshAllData(scriptId?: number) {
+  // --- Tab & Data Management (On-Demand / Page-Specific Loading) ---
+  switchTab(tab: 'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed') {
+    this.activeTab.set(tab);
+    this.searchQuery.set('');
+    this.loadActiveTabData(tab);
+  }
+
+  loadActiveTabData(tab: 'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed' = this.activeTab(), scriptId?: number) {
+    switch (tab) {
+      case 'content':
+        this.loadContents(scriptId);
+        break;
+      case 'genres':
+        this.loadGenres();
+        break;
+      case 'themes':
+        this.loadThemes();
+        break;
+      case 'authors':
+        this.loadAuthors(scriptId);
+        break;
+      case 'seed':
+      case 'auth':
+        break;
+    }
+  }
+
+  loadContents(scriptId?: number) {
     const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
-
-    this.authorService.getEnrichedAuthors(currentScriptId).subscribe({
-      next: (res) => this.authors.set(res),
-      error: () => this.authors.set([])
-    });
-
     this.contentService.getEnrichedContents(currentScriptId).subscribe({
       next: (res) => this.contents.set(res),
       error: () => this.contents.set([])
     });
+  }
 
+  loadGenres() {
     this.taxonomyService.filterGenres().subscribe({
       next: (res) => {
         const list = res.data?.length ? res.data : this.seedService.initialGenres;
@@ -277,7 +306,9 @@ export class StudioComponent implements OnInit {
       },
       error: () => this.genres.set(this.seedService.initialGenres)
     });
+  }
 
+  loadThemes() {
     this.taxonomyService.filterThemes().subscribe({
       next: (res) => {
         const list = res.data?.length ? res.data : this.seedService.initialThemes;
@@ -285,11 +316,37 @@ export class StudioComponent implements OnInit {
       },
       error: () => this.themes.set(this.seedService.initialThemes)
     });
+  }
 
+  loadAuthors(scriptId?: number) {
+    const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    this.authorService.getEnrichedAuthors(currentScriptId).subscribe({
+      next: (res) => this.authors.set(res),
+      error: () => this.authors.set([])
+    });
+  }
+
+  loadScripts() {
     this.taxonomyService.filterScripts().subscribe({
       next: (res) => this.scripts.set(res.data || []),
       error: () => this.scripts.set([])
     });
+  }
+
+  loadSupportingModalData() {
+    if (this.genres().length === 0) this.loadGenres();
+    if (this.authors().length === 0) this.loadAuthors();
+    if (this.themes().length === 0) this.loadThemes();
+    if (this.scripts().length === 0) this.loadScripts();
+  }
+
+  refreshAllData(scriptId?: number) {
+    const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    this.loadAuthors(currentScriptId);
+    this.loadContents(currentScriptId);
+    this.loadGenres();
+    this.loadThemes();
+    this.loadScripts();
   }
 
   // Multi-script Dynamic Content Extractors
@@ -606,6 +663,7 @@ export class StudioComponent implements OnInit {
     this.editingAuthorId.set(null);
 
     if (this.activeTab() === 'content') {
+      this.loadSupportingModalData();
       this.contentCreationStep.set('select-genre');
       this.genreSearchQuery.set('');
       this.showInlineGenreCreate.set(false);
@@ -699,6 +757,7 @@ export class StudioComponent implements OnInit {
   openEditContentModal(item: Content) {
     if (!item || !item.id) return;
 
+    this.loadSupportingModalData();
     this.editingContentId.set(item.id);
     this.activeTab.set('content');
     this.contentCreationStep.set('editor');
@@ -844,7 +903,7 @@ export class StudioComponent implements OnInit {
         this.inlineGenreName.set('');
         this.inlineGenreSlug.set('');
         this.showInlineGenreCreate.set(false);
-        this.refreshAllData();
+        this.loadGenres();
         this.contentCreationStep.set('editor');
       },
       error: () => {
@@ -872,7 +931,7 @@ export class StudioComponent implements OnInit {
     this.contentService.deleteContent({ id: item.id }).subscribe({
       next: () => {
         this.showStatus('success', `"${title}" deleted successfully.`);
-        this.refreshAllData();
+        this.loadContents();
       },
       error: (err) => {
         console.error('Failed to delete content:', err);
@@ -954,7 +1013,7 @@ export class StudioComponent implements OnInit {
 
         this.editingContentId.set(null);
         this.closeAddModal();
-        this.refreshAllData();
+        this.loadContents();
       },
       error: (err) => {
         this.isSavingContent.set(false);
@@ -978,7 +1037,7 @@ export class StudioComponent implements OnInit {
         this.genreForm.set({ name: '', slug: '', description: '' });
         this.editingGenreId.set(null);
         this.closeAddModal();
-        this.refreshAllData();
+        this.loadGenres();
       },
       error: () => this.showStatus('error', 'Failed to save genre.')
     });
@@ -998,7 +1057,7 @@ export class StudioComponent implements OnInit {
         this.themeForm.set({ name: '', slug: '', description: '' });
         this.editingThemeId.set(null);
         this.closeAddModal();
-        this.refreshAllData();
+        this.loadThemes();
       },
       error: () => this.showStatus('error', 'Failed to save theme.')
     });
@@ -1019,7 +1078,7 @@ export class StudioComponent implements OnInit {
     this.taxonomyService.deleteGenre({ id: genre.id }).subscribe({
       next: () => {
         this.showStatus('success', `Genre "${genreName}" deleted successfully.`);
-        this.refreshAllData();
+        this.loadGenres();
       },
       error: (err) => {
         console.error('Failed to delete genre:', err);
@@ -1043,7 +1102,7 @@ export class StudioComponent implements OnInit {
     this.taxonomyService.deleteTheme({ id: theme.id }).subscribe({
       next: () => {
         this.showStatus('success', `Theme "${themeName}" deleted successfully.`);
-        this.refreshAllData();
+        this.loadThemes();
       },
       error: (err) => {
         console.error('Failed to delete theme:', err);
@@ -1067,7 +1126,7 @@ export class StudioComponent implements OnInit {
     this.authorService.deleteAuthor({ id: author.id }).subscribe({
       next: () => {
         this.showStatus("success", `Author "${authorName}" deleted successfully.`);
-        this.refreshAllData();
+        this.loadAuthors();
       },
       error: (err) => {
         console.error("Failed to delete author:", err);
@@ -1134,7 +1193,7 @@ export class StudioComponent implements OnInit {
         this.editingAuthorId.set(null);
         this.poetForm.set({ birthDate: '', deathDate: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
         this.closeAddModal();
-        this.refreshAllData();
+        this.loadAuthors();
       },
       error: (err) => this.showStatus('error', err?.error?.message || 'Failed to save author.')
     });
