@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, Output, EventEmitter, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ScriptService, ScriptCode } from '../../core/services/script.service';
+import { ScriptService, ScriptCode, ScriptOption } from '../../core/services/script.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SeedDataService, ClassicalPoet, ClassicalPoem } from '../../core/services/seed-data.service';
 
@@ -115,6 +115,7 @@ export class NavbarComponent implements OnInit {
       document.body.classList.add('theme-dark');
       document.body.classList.remove('theme-light');
     }
+    this.scriptService.syncScriptsFromBackend().subscribe();
   }
 
   selectResult(item: SearchResultItem) {
@@ -123,8 +124,12 @@ export class NavbarComponent implements OnInit {
     this.router.navigate(item.route);
   }
 
-  switchScript(code: ScriptCode) {
-    this.scriptService.setScript(code);
+  switchScript(item: ScriptOption | ScriptCode) {
+    if (typeof item === 'string') {
+      this.scriptService.setScript(item);
+    } else {
+      this.scriptService.selectScript(item);
+    }
   }
 
   toggleTheme() {

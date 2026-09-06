@@ -22,7 +22,7 @@ export interface Content {
 
 export interface ContentText {
   id?: number;
-  contentId: number;
+  contentId?: number;
   scriptId: number;
   title: string;
   body: string;
@@ -36,6 +36,8 @@ export interface ContentFilterRequest extends BaseFilterRequest {
   themeId?: number;
   search?: string;
   authorName?: string;
+  scriptId?: number;
+  scriptCode?: string;
 }
 
 export interface ContentTextFilterRequest extends BaseFilterRequest {

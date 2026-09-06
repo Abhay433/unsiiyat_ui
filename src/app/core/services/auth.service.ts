@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { ApiService } from './api.service';
+import { ScriptService } from './script.service';
 import { LoginRequest, LoginResponse, RegisterRequest, CurrentUser } from '../models/auth.models';
 import { ApiResponse } from '../models/api-response.models';
 
@@ -9,6 +10,7 @@ import { ApiResponse } from '../models/api-response.models';
 })
 export class AuthService {
   private readonly api = inject(ApiService);
+  private readonly scriptService = inject(ScriptService);
 
   readonly token = signal<string | null>(localStorage.getItem('unsiiyat_token'));
   readonly currentUser = signal<CurrentUser | null>(this.getStoredUser());
@@ -44,6 +46,7 @@ export class AuthService {
     localStorage.removeItem('unsiiyat_user');
     this.token.set(null);
     this.currentUser.set(null);
+    this.scriptService.syncScriptsFromBackend().subscribe();
   }
 
   updateProfilePicture(photoUrl: string) {
@@ -68,6 +71,8 @@ export class AuthService {
     localStorage.setItem('unsiiyat_user', JSON.stringify(user));
     this.token.set(authData.token);
     this.currentUser.set(user);
+    // Immediately fetch dynamic script list from backend with newly acquired JWT token
+    this.scriptService.syncScriptsFromBackend().subscribe();
   }
 
   private getStoredUser(): CurrentUser | null {

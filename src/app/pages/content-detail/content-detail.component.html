@@ -23,9 +23,9 @@
 
     <!-- Script Switcher Tabs (when reading) or Language editor tabs (when editing) -->
     <div class="reader-script-tabs" *ngIf="!isEditing()">
-      <button *ngFor="let s of scriptService.scripts" class="reader-script-btn"
-        [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s.code)">
-        {{ s.nativeName }}
+      <button *ngFor="let s of scriptService.scripts()" class="reader-script-btn"
+        [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s)">
+        {{ s.nativeName || s.name }}
       </button>
     </div>
 

@@ -19,9 +19,9 @@
             <span class="switcher-icon">🌐</span>
             <span>Script:</span>
           </span>
-          <button *ngFor="let s of scriptService.scripts" class="script-pill"
-            [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s.code)">
-            {{ s.nativeName }}
+          <button *ngFor="let s of scriptService.scripts()" class="script-pill"
+            [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s)">
+            {{ s.nativeName || s.name }}
           </button>
         </div>
 

@@ -1,9 +1,12 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+import { ApiService } from './api.service';
 
 export type ScriptCode = 'ur' | 'hi' | 'en';
 
 export interface ScriptOption {
+  id?: number;
   code: ScriptCode;
   name: string;
   nativeName: string;
@@ -11,28 +14,33 @@ export interface ScriptOption {
   dir: 'rtl' | 'ltr';
 }
 
+const DEFAULT_SCRIPTS: ScriptOption[] = [
+  { id: 1, code: 'ur', name: 'Urdu', nativeName: 'اردو', fontClass: 'font-urdu', dir: 'rtl' },
+  { id: 2, code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', fontClass: 'font-hindi', dir: 'ltr' },
+  { id: 3, code: 'en', name: 'English', nativeName: 'English', fontClass: 'font-english', dir: 'ltr' }
+];
+
 @Injectable({
   providedIn: 'root'
 })
 export class ScriptService {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:8080';
+  private readonly api = inject(ApiService);
 
-  readonly scripts: ScriptOption[] = [
-    { code: 'ur', name: 'Urdu', nativeName: 'اردو', fontClass: 'font-urdu', dir: 'rtl' },
-    { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', fontClass: 'font-hindi', dir: 'ltr' },
-    { code: 'en', name: 'English', nativeName: 'English', fontClass: 'font-english', dir: 'ltr' }
-  ];
+  // Dynamic scripts loaded directly from backend `/api/scripts/list`
+  readonly scripts = signal<ScriptOption[]>(DEFAULT_SCRIPTS);
 
   // Dynamic mapping loaded from DB table `scripts`
-  private readonly scriptCodeToIdMap = new Map<ScriptCode, number>();
+  private readonly scriptCodeToIdMap = new Map<string, number>();
   private readonly scriptIdToCodeMap = new Map<number, ScriptCode>();
 
   // Active script signal (defaults to Urdu)
   readonly activeScript = signal<ScriptCode>('ur');
+  readonly activeScriptId = signal<number>(1);
+  readonly scriptSyncVersion = signal<number>(0);
+  readonly isSyncing = signal<boolean>(false);
 
   readonly currentScriptOption = computed(() => {
-    return this.scripts.find(s => s.code === this.activeScript()) || this.scripts[0];
+    return this.scripts().find(s => s.code === this.activeScript()) || this.scripts()[0];
   });
 
   readonly isRtl = computed(() => this.currentScriptOption().dir === 'rtl');
@@ -43,7 +51,11 @@ export class ScriptService {
     if (saved && (saved === 'ur' || saved === 'hi' || saved === 'en')) {
       this.activeScript.set(saved);
     }
-    this.syncScriptsFromBackend();
+    const savedId = Number(localStorage.getItem('unsiiyat_script_id'));
+    if (savedId && !isNaN(savedId)) {
+      this.activeScriptId.set(savedId);
+    }
+    this.syncScriptsFromBackend().subscribe();
   }
 
   // Dynamically learn a script ID mapping
@@ -55,53 +67,222 @@ export class ScriptService {
     }
   }
 
-  // Load actual dynamic script IDs from the database
-  syncScriptsFromBackend() {
-    const parseScripts = (res: any) => {
-      const list: any[] = Array.isArray(res)
-        ? res
-        : (res?.data?.content || res?.data?.data || res?.data || res?.content || []);
-      if (!Array.isArray(list)) return;
-      for (const s of list) {
-        const code = (s.code || '').toLowerCase().trim();
-        const name = (s.name || '').toLowerCase().trim();
-        const id = Number(s.id);
+  // Load actual dynamic script IDs from the database `/api/scripts/list`
+  syncScriptsFromBackend(): Observable<ScriptOption[]> {
+    this.isSyncing.set(true);
+    const payload = { page: 0, size: 50, sortBy: 'id', sortDirection: 'asc' };
+
+    return this.api.post<any>('/api/scripts/list', payload).pipe(
+      map(res => this.handleScriptsResponse(res)),
+      catchError(err => {
+        return this.api.get<any>('/api/scripts').pipe(
+          map(res => this.handleScriptsResponse(res)),
+          catchError(() => {
+            return this.api.get<any>('/api/scripts/list').pipe(
+              map(res => this.handleScriptsResponse(res)),
+              catchError(() => {
+                this.isSyncing.set(false);
+                return of(this.scripts());
+              })
+            );
+          })
+        );
+      })
+    );
+  }
+
+  handleScriptsResponse(res: any): ScriptOption[] {
+    this.isSyncing.set(false);
+    let list: any[] = [];
+    if (Array.isArray(res)) {
+      list = res;
+    } else if (res && typeof res === 'object') {
+      if (Array.isArray(res.data)) {
+        list = res.data;
+      } else if (res.data && Array.isArray(res.data.content)) {
+        list = res.data.content;
+      } else if (res.data && Array.isArray(res.data.data)) {
+        list = res.data.data;
+      } else if (Array.isArray(res.content)) {
+        list = res.content;
+      }
+    }
+
+    if (!Array.isArray(list) || list.length === 0) {
+      return this.scripts();
+    }
+
+    return this.syncWithScriptList(list);
+  }
+
+  syncWithScriptList(list: any[]): ScriptOption[] {
+    if (!Array.isArray(list) || list.length === 0) {
+      return this.scripts();
+    }
+
+    const newOptions: ScriptOption[] = [];
+    const seenCodes = new Set<string>();
+
+    for (const s of list) {
+      const id = Number(s.id);
+      const rawCode = (s.code || '').toString().trim().toLowerCase();
+      const rawName = (s.name || '').toString().trim();
+      const lowerName = rawName.toLowerCase();
+
+      let code: ScriptCode = 'ur';
+      let name = rawName || 'Urdu';
+      let nativeName = s.nativeName || 'اردو';
+      let fontClass = 'font-urdu';
+      let dir: 'rtl' | 'ltr' = 'rtl';
+
+      if (
+        rawCode === 'hi' ||
+        rawCode === 'hin' ||
+        rawCode === 'hindi' ||
+        lowerName.includes('hindi') ||
+        lowerName.includes('हिन्दी') ||
+        lowerName.includes('devanagari')
+      ) {
+        code = 'hi';
+        name = rawName || 'Hindi';
+        nativeName = s.nativeName || 'हिन्दी';
+        fontClass = 'font-hindi';
+        dir = 'ltr';
+      } else if (
+        rawCode === 'en' ||
+        rawCode === 'eng' ||
+        rawCode === 'english' ||
+        lowerName.includes('english') ||
+        lowerName.includes('roman') ||
+        lowerName.includes('latin')
+      ) {
+        code = 'en';
+        name = rawName || 'English';
+        nativeName = s.nativeName || 'English';
+        fontClass = 'font-english';
+        dir = 'ltr';
+      } else if (
+        rawCode === 'ur' ||
+        rawCode === 'urd' ||
+        rawCode === 'urdu' ||
+        lowerName.includes('urdu') ||
+        lowerName.includes('اردو') ||
+        lowerName.includes('nastaliq')
+      ) {
+        code = 'ur';
+        name = rawName || 'Urdu';
+        nativeName = s.nativeName || 'اردو';
+        fontClass = 'font-urdu';
+        dir = 'rtl';
+      } else {
+        code = (rawCode as ScriptCode) || 'ur';
+        name = rawName || code;
+        nativeName = s.nativeName || name;
+        fontClass = 'font-sans';
+        dir = 'ltr';
+      }
+
+      if (id && !isNaN(id)) {
+        this.scriptCodeToIdMap.set(code, id);
+        this.scriptIdToCodeMap.set(id, code);
+      }
+
+      newOptions.push({
+        id: id && !isNaN(id) ? id : undefined,
+        code,
+        name,
+        nativeName,
+        fontClass,
+        dir
+      });
+      seenCodes.add(code);
+    }
+
+    // Ensure standard scripts (ur, hi, en) exist even if backend only returned a subset
+    const standardDefaults: ScriptOption[] = [
+      { id: 1, code: 'ur', name: 'Urdu', nativeName: 'اردو', fontClass: 'font-urdu', dir: 'rtl' },
+      { id: 2, code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', fontClass: 'font-hindi', dir: 'ltr' },
+      { id: 3, code: 'en', name: 'English', nativeName: 'English', fontClass: 'font-english', dir: 'ltr' }
+    ];
+
+    for (const def of standardDefaults) {
+      if (!seenCodes.has(def.code)) {
+        const id = this.scriptCodeToIdMap.get(def.code) || def.id;
+        newOptions.push({ ...def, id });
         if (id) {
-          if (code === 'ur' || name.includes('urdu') || name.includes('اردو') || name.includes('nastaliq')) {
-            this.learnScriptId(id, 'ur');
-          } else if (code === 'hi' || name.includes('hindi') || name.includes('हिन्दी') || name.includes('devanagari')) {
-            this.learnScriptId(id, 'hi');
-          } else if (code === 'en' || name.includes('english') || name.includes('roman') || name.includes('latin')) {
-            this.learnScriptId(id, 'en');
-          }
+          this.scriptCodeToIdMap.set(def.code, id);
+          this.scriptIdToCodeMap.set(id, def.code);
         }
       }
-    };
+    }
 
-    this.http.post<any>(`${this.baseUrl}/api/scripts/list`, { page: 0, size: 50 }).subscribe({
-      next: parseScripts,
-      error: () => {
-        this.http.get<any>(`${this.baseUrl}/api/scripts`).subscribe({
-          next: parseScripts,
-          error: () => {}
-        });
-      }
+    // Standard ordering: Urdu, Hindi, English, then others
+    const orderPriority: Record<string, number> = { 'ur': 1, 'hi': 2, 'en': 3 };
+    newOptions.sort((a, b) => {
+      const pA = orderPriority[a.code] || 99;
+      const pB = orderPriority[b.code] || 99;
+      return pA - pB;
     });
+
+    this.scripts.set(newOptions);
+
+    // Update activeScriptId to match currently selected script
+    const currentCode = this.activeScript();
+    const matched = newOptions.find(o => o.code === currentCode);
+    if (matched?.id) {
+      this.activeScriptId.set(matched.id);
+      localStorage.setItem('unsiiyat_script_id', String(matched.id));
+    }
+
+    this.scriptSyncVersion.update(v => v + 1);
+    return newOptions;
   }
 
   setScript(code: ScriptCode) {
     this.activeScript.set(code);
     localStorage.setItem('unsiiyat_script', code);
+    const matched = this.scripts().find(s => s.code === code);
+    if (matched?.id) {
+      this.activeScriptId.set(matched.id);
+      this.scriptCodeToIdMap.set(code, matched.id);
+      this.scriptIdToCodeMap.set(matched.id, code);
+      localStorage.setItem('unsiiyat_script_id', String(matched.id));
+    }
+  }
+
+  selectScript(option: ScriptOption) {
+    this.activeScript.set(option.code);
+    localStorage.setItem('unsiiyat_script', option.code);
+    if (option.id) {
+      this.activeScriptId.set(option.id);
+      this.scriptCodeToIdMap.set(option.code, option.id);
+      this.scriptIdToCodeMap.set(option.id, option.code);
+      localStorage.setItem('unsiiyat_script_id', String(option.id));
+    }
+  }
+
+  setScriptById(id: number) {
+    const code = this.getCodeFromId(id);
+    this.activeScript.set(code);
+    this.activeScriptId.set(id);
+    localStorage.setItem('unsiiyat_script', code);
+    localStorage.setItem('unsiiyat_script_id', String(id));
   }
 
   // Dynamic scriptId from database
-  getScriptId(code: ScriptCode): number {
-    if (this.scriptCodeToIdMap.has(code)) {
-      return this.scriptCodeToIdMap.get(code)!;
+  getScriptId(code?: ScriptCode): number {
+    const target = code || this.activeScript();
+    if (this.scriptCodeToIdMap.has(target)) {
+      return this.scriptCodeToIdMap.get(target)!;
     }
-    switch (code) {
+    const found = this.scripts().find(s => s.code === target);
+    if (found?.id) {
+      this.scriptCodeToIdMap.set(target, found.id);
+      return found.id;
+    }
+    switch (target) {
       case 'ur': return 1;
-      case 'hi': return 9;
+      case 'hi': return 2;
       case 'en': return 3;
       default: return 1;
     }
@@ -111,6 +292,11 @@ export class ScriptService {
   getCodeFromId(id: number): ScriptCode {
     if (this.scriptIdToCodeMap.has(id)) {
       return this.scriptIdToCodeMap.get(id)!;
+    }
+    const found = this.scripts().find(s => s.id === id);
+    if (found?.code) {
+      this.scriptIdToCodeMap.set(id, found.code);
+      return found.code;
     }
     switch (id) {
       case 1:

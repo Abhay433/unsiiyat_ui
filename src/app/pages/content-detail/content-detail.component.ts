@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, computed, effect } from '@angular/co
 import { CommonModule, Location } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ScriptService, ScriptCode } from '../../core/services/script.service';
+import { ScriptService, ScriptCode, ScriptOption } from '../../core/services/script.service';
 import { ContentService } from '../../core/services/content.service';
 import { AuthorService } from '../../core/services/author.service';
 import { SeedDataService } from '../../core/services/seed-data.service';
@@ -228,12 +228,12 @@ export class ContentDetailComponent implements OnInit {
     this.isEditing.set(true);
     window.scrollTo({ top: 120, behavior: 'smooth' });
 
-    // Direct asynchronous DB fetch from content_texts table
+    // Direct asynchronous fetch via unified content detail
     const id = this.contentId();
     if (id) {
-      this.contentService.filterContentTexts({ contentId: id, size: 50 }).subscribe({
-        next: (res) => {
-          const raw = (res.data || []) as any[];
+      this.contentService.getContentDetailById(id).subscribe({
+        next: (fresh) => {
+          const raw = (fresh?.texts || fresh?.contentTexts || []) as any[];
           if (raw.length > 0) {
             const freshTexts: ContentText[] = raw.map(t => {
               const rawId = Number(t.scriptId ?? t.script_id ?? t.script?.id);
@@ -396,21 +396,21 @@ export class ContentDetailComponent implements OnInit {
       en?: { title: string; body: string };
     } = {};
 
-    if (f.urBody.trim() || f.urTitle.trim()) {
+    if (f.urBody.trim().length > 0) {
       scriptTexts.ur = {
         title: f.urTitle.trim() || (this.isUrdu(finalTitle) ? finalTitle : (f.urBody.split('\n')[0]?.trim() || finalTitle)),
         body: f.urBody.trim()
       };
     }
 
-    if (f.hiBody.trim() || f.hiTitle.trim()) {
+    if (f.hiBody.trim().length > 0) {
       scriptTexts.hi = {
         title: f.hiTitle.trim() || (this.isHindi(finalTitle) ? finalTitle : (f.hiBody.split('\n')[0]?.trim() || '')),
         body: f.hiBody.trim()
       };
     }
 
-    if (f.enBody.trim() || f.enTitle.trim()) {
+    if (f.enBody.trim().length > 0) {
       scriptTexts.en = {
         title: f.enTitle.trim() || (this.isLatinOrEnglish(finalTitle) ? finalTitle : (f.enBody.split('\n')[0]?.trim() || '')),
         body: f.enBody.trim()
@@ -728,8 +728,12 @@ export class ContentDetailComponent implements OnInit {
     }
   }
 
-  switchScript(code: ScriptCode) {
-    this.scriptService.setScript(code);
+  switchScript(item: ScriptOption | ScriptCode) {
+    if (typeof item === 'string') {
+      this.scriptService.setScript(item);
+    } else {
+      this.scriptService.selectScript(item);
+    }
   }
 
   getCoupletStats(text: string): { lines: number; couplets: number } {

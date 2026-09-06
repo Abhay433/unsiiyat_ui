@@ -43,6 +43,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   readonly seedService = inject(SeedDataService);
 
   private lastObservedScript: ScriptCode | null = null;
+  private lastObservedScriptId: number | null = null;
 
   // Search subjects & debounce streams
   private contentSearchSubject = new Subject<void>();
@@ -51,20 +52,23 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      // Reactively reload active tab data ONLY when header script actually changes (Urdu, Hindi, English)
+      // Reactively reload active tab data when header script or backend scriptId actually changes
       const currentScript = this.scriptService.activeScript();
       const scriptId = this.scriptService.getScriptId(currentScript);
+      const syncVer = this.scriptService.scriptSyncVersion();
 
       if (this.lastObservedScript === null) {
-        // Initial run: skip to let ngOnInit handle clean initial loading
+        // Initial run: record values so initial load runs
         this.lastObservedScript = currentScript;
+        this.lastObservedScriptId = scriptId;
         return;
       }
 
-      if (this.lastObservedScript === currentScript) {
+      if (this.lastObservedScript === currentScript && this.lastObservedScriptId === scriptId) {
         return;
       }
       this.lastObservedScript = currentScript;
+      this.lastObservedScriptId = scriptId;
 
       untracked(() => {
         if (this.activeTab() === 'content') {
@@ -231,6 +235,8 @@ export class StudioComponent implements OnInit, OnDestroy {
       })
     );
 
+    this.scriptService.syncScriptsFromBackend().subscribe();
+    this.loadScripts();
     this.loadActiveTabData();
     this.route.queryParams.subscribe(params => {
       const editId = Number(params['editContentId']);
@@ -558,7 +564,13 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   loadScripts() {
     this.taxonomyService.filterScripts().subscribe({
-      next: (res) => this.scripts.set(res.data || []),
+      next: (res) => {
+        const list = res.data || [];
+        this.scripts.set(list);
+        if (list.length > 0) {
+          this.scriptService.syncWithScriptList(list);
+        }
+      },
       error: () => this.scripts.set([])
     });
   }
@@ -1096,9 +1108,9 @@ export class StudioComponent implements OnInit, OnDestroy {
     const enText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'en'));
 
     if (!urText && !hiText && !enText) {
-      this.contentService.filterContentTexts({ contentId: item.id }).subscribe({
-        next: (res) => {
-          const texts = res.data || [];
+      this.contentService.getContentDetailById(item.id).subscribe({
+        next: (detail) => {
+          const texts = detail?.texts || detail?.contentTexts || [];
           const ur = texts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
           const hi = texts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
           const en = texts.find(t => this.scriptService.isScriptMatch(t, 'en'));
@@ -1290,20 +1302,30 @@ export class StudioComponent implements OnInit, OnDestroy {
 
     this.isSavingContent.set(true);
 
-    const scriptTexts = {
-      ur: {
+    const scriptTexts: {
+      ur?: { title: string; body: string };
+      hi?: { title: string; body: string };
+      en?: { title: string; body: string };
+    } = {};
+
+    if (f.urBody.trim().length > 0) {
+      scriptTexts.ur = {
         title: f.urTitle.trim() || finalTitle,
         body: f.urBody.trim()
-      },
-      hi: {
+      };
+    }
+    if (f.hiBody.trim().length > 0) {
+      scriptTexts.hi = {
         title: f.hiTitle.trim() || finalTitle,
         body: f.hiBody.trim()
-      },
-      en: {
+      };
+    }
+    if (f.enBody.trim().length > 0) {
+      scriptTexts.en = {
         title: f.enTitle.trim() || finalTitle,
         body: f.enBody.trim()
-      }
-    };
+      };
+    }
 
     console.log('Saving content payload:', { id: editId, title: finalTitle, authorId, genreId, themeIds, scriptTexts });
 

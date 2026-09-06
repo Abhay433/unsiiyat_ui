@@ -127,10 +127,9 @@ export class SearchComponent implements OnInit {
 
     if (content.contentTexts && content.contentTexts.length > 0) {
       // Find text matching active script if available
-      const scriptCodeToId: Record<string, number> = { 'ur': 8, 'hi': 9, 'en': 7 };
-      const targetScriptId = scriptCodeToId[active];
+      const targetScriptId = this.scriptService.getScriptId(active);
 
-      let match = content.contentTexts.find(t => t.scriptId === targetScriptId);
+      let match = content.contentTexts.find(t => t.scriptId === targetScriptId || this.scriptService.isScriptMatch(t, active));
       if (!match) {
         match = content.contentTexts[0];
       }
@@ -154,10 +153,9 @@ export class SearchComponent implements OnInit {
     const active = this.scriptService.activeScript();
 
     if (content.contentTexts && content.contentTexts.length > 0) {
-      const scriptCodeToId: Record<string, number> = { 'ur': 8, 'hi': 9, 'en': 7 };
-      const targetScriptId = scriptCodeToId[active];
+      const targetScriptId = this.scriptService.getScriptId(active);
 
-      const match = content.contentTexts.find(t => t.scriptId === targetScriptId);
+      const match = content.contentTexts.find(t => t.scriptId === targetScriptId || this.scriptService.isScriptMatch(t, active));
       if (match && match.title) {
         return match.title;
       }
