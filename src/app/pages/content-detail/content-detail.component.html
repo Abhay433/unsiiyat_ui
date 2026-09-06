@@ -48,6 +48,9 @@
     <div class="control-right">
       <!-- When Editing: Top Save & Cancel -->
       <ng-container *ngIf="isEditing()">
+        <button type="button" class="tool-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" (click)="deleteCurrentContent()" title="Delete this Kalam">
+          🗑️ Delete
+        </button>
         <button type="button" class="tool-btn cancel-edit-btn" (click)="cancelEditing()">
           ✕ Cancel
         </button>
@@ -119,6 +122,7 @@
           tabs to edit each script.</p>
       </div>
       <div class="editor-header-btn-row">
+        <button type="button" class="btn btn-outline-cancel" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" (click)="deleteCurrentContent()" title="Delete this Kalam">🗑️ Delete Kalam</button>
         <button type="button" class="btn btn-outline-cancel" (click)="cancelEditing()">✕ Cancel</button>
         <button type="button" class="btn btn-save-primary" (click)="saveEditedContent()" [disabled]="isSaving()">
           <span *ngIf="isSaving()" class="btn-spinner"></span>

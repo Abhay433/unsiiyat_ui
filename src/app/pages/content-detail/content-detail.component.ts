@@ -267,6 +267,23 @@ export class ContentDetailComponent implements OnInit {
     this.isEditing.set(false);
   }
 
+  deleteCurrentContent() {
+    const id = this.contentId();
+    const title = this.currentPoemText()?.title || this.content()?.title || 'Kalam';
+    if (!id) return;
+    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+    this.contentService.deleteContent({ id }).subscribe({
+      next: () => {
+        this.router.navigate(['/studio']);
+      },
+      error: (err) => {
+        this.showEditStatus('error', err?.error?.message || 'Failed to delete kalam.');
+      }
+    });
+  }
+
   getActiveEditTitle(): string {
     const tab = this.editScriptTab();
     const f = this.editForm();

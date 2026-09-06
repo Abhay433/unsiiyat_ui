@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit, computed, effect } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { ScriptService, ScriptCode } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
@@ -80,6 +81,9 @@ export class StudioComponent implements OnInit {
   isSeeding = signal(false);
 
   editingContentId = signal<number | null>(null);
+  editingGenreId = signal<number | null>(null);
+  editingThemeId = signal<number | null>(null);
+  editingAuthorId = signal<number | null>(null);
 
   // Forms
   contentForm = signal<{
@@ -597,6 +601,10 @@ export class StudioComponent implements OnInit {
   // Actions
   openAddModal() {
     this.editingContentId.set(null);
+    this.editingGenreId.set(null);
+    this.editingThemeId.set(null);
+    this.editingAuthorId.set(null);
+
     if (this.activeTab() === 'content') {
       this.contentCreationStep.set('select-genre');
       this.genreSearchQuery.set('');
@@ -614,6 +622,21 @@ export class StudioComponent implements OnInit {
         enTitle: '',
         enBody: ''
       });
+    } else if (this.activeTab() === 'genres') {
+      this.genreForm.set({ name: '', slug: '', description: '' });
+    } else if (this.activeTab() === 'themes') {
+      this.themeForm.set({ name: '', slug: '', description: '' });
+    } else if (this.activeTab() === 'authors') {
+      this.poetForm.set({
+        birthDate: '',
+        deathDate: '',
+        urName: '',
+        urBio: '',
+        hiName: '',
+        hiBio: '',
+        enName: '',
+        enBio: ''
+      });
     }
     this.showAddModal.set(true);
   }
@@ -621,6 +644,56 @@ export class StudioComponent implements OnInit {
   closeAddModal() {
     this.showAddModal.set(false);
     this.editingContentId.set(null);
+    this.editingGenreId.set(null);
+    this.editingThemeId.set(null);
+    this.editingAuthorId.set(null);
+  }
+
+  openEditGenreModal(genre: Genre) {
+    if (!genre || !genre.id) return;
+    this.editingGenreId.set(genre.id);
+    this.activeTab.set('genres');
+    this.genreForm.set({
+      name: genre.name || '',
+      slug: genre.slug || '',
+      description: (genre as any).description || ''
+    });
+    this.showAddModal.set(true);
+  }
+
+  openEditThemeModal(theme: Theme) {
+    if (!theme || !theme.id) return;
+    this.editingThemeId.set(theme.id);
+    this.activeTab.set('themes');
+    this.themeForm.set({
+      name: theme.name || '',
+      slug: theme.slug || '',
+      description: (theme as any).description || ''
+    });
+    this.showAddModal.set(true);
+  }
+
+  openEditAuthorModal(author: Author) {
+    if (!author || !author.id) return;
+    this.editingAuthorId.set(author.id);
+    this.activeTab.set('authors');
+
+    const details = author.details || (author as any).authorDetails || [];
+    const urDetail = details.find((d: any) => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'ur'));
+    const hiDetail = details.find((d: any) => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'hi'));
+    const enDetail = details.find((d: any) => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'en'));
+
+    this.poetForm.set({
+      birthDate: author.birthDate || '',
+      deathDate: author.deathDate || '',
+      urName: author.urName || urDetail?.name || '',
+      urBio: urDetail?.biography || author.primaryBio || '',
+      hiName: author.hiName || hiDetail?.name || '',
+      hiBio: hiDetail?.biography || '',
+      enName: author.enName || enDetail?.name || author.primaryName || author.name || '',
+      enBio: enDetail?.biography || ''
+    });
+    this.showAddModal.set(true);
   }
 
   openEditContentModal(item: Content) {
@@ -898,10 +971,12 @@ export class StudioComponent implements OnInit {
       this.showStatus('error', 'Genre name and slug are required.');
       return;
     }
-    this.taxonomyService.saveGenre({ name: f.name, slug: f.slug }).subscribe({
+    const editId = this.editingGenreId();
+    this.taxonomyService.saveGenre({ id: editId || undefined, name: f.name, slug: f.slug }).subscribe({
       next: () => {
-        this.showStatus('success', `Genre "${f.name}" saved!`);
+        this.showStatus('success', editId ? `Genre "${f.name}" updated successfully!` : `Genre "${f.name}" saved!`);
         this.genreForm.set({ name: '', slug: '', description: '' });
+        this.editingGenreId.set(null);
         this.closeAddModal();
         this.refreshAllData();
       },
@@ -916,14 +991,64 @@ export class StudioComponent implements OnInit {
       this.showStatus('error', 'Theme name and slug are required.');
       return;
     }
-    this.taxonomyService.saveTheme({ name: f.name, slug: f.slug }).subscribe({
+    const editId = this.editingThemeId();
+    this.taxonomyService.saveTheme({ id: editId || undefined, name: f.name, slug: f.slug }).subscribe({
       next: () => {
-        this.showStatus('success', `Theme "${f.name}" saved!`);
+        this.showStatus('success', editId ? `Theme "${f.name}" updated successfully!` : `Theme "${f.name}" saved!`);
         this.themeForm.set({ name: '', slug: '', description: '' });
+        this.editingThemeId.set(null);
         this.closeAddModal();
         this.refreshAllData();
       },
       error: () => this.showStatus('error', 'Failed to save theme.')
+    });
+  }
+
+  // --- Delete Genre ---
+  deleteGenre(genre: Genre) {
+    const genreName = this.getGenreNameForActiveScript(genre.id, genre) || `Genre #${genre.id}`;
+    if (!confirm(`Are you sure you want to delete genre "${genreName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    if (!genre.id) {
+      this.showStatus('error', 'Genre ID is missing.');
+      return;
+    }
+
+    this.taxonomyService.deleteGenre({ id: genre.id }).subscribe({
+      next: () => {
+        this.showStatus('success', `Genre "${genreName}" deleted successfully.`);
+        this.refreshAllData();
+      },
+      error: (err) => {
+        console.error('Failed to delete genre:', err);
+        this.showStatus('error', err?.error?.message || 'Failed to delete genre.');
+      }
+    });
+  }
+
+  // --- Delete Theme ---
+  deleteTheme(theme: Theme) {
+    const themeName = this.getThemeNameForActiveScript(theme) || `Theme #${theme.id}`;
+    if (!confirm(`Are you sure you want to delete theme "${themeName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    if (!theme.id) {
+      this.showStatus('error', 'Theme ID is missing.');
+      return;
+    }
+
+    this.taxonomyService.deleteTheme({ id: theme.id }).subscribe({
+      next: () => {
+        this.showStatus('success', `Theme "${themeName}" deleted successfully.`);
+        this.refreshAllData();
+      },
+      error: (err) => {
+        console.error('Failed to delete theme:', err);
+        this.showStatus('error', err?.error?.message || 'Failed to delete theme.');
+      }
     });
   }
 
@@ -959,7 +1084,9 @@ export class StudioComponent implements OnInit {
       return;
     }
 
+    const editId = this.editingAuthorId();
     const payload: any = {
+      id: editId || undefined,
       birthDate: f.birthDate || null,
       deathDate: f.deathDate || null,
       urName: f.urName?.trim() || '',
@@ -970,8 +1097,41 @@ export class StudioComponent implements OnInit {
     };
 
     this.authorService.saveAuthor(payload).subscribe({
-      next: () => {
-        this.showStatus('success', 'Shayar profile saved into database!');
+      next: (res: any) => {
+        const authorId = res?.data?.id || editId;
+        if (authorId) {
+          const detailRequests = [];
+          if (f.urName?.trim() || f.urBio?.trim()) {
+            detailRequests.push(this.authorService.saveAuthorDetail({
+              authorId,
+              scriptId: this.scriptService.getScriptId('ur'),
+              name: f.urName?.trim() || payload.primaryName,
+              biography: f.urBio?.trim()
+            }));
+          }
+          if (f.hiName?.trim() || f.hiBio?.trim()) {
+            detailRequests.push(this.authorService.saveAuthorDetail({
+              authorId,
+              scriptId: this.scriptService.getScriptId('hi'),
+              name: f.hiName?.trim() || payload.primaryName,
+              biography: f.hiBio?.trim()
+            }));
+          }
+          if (f.enName?.trim() || f.enBio?.trim()) {
+            detailRequests.push(this.authorService.saveAuthorDetail({
+              authorId,
+              scriptId: this.scriptService.getScriptId('en'),
+              name: f.enName?.trim() || payload.primaryName,
+              biography: f.enBio?.trim()
+            }));
+          }
+          if (detailRequests.length > 0) {
+            forkJoin(detailRequests).subscribe({ error: () => {} });
+          }
+        }
+
+        this.showStatus('success', editId ? 'Shayar profile updated successfully!' : 'Shayar profile saved into database!');
+        this.editingAuthorId.set(null);
         this.poetForm.set({ birthDate: '', deathDate: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
         this.closeAddModal();
         this.refreshAllData();

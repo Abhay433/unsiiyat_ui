@@ -198,10 +198,20 @@
                   </span>
                 </td>
                 <td style="text-align: right;">
-                  <a [routerLink]="['/content', item.id]" class="table-action-btn" title="View in Reading Room">
-                    👁️ {{ scriptService.activeScript() === 'ur' ? 'دیکھیں' : (scriptService.activeScript() === 'hi' ?
-                    'देखें' : 'View') }}
-                  </a>
+                  <div class="table-actions-wrapper">
+                    <a [routerLink]="['/content', item.id]" class="table-action-btn" title="View in Reading Room">
+                      👁️ {{ scriptService.activeScript() === 'ur' ? 'دیکھیں' : (scriptService.activeScript() === 'hi' ?
+                      'देखें' : 'View') }}
+                    </a>
+                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditContentModal(item)"
+                      title="Edit Kalam">
+                      ✏️
+                    </button>
+                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteContent(item)"
+                      title="Delete Kalam">
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="filteredContents().length === 0">
@@ -244,10 +254,18 @@
                   {{ getGenreDescriptionForActiveScript(g) }}
                 </td>
                 <td style="text-align: right;">
-                  <span class="status-pill status-active">
-                    {{ scriptService.activeScript() === 'ur' ? 'فعال' : (scriptService.activeScript() === 'hi' ?
-                    'सक्रिय' : 'Active') }}
-                  </span>
+                  <div class="table-actions-wrapper">
+                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditGenreModal(g)"
+                      title="Edit Genre">
+                      ✏️ {{ scriptService.activeScript() === 'ur' ? 'ترمیم' : (scriptService.activeScript() === 'hi' ?
+                      'संपादित' : 'Edit') }}
+                    </button>
+                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteGenre(g)"
+                      title="Delete Genre">
+                      🗑️ {{ scriptService.activeScript() === 'ur' ? 'حذف کریں' : (scriptService.activeScript() === 'hi' ?
+                      'हटाएं' : 'Delete') }}
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="filteredGenres().length === 0">
@@ -274,7 +292,7 @@
                 <th>Theme / Mood Name</th>
                 <th>Slug Code</th>
                 <th>Heritage Category</th>
-                <th style="text-align: right;">Status</th>
+                <th style="text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -290,10 +308,18 @@
                   <span class="author-tag">✦ Rekhta Heritage Theme</span>
                 </td>
                 <td style="text-align: right;">
-                  <span class="status-pill status-active">
-                    {{ scriptService.activeScript() === 'ur' ? 'فعال' : (scriptService.activeScript() === 'hi' ?
-                    'सक्रिय' : 'Active') }}
-                  </span>
+                  <div class="table-actions-wrapper">
+                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditThemeModal(t)"
+                      title="Edit Theme">
+                      ✏️ {{ scriptService.activeScript() === 'ur' ? 'ترمیم' : (scriptService.activeScript() === 'hi' ?
+                      'संपादित' : 'Edit') }}
+                    </button>
+                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteTheme(t)"
+                      title="Delete Theme">
+                      🗑️ {{ scriptService.activeScript() === 'ur' ? 'حذف کریں' : (scriptService.activeScript() === 'hi' ?
+                      'हटाएं' : 'Delete') }}
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="filteredThemes().length === 0">
@@ -352,6 +378,11 @@
                       'hi'
                       ? 'जीवनी देखें' : 'View Bio') }}
                     </a>
+                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditAuthorModal(a)"
+                      title="Edit Shayar">
+                      ✏️ {{ scriptService.activeScript() === 'ur' ? 'ترمیم' : (scriptService.activeScript() === 'hi' ?
+                      'संपादित' : 'Edit') }}
+                    </button>
                     <button type="button" class="table-action-btn table-action-delete" (click)="deleteAuthor(a)"
                       title="Delete Shayar">
                       🗑️
@@ -457,12 +488,11 @@
           <ng-container [ngSwitch]="activeTab()">
             <ng-container *ngSwitchCase="'content'">
               <span *ngIf="contentCreationStep() === 'select-genre'">✨ Select Poetic Genre (صنف کا انتخاب)</span>
-              <span *ngIf="contentCreationStep() === 'editor'">📜 Publish {{ getSelectedGenre()?.name || 'Ghazal / Poem'
-                }}</span>
+              <span *ngIf="contentCreationStep() === 'editor'">📜 {{ editingContentId() ? 'Edit' : 'Publish' }} {{ getSelectedGenre()?.name || 'Ghazal / Poem' }}</span>
             </ng-container>
-            <span *ngSwitchCase="'genres'">🏷️ Create Literary Genre</span>
-            <span *ngSwitchCase="'themes'">✦ Create Poetic Theme</span>
-            <span *ngSwitchCase="'authors'">👤 Add Shayar / Poet Profile</span>
+            <span *ngSwitchCase="'genres'">🏷️ {{ editingGenreId() ? 'Edit' : 'Create' }} Literary Genre</span>
+            <span *ngSwitchCase="'themes'">✦ {{ editingThemeId() ? 'Edit' : 'Create' }} Poetic Theme</span>
+            <span *ngSwitchCase="'authors'">👤 {{ editingAuthorId() ? 'Edit' : 'Add' }} Shayar / Poet Profile</span>
             <span *ngSwitchCase="'auth'">🔐 Register Platform Administrator</span>
           </ng-container>
         </h3>
@@ -739,7 +769,7 @@
             <input type="text" class="form-input" placeholder="e.g. marsiya" [(ngModel)]="genreForm().slug" name="slug"
               required />
           </div>
-          <button type="submit" class="btn btn-blue btn-block">Save Genre</button>
+          <button type="submit" class="btn btn-blue btn-block">{{ editingGenreId() ? 'Update Genre' : 'Save Genre' }}</button>
         </form>
 
         <!-- Add Theme Form -->
@@ -754,7 +784,7 @@
             <input type="text" class="form-input" placeholder="e.g. sufi" [(ngModel)]="themeForm().slug" name="slug"
               required />
           </div>
-          <button type="submit" class="btn btn-blue btn-block">Save Theme</button>
+          <button type="submit" class="btn btn-blue btn-block">{{ editingThemeId() ? 'Update Theme' : 'Save Theme' }}</button>
         </form>
 
         <!-- Add Author Form -->
@@ -784,7 +814,7 @@
             <input type="text" class="form-input font-english" placeholder="e.g. Mirza Ghalib"
               [(ngModel)]="poetForm().enName" name="enName" />
           </div>
-          <button type="submit" class="btn btn-blue btn-block">Save Shayar</button>
+          <button type="submit" class="btn btn-blue btn-block">{{ editingAuthorId() ? 'Update Shayar' : 'Save Shayar' }}</button>
         </form>
 
         <!-- Add Admin User Form -->

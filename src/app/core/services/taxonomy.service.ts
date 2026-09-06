@@ -26,6 +26,10 @@ export class TaxonomyService {
     return this.api.post<ApiResponse<void>>('/api/genres/addOrUpdate', genre);
   }
 
+  deleteGenre(genre: { id?: number }): Observable<ApiResponse<void>> {
+    return this.api.post<ApiResponse<void>>('/api/genres/delete', genre);
+  }
+
   // Themes
   filterThemes(request: ThemeFilterRequest = {}): Observable<PagedResponse<Theme>> {
     const payload = {
@@ -40,6 +44,10 @@ export class TaxonomyService {
 
   saveTheme(theme: Theme): Observable<ApiResponse<void>> {
     return this.api.post<ApiResponse<void>>('/api/themes/addOrUpdate', theme);
+  }
+
+  deleteTheme(theme: { id?: number }): Observable<ApiResponse<void>> {
+    return this.api.post<ApiResponse<void>>('/api/themes/delete', theme);
   }
 
   // Scripts
