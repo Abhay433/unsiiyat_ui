@@ -31,6 +31,7 @@ export interface AuthorFilterRequest extends BaseFilterRequest {
   id?: number;
   birthDate?: string;
   deathDate?: string;
+  search?: string;
 }
 
 export interface AuthorDetailFilterRequest extends BaseFilterRequest {

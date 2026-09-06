@@ -9,6 +9,7 @@ export interface Genre {
 export interface GenreFilterRequest extends BaseFilterRequest {
   name?: string;
   slug?: string;
+  search?: string;
 }
 
 export interface Theme {
@@ -20,6 +21,7 @@ export interface Theme {
 export interface ThemeFilterRequest extends BaseFilterRequest {
   name?: string;
   slug?: string;
+  search?: string;
 }
 
 export interface Script {

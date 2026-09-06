@@ -1,8 +1,9 @@
-import { Component, inject, signal, OnInit, computed, effect, untracked } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { ScriptService, ScriptCode } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
@@ -12,7 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { Genre, Theme, Script } from '../../core/models/taxonomy.models';
 import { Author } from '../../core/models/author.models';
-import { Content, ContentText } from '../../core/models/content.models';
+import { Content, ContentText, ContentFilterRequest } from '../../core/models/content.models';
 
 export interface AdminUserItem {
   id: number;
@@ -30,7 +31,7 @@ export interface AdminUserItem {
   templateUrl: './studio.component.html',
   styleUrls: ['./studio.component.css']
 })
-export class StudioComponent implements OnInit {
+export class StudioComponent implements OnInit, OnDestroy {
   readonly scriptService = inject(ScriptService);
   readonly authService = inject(AuthService);
   private readonly userService = inject(UserService);
@@ -42,6 +43,11 @@ export class StudioComponent implements OnInit {
   readonly seedService = inject(SeedDataService);
 
   private lastObservedScript: ScriptCode | null = null;
+
+  // Search subjects & debounce streams
+  private contentSearchSubject = new Subject<void>();
+  private generalSearchSubject = new Subject<string>();
+  private searchSubscriptions = new Subscription();
 
   constructor() {
     effect(() => {
@@ -97,6 +103,7 @@ export class StudioComponent implements OnInit {
   authors = signal<Author[]>([]);
   contents = signal<Content[]>([]);
   genres = signal<Genre[]>(this.seedService.initialGenres);
+  allAvailableGenres = signal<Genre[]>(this.seedService.initialGenres);
   themes = signal<Theme[]>(this.seedService.initialThemes);
   scripts = signal<Script[]>([]);
 
@@ -196,6 +203,34 @@ export class StudioComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.searchSubscriptions.add(
+      this.contentSearchSubject.pipe(
+        debounceTime(350)
+      ).subscribe(() => {
+        this.contentPage.set(0);
+        this.loadContents(undefined, 0);
+      })
+    );
+
+    this.searchSubscriptions.add(
+      this.generalSearchSubject.pipe(
+        debounceTime(350),
+        distinctUntilChanged()
+      ).subscribe((query) => {
+        const tab = this.activeTab();
+        if (tab === 'genres') {
+          this.genrePage.set(0);
+          this.loadGenres(0, query);
+        } else if (tab === 'themes') {
+          this.themePage.set(0);
+          this.loadThemes(0, query);
+        } else if (tab === 'authors') {
+          this.authorPage.set(0);
+          this.loadAuthors(undefined, 0, query);
+        }
+      })
+    );
+
     this.loadActiveTabData();
     this.route.queryParams.subscribe(params => {
       const editId = Number(params['editContentId']);
@@ -209,6 +244,10 @@ export class StudioComponent implements OnInit {
         });
       }
     });
+  }
+
+  ngOnDestroy() {
+    this.searchSubscriptions.unsubscribe();
   }
 
   toggleSidebar() {
@@ -319,29 +358,93 @@ export class StudioComponent implements OnInit {
   switchTab(tab: 'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed') {
     this.activeTab.set(tab);
     this.searchQuery.set('');
-    this.resetContentFilters();
+    this.contentTitleSearch.set('');
+    this.contentAuthorSearch.set('');
+    this.contentGenreFilter.set('');
     this.loadActiveTabData(tab);
+  }
+
+  // --- Content Tab Dedicated Filter Handlers (Triggers Real Server-Side API Calls) ---
+  onContentTitleSearchChange(val: string) {
+    this.contentTitleSearch.set(val);
+    this.contentSearchSubject.next();
+  }
+
+  clearContentTitleSearch() {
+    this.contentTitleSearch.set('');
+    this.contentPage.set(0);
+    this.loadContents(undefined, 0);
+  }
+
+  onContentAuthorSearchChange(val: string) {
+    this.contentAuthorSearch.set(val);
+    this.contentSearchSubject.next();
+  }
+
+  clearContentAuthorSearch() {
+    this.contentAuthorSearch.set('');
+    this.contentPage.set(0);
+    this.loadContents(undefined, 0);
+  }
+
+  onContentGenreFilterChange(val: string | number) {
+    this.contentGenreFilter.set(val);
+    this.contentPage.set(0);
+    this.loadContents(undefined, 0);
   }
 
   resetContentFilters() {
     this.contentTitleSearch.set('');
     this.contentAuthorSearch.set('');
     this.contentGenreFilter.set('');
+    this.contentPage.set(0);
+    this.loadContents(undefined, 0);
+  }
+
+  // --- General Search Bar (Genres, Themes, Authors) ---
+  onGeneralSearchChange(val: string) {
+    this.searchQuery.set(val);
+    this.generalSearchSubject.next(val);
+  }
+
+  clearGeneralSearch() {
+    this.searchQuery.set('');
+    const tab = this.activeTab();
+    if (tab === 'genres') {
+      this.genrePage.set(0);
+      this.loadGenres(0, '');
+    } else if (tab === 'themes') {
+      this.themePage.set(0);
+      this.loadThemes(0, '');
+    } else if (tab === 'authors') {
+      this.authorPage.set(0);
+      this.loadAuthors(undefined, 0, '');
+    }
   }
 
   loadActiveTabData(tab: 'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed' = this.activeTab(), scriptId?: number) {
     switch (tab) {
       case 'content':
         this.loadContents(scriptId);
+        this.taxonomyService.getAllGenres().subscribe({
+          next: (g) => {
+            if (g && g.length) {
+              this.allAvailableGenres.set(g);
+              if (this.genres().length === 0 || this.genres() === this.seedService.initialGenres) {
+                this.genres.set(g);
+              }
+            }
+          }
+        });
         break;
       case 'genres':
-        this.loadGenres();
+        this.loadGenres(0, this.searchQuery());
         break;
       case 'themes':
-        this.loadThemes();
+        this.loadThemes(0, this.searchQuery());
         break;
       case 'authors':
-        this.loadAuthors(scriptId);
+        this.loadAuthors(scriptId, 0, this.searchQuery());
         break;
       case 'seed':
         break;
@@ -353,7 +456,26 @@ export class StudioComponent implements OnInit {
 
   loadContents(scriptId?: number, page: number = this.contentPage()) {
     const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
-    this.contentService.getEnrichedContentsPaged(currentScriptId, { page, size: this.pageSize }).subscribe({
+    const filterReq: ContentFilterRequest = { page, size: this.pageSize };
+
+    const genreVal = this.contentGenreFilter();
+    if (genreVal !== '' && genreVal !== null && genreVal !== undefined) {
+      filterReq.genreId = Number(genreVal);
+    }
+    const titleVal = this.contentTitleSearch().trim();
+    if (titleVal) {
+      filterReq.title = titleVal;
+    }
+    const authorVal = this.contentAuthorSearch().trim();
+    if (authorVal) {
+      filterReq.authorName = authorVal;
+    }
+    const globalQ = this.searchQuery().trim();
+    if (globalQ && this.activeTab() === 'content') {
+      filterReq.search = globalQ;
+    }
+
+    this.contentService.getEnrichedContentsPaged(currentScriptId, filterReq).subscribe({
       next: (res) => {
         this.contents.set(res.data || []);
         this.contentTotalElements.set(res.totalElements ?? res.data?.length ?? 0);
@@ -368,43 +490,58 @@ export class StudioComponent implements OnInit {
     });
   }
 
-  loadGenres(page: number = this.genrePage()) {
-    this.taxonomyService.filterGenres({ page, size: this.pageSize }).subscribe({
+  loadGenres(page: number = this.genrePage(), search?: string) {
+    const query = (search !== undefined ? search : this.searchQuery()).trim();
+    const req: any = { page, size: this.pageSize };
+    if (query) {
+      req.search = query;
+    }
+    this.taxonomyService.filterGenres(req).subscribe({
       next: (res) => {
-        const list = res.data?.length ? res.data : this.seedService.initialGenres;
-        this.genres.set(list);
+        const list = res.data || [];
+        this.genres.set(list.length > 0 || query ? list : this.seedService.initialGenres);
         this.genreTotalElements.set(res.totalElements ?? list.length);
         this.genreTotalPages.set(res.totalPages || 1);
         this.genrePage.set(res.page ?? page);
       },
       error: () => {
-        this.genres.set(this.seedService.initialGenres);
-        this.genreTotalElements.set(this.seedService.initialGenres.length);
+        this.genres.set(query ? [] : this.seedService.initialGenres);
+        this.genreTotalElements.set(0);
         this.genreTotalPages.set(1);
       }
     });
   }
 
-  loadThemes(page: number = this.themePage()) {
-    this.taxonomyService.filterThemes({ page, size: this.pageSize }).subscribe({
+  loadThemes(page: number = this.themePage(), search?: string) {
+    const query = (search !== undefined ? search : this.searchQuery()).trim();
+    const req: any = { page, size: this.pageSize };
+    if (query) {
+      req.search = query;
+    }
+    this.taxonomyService.filterThemes(req).subscribe({
       next: (res) => {
-        const list = res.data?.length ? res.data : this.seedService.initialThemes;
-        this.themes.set(list);
+        const list = res.data || [];
+        this.themes.set(list.length > 0 || query ? list : this.seedService.initialThemes);
         this.themeTotalElements.set(res.totalElements ?? list.length);
         this.themeTotalPages.set(res.totalPages || 1);
         this.themePage.set(res.page ?? page);
       },
       error: () => {
-        this.themes.set(this.seedService.initialThemes);
-        this.themeTotalElements.set(this.seedService.initialThemes.length);
+        this.themes.set(query ? [] : this.seedService.initialThemes);
+        this.themeTotalElements.set(0);
         this.themeTotalPages.set(1);
       }
     });
   }
 
-  loadAuthors(scriptId?: number, page: number = this.authorPage()) {
+  loadAuthors(scriptId?: number, page: number = this.authorPage(), search?: string) {
     const currentScriptId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
-    this.authorService.getEnrichedAuthorsPaged(currentScriptId, { page, size: this.pageSize }).subscribe({
+    const query = (search !== undefined ? search : this.searchQuery()).trim();
+    const req: any = { page, size: this.pageSize };
+    if (query) {
+      req.search = query;
+    }
+    this.authorService.getEnrichedAuthorsPaged(currentScriptId, req).subscribe({
       next: (res) => {
         this.authors.set(res.data || []);
         this.authorTotalElements.set(res.totalElements ?? res.data?.length ?? 0);
@@ -469,7 +606,7 @@ export class StudioComponent implements OnInit {
     return pages;
   }
 
-  loadSupportingModalData() {
+  loadSupportingModalData(forceRefreshAuthors = true) {
     this.taxonomyService.getAllGenres().subscribe({
       next: (g) => { if (g && g.length) this.genres.set(g); }
     });
@@ -478,21 +615,26 @@ export class StudioComponent implements OnInit {
     });
     if (this.scripts().length === 0) this.loadScripts();
 
-    if (this.allModalAuthors().length === 0) {
-      this.authorService.getEnrichedAuthors().subscribe({
-        next: (authors) => {
-          this.allModalAuthors.set(authors);
-          if (this.authors().length === 0) this.authors.set(authors);
-          this.syncAuthorSearchInput();
-        },
-        error: () => {
-          this.allModalAuthors.set(this.authors());
+    this.refreshModalAuthors(forceRefreshAuthors);
+  }
+
+  refreshModalAuthors(forceRefresh = true) {
+    this.authorService.getEnrichedAuthors(undefined, forceRefresh).subscribe({
+      next: (authors) => {
+        this.allModalAuthors.set(authors);
+        if (this.authors().length === 0) {
+          this.authors.set(authors);
+        }
+        if (!this.authorSearchQuery()) {
           this.syncAuthorSearchInput();
         }
-      });
-    } else {
-      this.syncAuthorSearchInput();
-    }
+      },
+      error: () => {
+        if (this.allModalAuthors().length === 0) {
+          this.allModalAuthors.set(this.authors());
+        }
+      }
+    });
   }
 
   refreshAllData(scriptId?: number) {
@@ -733,81 +875,11 @@ export class StudioComponent implements OnInit {
     return this.scriptService.activeScript() === 'ur' ? 'font-english' : 'font-urdu';
   }
 
-  // Filtered lists based on search
-  filteredContents = computed(() => {
-    let items = this.contents();
-
-    // 1. Filter by Genre Dropdown
-    const genreVal = this.contentGenreFilter();
-    if (genreVal !== '' && genreVal !== null && genreVal !== undefined) {
-      const gId = Number(genreVal);
-      items = items.filter(c => c.genreId === gId || c.genre?.id === gId);
-    }
-
-    // 2. Filter by Poem Title Search Box
-    const titleQ = this.contentTitleSearch().toLowerCase().trim();
-    if (titleQ) {
-      items = items.filter(c => {
-        const t1 = (c.title || '').toLowerCase();
-        const t2 = (this.getContentTitleForActiveScript(c) || '').toLowerCase();
-        const t3 = (this.getContentBodySnippetForActiveScript(c) || '').toLowerCase();
-        const t4 = (c.primaryText?.title || '').toLowerCase();
-        return t1.includes(titleQ) || t2.includes(titleQ) || t3.includes(titleQ) || t4.includes(titleQ);
-      });
-    }
-
-    // 3. Filter by Author / Shayar Search Box
-    const authorQ = this.contentAuthorSearch().toLowerCase().trim();
-    if (authorQ) {
-      items = items.filter(c => {
-        const targetAuthor = c.author || (c.authorId ? this.authors().find(a => a.id === c.authorId) : undefined);
-        const aActive = (this.getAuthorNameForActiveScript(c.author, c.authorId) || '').toLowerCase();
-        const aPrimary = (targetAuthor?.primaryName || '').toLowerCase();
-        const aName = (targetAuthor?.name || '').toLowerCase();
-        const aUr = ((targetAuthor as any)?.urName || '').toLowerCase();
-        const aHi = ((targetAuthor as any)?.hiName || '').toLowerCase();
-        const aEn = ((targetAuthor as any)?.enName || '').toLowerCase();
-
-        let detailsMatch = false;
-        if (targetAuthor?.details && Array.isArray(targetAuthor.details)) {
-          detailsMatch = targetAuthor.details.some(d => (d.name || '').toLowerCase().includes(authorQ));
-        }
-
-        return aActive.includes(authorQ) ||
-               aPrimary.includes(authorQ) ||
-               aName.includes(authorQ) ||
-               aUr.includes(authorQ) ||
-               aHi.includes(authorQ) ||
-               aEn.includes(authorQ) ||
-               detailsMatch;
-      });
-    }
-
-    // 4. Global fallback search query if active
-    const globalQ = this.searchQuery().toLowerCase().trim();
-    if (globalQ && this.activeTab() === 'content') {
-      items = items.filter(c => 
-        (c.title || '').toLowerCase().includes(globalQ) ||
-        (this.getContentTitleForActiveScript(c) || '').toLowerCase().includes(globalQ) ||
-        (this.getContentBodySnippetForActiveScript(c) || '').toLowerCase().includes(globalQ) ||
-        (this.getAuthorNameForActiveScript(c.author, c.authorId) || '').toLowerCase().includes(globalQ) ||
-        (c.primaryText?.title || '').toLowerCase().includes(globalQ) ||
-        (c.author?.primaryName || '').toLowerCase().includes(globalQ)
-      );
-    }
-
-    return items;
-  });
-
-  filteredGenres = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.genres();
-    return this.genres().filter(g => 
-      (g.name || '').toLowerCase().includes(q) ||
-      (this.getGenreNameForActiveScript(g.id, g) || '').toLowerCase().includes(q) ||
-      (g.slug || '').toLowerCase().includes(q)
-    );
-  });
+  // Filtered lists based on search - now 100% powered by server-side specification queries
+  filteredContents = computed(() => this.contents());
+  filteredGenres = computed(() => this.genres());
+  filteredThemes = computed(() => this.themes());
+  filteredAuthors = computed(() => this.authors());
 
   filteredSelectionGenres = computed(() => {
     const q = this.genreSearchQuery().toLowerCase().trim();
@@ -818,27 +890,6 @@ export class StudioComponent implements OnInit {
       (this.getGenreNameForActiveScript(g.id, g) || '').toLowerCase().includes(q) ||
       (g.slug || '').toLowerCase().includes(q)
     );
-  });
-
-  filteredThemes = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.themes();
-    return this.themes().filter(t => 
-      (t.name || '').toLowerCase().includes(q) ||
-      (this.getThemeNameForActiveScript(t) || '').toLowerCase().includes(q) ||
-      (t.slug || '').toLowerCase().includes(q)
-    );
-  });
-
-  filteredAuthors = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.authors();
-    return this.authors().filter(a => {
-      const matchPrimary = (a.primaryName || '').toLowerCase().includes(q);
-      const matchActiveName = (this.getAuthorNameForActiveScript(a, a.id) || '').toLowerCase().includes(q);
-      const matchDetails = Array.isArray(a.details) && a.details.some(d => (d.name || '').toLowerCase().includes(q));
-      return matchPrimary || matchActiveName || matchDetails;
-    });
   });
 
   getAuthorAvatarUrl(a: Author): string | null {
@@ -890,11 +941,16 @@ export class StudioComponent implements OnInit {
 
   openAuthorDropdown() {
     this.isAuthorDropdownOpen.set(true);
+    this.refreshModalAuthors(true);
   }
 
   toggleAuthorDropdown(event?: MouseEvent) {
     if (event) event.stopPropagation();
-    this.isAuthorDropdownOpen.update(v => !v);
+    const nextState = !this.isAuthorDropdownOpen();
+    this.isAuthorDropdownOpen.set(nextState);
+    if (nextState) {
+      this.refreshModalAuthors(true);
+    }
   }
 
   onAuthorSearchInput(event: Event) {
@@ -1151,6 +1207,7 @@ export class StudioComponent implements OnInit {
     if (genre && genre.id) {
       this.contentForm.update(f => ({ ...f, genreId: genre.id! }));
     }
+    this.refreshModalAuthors(true);
     this.contentCreationStep.set('editor');
   }
 
@@ -1428,11 +1485,11 @@ export class StudioComponent implements OnInit {
       primaryName: f.enName?.trim() || f.urName?.trim() || f.hiName?.trim() || ''
     };
 
-    this.authorService.saveAuthor(payload).subscribe({
-      next: (res: any) => {
+    this.authorService.saveAuthor(payload).pipe(
+      switchMap((res: any) => {
         const authorId = res?.data?.id || editId;
+        const detailRequests = [];
         if (authorId) {
-          const detailRequests = [];
           if (f.urName?.trim() || f.urBio?.trim()) {
             detailRequests.push(this.authorService.saveAuthorDetail({
               authorId,
@@ -1457,16 +1514,19 @@ export class StudioComponent implements OnInit {
               biography: f.enBio?.trim()
             }));
           }
-          if (detailRequests.length > 0) {
-            forkJoin(detailRequests).subscribe({ error: () => {} });
-          }
         }
-
+        return detailRequests.length > 0 ? forkJoin(detailRequests) : of([]);
+      })
+    ).subscribe({
+      next: () => {
         this.showStatus('success', editId ? 'Shayar profile updated successfully!' : 'Shayar profile saved into database!');
         this.editingAuthorId.set(null);
         this.poetForm.set({ birthDate: '', deathDate: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
         this.closeAddModal();
+        this.authorService.clearCache();
+        this.allModalAuthors.set([]);
         this.loadAuthors();
+        this.refreshModalAuthors(true);
       },
       error: (err) => this.showStatus('error', err?.error?.message || 'Failed to save author.')
     });

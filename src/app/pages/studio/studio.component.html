@@ -167,8 +167,8 @@
             class="table-search-input" 
             placeholder="Search by poem title..."
             [ngModel]="contentTitleSearch()" 
-            (ngModelChange)="contentTitleSearch.set($event)" />
-          <button *ngIf="contentTitleSearch()" type="button" class="clear-search-btn" (click)="contentTitleSearch.set('')">✕</button>
+            (ngModelChange)="onContentTitleSearchChange($event)" />
+          <button *ngIf="contentTitleSearch()" type="button" class="clear-search-btn" (click)="clearContentTitleSearch()">✕</button>
         </div>
       </div>
 
@@ -182,8 +182,8 @@
             class="table-search-input" 
             placeholder="Search by author / shayar..."
             [ngModel]="contentAuthorSearch()" 
-            (ngModelChange)="contentAuthorSearch.set($event)" />
-          <button *ngIf="contentAuthorSearch()" type="button" class="clear-search-btn" (click)="contentAuthorSearch.set('')">✕</button>
+            (ngModelChange)="onContentAuthorSearchChange($event)" />
+          <button *ngIf="contentAuthorSearch()" type="button" class="clear-search-btn" (click)="clearContentAuthorSearch()">✕</button>
         </div>
       </div>
 
@@ -195,9 +195,9 @@
           <select 
             class="content-genre-select" 
             [ngModel]="contentGenreFilter()" 
-            (ngModelChange)="contentGenreFilter.set($event)">
+            (ngModelChange)="onContentGenreFilterChange($event)">
             <option value="">All Genres (سب اصناف)</option>
-            <option *ngFor="let g of genres()" [value]="g.id">
+            <option *ngFor="let g of allAvailableGenres()" [value]="g.id">
               {{ getGenreNameForActiveScript(g.id, g) }} ({{ g.name }})
             </option>
           </select>
@@ -223,8 +223,8 @@
       <div class="table-search-box">
         <span class="search-lens">🔍</span>
         <input type="text" class="table-search-input" placeholder="Search by name, title, or code..."
-          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-        <button *ngIf="searchQuery()" type="button" class="clear-search-btn" (click)="searchQuery.set('')">✕</button>
+          [ngModel]="searchQuery()" (ngModelChange)="onGeneralSearchChange($event)" />
+        <button *ngIf="searchQuery()" type="button" class="clear-search-btn" (click)="clearGeneralSearch()">✕</button>
       </div>
     </div>
 

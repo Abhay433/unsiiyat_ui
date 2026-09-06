@@ -34,6 +34,8 @@ export interface ContentFilterRequest extends BaseFilterRequest {
   authorId?: number;
   title?: string;
   themeId?: number;
+  search?: string;
+  authorName?: string;
 }
 
 export interface ContentTextFilterRequest extends BaseFilterRequest {
