@@ -142,8 +142,71 @@
       </div>
     </div>
 
-    <!-- Search Bar for Tables -->
-    <div *ngIf="activeTab() !== 'seed'" class="table-search-bar-wrap">
+    <!-- Dedicated Filter Bar for Content Tab: 2 Search Boxes + 1 Genre Dropdown -->
+    <div *ngIf="activeTab() === 'content'" class="content-filters-toolbar">
+      <!-- 1. Search by Poem Title -->
+      <div class="filter-field-group">
+        <label class="filter-field-label">Poem Title</label>
+        <div class="table-search-box content-filter-box">
+          <span class="search-lens">🔍</span>
+          <input 
+            type="text" 
+            class="table-search-input" 
+            placeholder="Search by poem title..."
+            [ngModel]="contentTitleSearch()" 
+            (ngModelChange)="contentTitleSearch.set($event)" />
+          <button *ngIf="contentTitleSearch()" type="button" class="clear-search-btn" (click)="contentTitleSearch.set('')">✕</button>
+        </div>
+      </div>
+
+      <!-- 2. Search by Author / Shayar -->
+      <div class="filter-field-group">
+        <label class="filter-field-label">Author / Shayar</label>
+        <div class="table-search-box content-filter-box">
+          <span class="search-lens">👤</span>
+          <input 
+            type="text" 
+            class="table-search-input" 
+            placeholder="Search by author / shayar..."
+            [ngModel]="contentAuthorSearch()" 
+            (ngModelChange)="contentAuthorSearch.set($event)" />
+          <button *ngIf="contentAuthorSearch()" type="button" class="clear-search-btn" (click)="contentAuthorSearch.set('')">✕</button>
+        </div>
+      </div>
+
+      <!-- 3. Genre Dropdown -->
+      <div class="filter-field-group">
+        <label class="filter-field-label">Poetic Genre</label>
+        <div class="content-genre-select-wrap">
+          <span class="content-genre-icon">🏷️</span>
+          <select 
+            class="content-genre-select" 
+            [ngModel]="contentGenreFilter()" 
+            (ngModelChange)="contentGenreFilter.set($event)">
+            <option value="">All Genres (سب اصناف)</option>
+            <option *ngFor="let g of genres()" [value]="g.id">
+              {{ getGenreNameForActiveScript(g.id, g) }} ({{ g.name }})
+            </option>
+          </select>
+          <span class="content-genre-arrow">▾</span>
+        </div>
+      </div>
+
+      <!-- Clear All Filters Button -->
+      <div class="filter-field-group" *ngIf="contentTitleSearch() || contentAuthorSearch() || contentGenreFilter()">
+        <label class="filter-field-label filter-label-spacer">&nbsp;</label>
+        <button 
+          type="button" 
+          class="content-reset-filters-btn" 
+          (click)="resetContentFilters()"
+          title="Reset all filters">
+          ✕ Clear Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar for Other Tabs (Genres, Themes, Authors, Admins) -->
+    <div *ngIf="activeTab() !== 'content' && activeTab() !== 'seed'" class="table-search-bar-wrap">
       <div class="table-search-box">
         <span class="search-lens">🔍</span>
         <input type="text" class="table-search-input" placeholder="Search by name, title, or code..."
@@ -213,7 +276,7 @@
               </tr>
               <tr *ngIf="filteredContents().length === 0">
                 <td colspan="5" class="empty-table-cell">
-                  No content records match "{{ searchQuery() }}".
+                  No content records match the specified search filters.
                 </td>
               </tr>
             </tbody>
@@ -726,13 +789,60 @@
 
           <!-- 2. Author, Genre & Theme Dropdowns Row -->
           <div class="form-row form-row-3col">
-            <div class="form-group">
+            <div class="form-group author-search-group">
               <label class="form-label">Shayar / Author <span class="required-star">*</span></label>
-              <select class="form-select" [(ngModel)]="contentForm().authorId" name="authorId" required>
-                <option *ngFor="let a of authors()" [value]="a.id">
-                  {{ a.primaryName }} ({{ getAuthorUrduName(a) }})
-                </option>
-              </select>
+              
+              <!-- Searchable Author Input Box -->
+              <div class="author-search-box-wrap">
+                <input 
+                  type="text" 
+                  class="form-input author-search-input" 
+                  placeholder="Search Shayar / Author..."
+                  [value]="authorSearchQuery()"
+                  (input)="onAuthorSearchInput($event)"
+                  (focus)="openAuthorDropdown()"
+                  (click)="openAuthorDropdown()"
+                  autocomplete="off" />
+                
+                <button 
+                  *ngIf="authorSearchQuery()" 
+                  type="button" 
+                  class="author-search-clear-btn" 
+                  (click)="clearAuthorSearch($event)"
+                  title="Clear search">
+                  ✕
+                </button>
+                <span class="author-search-arrow" (click)="toggleAuthorDropdown($event)">▾</span>
+              </div>
+
+              <!-- Click outside backdrop -->
+              <div *ngIf="isAuthorDropdownOpen()" class="author-dropdown-backdrop" (click)="isAuthorDropdownOpen.set(false)"></div>
+
+              <!-- Dropdown Results Panel -->
+              <div class="author-search-dropdown-panel animate-fade-in" *ngIf="isAuthorDropdownOpen()">
+                <div class="author-dropdown-header" *ngIf="filteredModalAuthors().length > 0">
+                  <span>{{ filteredModalAuthors().length }} Shayar{{ filteredModalAuthors().length === 1 ? '' : 's' }} found</span>
+                </div>
+                
+                <div class="author-dropdown-list">
+                  <div 
+                    *ngFor="let a of filteredModalAuthors()" 
+                    class="author-dropdown-item" 
+                    [class.selected]="a.id === contentForm().authorId"
+                    (click)="selectAuthor(a)">
+                    <div class="author-item-avatar">👤</div>
+                    <div class="author-item-info">
+                      <span class="author-item-name">{{ a.primaryName || a.name }}</span>
+                      <span class="author-item-urdu" *ngIf="getAuthorUrduName(a)">({{ getAuthorUrduName(a) }})</span>
+                    </div>
+                    <span *ngIf="a.id === contentForm().authorId" class="author-item-check">✓</span>
+                  </div>
+
+                  <div *ngIf="filteredModalAuthors().length === 0" class="author-dropdown-empty">
+                    <span>No shayar found matching "{{ authorSearchQuery() }}"</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="form-group">

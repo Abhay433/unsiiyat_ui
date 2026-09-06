@@ -337,6 +337,125 @@
   cursor: pointer;
 }
 
+/* Content Dedicated Filters Toolbar: 2 Search Boxes + 1 Genre Dropdown */
+.content-filters-toolbar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.filter-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-label-spacer {
+  visibility: hidden;
+}
+
+.content-filter-box {
+  width: 280px;
+  max-width: 320px;
+  min-width: 200px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.content-genre-select-wrap {
+  width: 230px;
+  min-width: 190px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.content-genre-icon {
+  position: absolute;
+  left: 13px;
+  font-size: 0.95rem;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.content-genre-select {
+  width: 100%;
+  padding: 10px 32px 10px 38px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  outline: none;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all var(--transition-fast);
+}
+
+.content-genre-select:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-glow);
+}
+
+.content-genre-arrow {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.content-reset-filters-btn {
+  padding: 9px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-sm);
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.content-reset-filters-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+@media (max-width: 860px) {
+  .content-filters-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .content-filter-box,
+  .content-genre-select-wrap {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
 /* ==========================================================================
    3. DATA CARDS & TABLE STYLING
    ========================================================================== */
@@ -1536,4 +1655,175 @@
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
 }
+
+/* ========================================================================== */
+/* SEARCHABLE AUTHOR SELECT BOX (STEP 2 MODAL)                                */
+/* ========================================================================== */
+.author-search-group {
+  position: relative;
+}
+
+.author-search-box-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.author-search-input {
+  width: 100%;
+  padding-right: 56px !important;
+  cursor: text;
+  background-color: var(--bg-secondary);
+}
+
+.author-search-input:focus {
+  border-color: var(--accent-blue) !important;
+  background-color: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-blue-glow);
+}
+
+.author-search-clear-btn {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.author-search-clear-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+}
+
+.author-search-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.author-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: transparent;
+}
+
+.author-search-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.author-dropdown-header {
+  padding: 8px 14px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+  letter-spacing: 0.4px;
+}
+
+.author-dropdown-list {
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.author-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.author-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.author-dropdown-item:hover {
+  background: #eff6ff;
+}
+
+.author-dropdown-item.selected {
+  background: #e0e7ff;
+}
+
+.author-item-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.author-item-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.author-item-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.author-item-urdu {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+
+.author-item-check {
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.author-dropdown-empty {
+  padding: 16px 14px;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
 

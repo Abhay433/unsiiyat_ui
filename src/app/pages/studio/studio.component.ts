@@ -59,6 +59,11 @@ export class StudioComponent implements OnInit {
   isSidebarCollapsed = signal(false);
   searchQuery = signal('');
 
+  // Content Tab Dedicated Filters (Poem Title, Author Search & Genre Dropdown)
+  contentTitleSearch = signal<string>('');
+  contentAuthorSearch = signal<string>('');
+  contentGenreFilter = signal<string | number>('');
+
   // Modals & Forms Visibility
   showAddModal = signal(false);
   contentCreationStep = signal<'select-genre' | 'editor'>('select-genre');
@@ -66,6 +71,11 @@ export class StudioComponent implements OnInit {
   showInlineGenreCreate = signal(false);
   inlineGenreName = signal('');
   inlineGenreSlug = signal('');
+
+  // Author Search Box in Content Modal
+  authorSearchQuery = signal<string>('');
+  isAuthorDropdownOpen = signal<boolean>(false);
+  allModalAuthors = signal<Author[]>([]);
 
   // Data Collections
   authors = signal<Author[]>([]);
@@ -171,6 +181,15 @@ export class StudioComponent implements OnInit {
 
   ngOnInit() {
     this.loadActiveTabData();
+    if (this.genres().length === 0) {
+      this.taxonomyService.filterGenres({ page: 0, size: 50 }).subscribe({
+        next: (res) => this.genres.set(res.data || []),
+        error: () => this.genres.set(this.seedService.initialGenres)
+      });
+    }
+    if (this.authors().length === 0) {
+      this.loadAuthors();
+    }
     this.route.queryParams.subscribe(params => {
       const editId = Number(params['editContentId']);
       if (editId) {
@@ -294,13 +313,29 @@ export class StudioComponent implements OnInit {
   switchTab(tab: 'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed') {
     this.activeTab.set(tab);
     this.searchQuery.set('');
+    this.resetContentFilters();
     this.loadActiveTabData(tab);
+  }
+
+  resetContentFilters() {
+    this.contentTitleSearch.set('');
+    this.contentAuthorSearch.set('');
+    this.contentGenreFilter.set('');
   }
 
   loadActiveTabData(tab: 'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed' = this.activeTab(), scriptId?: number) {
     switch (tab) {
       case 'content':
         this.loadContents(scriptId);
+        if (this.genres().length === 0) {
+          this.taxonomyService.filterGenres({ page: 0, size: 50 }).subscribe({
+            next: (res) => this.genres.set(res.data || []),
+            error: () => this.genres.set(this.seedService.initialGenres)
+          });
+        }
+        if (this.authors().length === 0) {
+          this.loadAuthors(scriptId);
+        }
         break;
       case 'genres':
         this.loadGenres();
@@ -437,9 +472,24 @@ export class StudioComponent implements OnInit {
 
   loadSupportingModalData() {
     if (this.genres().length === 0) this.loadGenres();
-    if (this.authors().length === 0) this.loadAuthors();
     if (this.themes().length === 0) this.loadThemes();
     if (this.scripts().length === 0) this.loadScripts();
+
+    if (this.allModalAuthors().length === 0) {
+      this.authorService.getEnrichedAuthors().subscribe({
+        next: (authors) => {
+          this.allModalAuthors.set(authors);
+          if (this.authors().length === 0) this.authors.set(authors);
+          this.syncAuthorSearchInput();
+        },
+        error: () => {
+          this.allModalAuthors.set(this.authors());
+          this.syncAuthorSearchInput();
+        }
+      });
+    } else {
+      this.syncAuthorSearchInput();
+    }
   }
 
   refreshAllData(scriptId?: number) {
@@ -682,16 +732,68 @@ export class StudioComponent implements OnInit {
 
   // Filtered lists based on search
   filteredContents = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.contents();
-    return this.contents().filter(c => 
-      (c.title || '').toLowerCase().includes(q) ||
-      (this.getContentTitleForActiveScript(c) || '').toLowerCase().includes(q) ||
-      (this.getContentBodySnippetForActiveScript(c) || '').toLowerCase().includes(q) ||
-      (this.getAuthorNameForActiveScript(c.author, c.authorId) || '').toLowerCase().includes(q) ||
-      (c.primaryText?.title || '').toLowerCase().includes(q) ||
-      (c.author?.primaryName || '').toLowerCase().includes(q)
-    );
+    let items = this.contents();
+
+    // 1. Filter by Genre Dropdown
+    const genreVal = this.contentGenreFilter();
+    if (genreVal !== '' && genreVal !== null && genreVal !== undefined) {
+      const gId = Number(genreVal);
+      items = items.filter(c => c.genreId === gId || c.genre?.id === gId);
+    }
+
+    // 2. Filter by Poem Title Search Box
+    const titleQ = this.contentTitleSearch().toLowerCase().trim();
+    if (titleQ) {
+      items = items.filter(c => {
+        const t1 = (c.title || '').toLowerCase();
+        const t2 = (this.getContentTitleForActiveScript(c) || '').toLowerCase();
+        const t3 = (this.getContentBodySnippetForActiveScript(c) || '').toLowerCase();
+        const t4 = (c.primaryText?.title || '').toLowerCase();
+        return t1.includes(titleQ) || t2.includes(titleQ) || t3.includes(titleQ) || t4.includes(titleQ);
+      });
+    }
+
+    // 3. Filter by Author / Shayar Search Box
+    const authorQ = this.contentAuthorSearch().toLowerCase().trim();
+    if (authorQ) {
+      items = items.filter(c => {
+        const targetAuthor = c.author || (c.authorId ? this.authors().find(a => a.id === c.authorId) : undefined);
+        const aActive = (this.getAuthorNameForActiveScript(c.author, c.authorId) || '').toLowerCase();
+        const aPrimary = (targetAuthor?.primaryName || '').toLowerCase();
+        const aName = (targetAuthor?.name || '').toLowerCase();
+        const aUr = ((targetAuthor as any)?.urName || '').toLowerCase();
+        const aHi = ((targetAuthor as any)?.hiName || '').toLowerCase();
+        const aEn = ((targetAuthor as any)?.enName || '').toLowerCase();
+
+        let detailsMatch = false;
+        if (targetAuthor?.details && Array.isArray(targetAuthor.details)) {
+          detailsMatch = targetAuthor.details.some(d => (d.name || '').toLowerCase().includes(authorQ));
+        }
+
+        return aActive.includes(authorQ) ||
+               aPrimary.includes(authorQ) ||
+               aName.includes(authorQ) ||
+               aUr.includes(authorQ) ||
+               aHi.includes(authorQ) ||
+               aEn.includes(authorQ) ||
+               detailsMatch;
+      });
+    }
+
+    // 4. Global fallback search query if active
+    const globalQ = this.searchQuery().toLowerCase().trim();
+    if (globalQ && this.activeTab() === 'content') {
+      items = items.filter(c => 
+        (c.title || '').toLowerCase().includes(globalQ) ||
+        (this.getContentTitleForActiveScript(c) || '').toLowerCase().includes(globalQ) ||
+        (this.getContentBodySnippetForActiveScript(c) || '').toLowerCase().includes(globalQ) ||
+        (this.getAuthorNameForActiveScript(c.author, c.authorId) || '').toLowerCase().includes(globalQ) ||
+        (c.primaryText?.title || '').toLowerCase().includes(globalQ) ||
+        (c.author?.primaryName || '').toLowerCase().includes(globalQ)
+      );
+    }
+
+    return items;
   });
 
   filteredGenres = computed(() => {
@@ -747,6 +849,65 @@ export class StudioComponent implements OnInit {
     return a.primaryName || (a as any).name || '';
   }
 
+  // Filtered authors for the searchable input in Content Modal
+  filteredModalAuthors = computed(() => {
+    const q = this.authorSearchQuery().toLowerCase().trim();
+    const list = this.allModalAuthors().length > 0 ? this.allModalAuthors() : this.authors();
+    if (!q) return list;
+    return list.filter(a => {
+      const primary = (a.primaryName || a.name || '').toLowerCase();
+      const ur = (this.getAuthorUrduName(a) || '').toLowerCase();
+      const en = (a.enName || '').toLowerCase();
+      const hi = (a.hiName || '').toLowerCase();
+      const details = Array.isArray(a.details) ? a.details.map(d => (d.name || '').toLowerCase()).join(' ') : '';
+      return primary.includes(q) || ur.includes(q) || en.includes(q) || hi.includes(q) || details.includes(q);
+    });
+  });
+
+  getAuthorDisplayLabel(author?: Author): string {
+    if (!author) return '';
+    const urdu = this.getAuthorUrduName(author);
+    const name = author.primaryName || author.name || 'Unknown Poet';
+    return urdu && urdu !== name ? `${name} (${urdu})` : name;
+  }
+
+  syncAuthorSearchInput() {
+    const currentAuthorId = this.contentForm().authorId;
+    const list = this.allModalAuthors().length > 0 ? this.allModalAuthors() : this.authors();
+    const current = list.find(a => a.id === currentAuthorId) || (currentAuthorId ? { id: currentAuthorId, primaryName: `Poet #${currentAuthorId}` } as Author : list[0]);
+    if (current) {
+      this.authorSearchQuery.set(this.getAuthorDisplayLabel(current));
+    }
+  }
+
+  openAuthorDropdown() {
+    this.isAuthorDropdownOpen.set(true);
+  }
+
+  toggleAuthorDropdown(event?: MouseEvent) {
+    if (event) event.stopPropagation();
+    this.isAuthorDropdownOpen.update(v => !v);
+  }
+
+  onAuthorSearchInput(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    this.authorSearchQuery.set(val);
+    this.isAuthorDropdownOpen.set(true);
+  }
+
+  selectAuthor(author: Author) {
+    if (!author?.id) return;
+    this.contentForm.update(f => ({ ...f, authorId: author.id! }));
+    this.authorSearchQuery.set(this.getAuthorDisplayLabel(author));
+    this.isAuthorDropdownOpen.set(false);
+  }
+
+  clearAuthorSearch(event?: MouseEvent) {
+    if (event) event.stopPropagation();
+    this.authorSearchQuery.set('');
+    this.isAuthorDropdownOpen.set(true);
+  }
+
   filteredAdmins = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.adminUsers();
@@ -782,6 +943,7 @@ export class StudioComponent implements OnInit {
         enTitle: '',
         enBody: ''
       });
+      this.syncAuthorSearchInput();
     } else if (this.activeTab() === 'genres') {
       this.genreForm.set({ name: '', slug: '', description: '' });
     } else if (this.activeTab() === 'themes') {
@@ -921,6 +1083,7 @@ export class StudioComponent implements OnInit {
       const active = this.scriptService.activeScript();
       this.activeScriptEditorTab.set(active === 'ur' ? 'ur' : (active === 'hi' ? 'hi' : 'en'));
     }
+    this.syncAuthorSearchInput();
   }
 
   getGenreIcon(slug?: string): string {
