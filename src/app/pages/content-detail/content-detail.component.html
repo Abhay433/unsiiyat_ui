@@ -222,127 +222,58 @@
   <!-- 2. STANDARD READING VIEW (When isEditing is FALSE)                      -->
   <!-- ======================================================================= -->
   <ng-container *ngIf="!isEditing()">
-    <!-- Word Click Hint Notice -->
-    <div class="word-hint-banner flex-between">
-      <span class="hint-text">
-        💡 <strong>Tip:</strong> Click on any word in the couplets to view its Urdu, Hindi, and English dictionary
-        meaning instantly.
-      </span>
-      <div class="hint-badge-group">
-        <span *ngIf="showShareToast()" class="share-toast-pill animate-fade-in">✓ Link copied to clipboard!</span>
-        <span class="hint-icon font-display">REKHTA LUGHAT ENABLED</span>
-      </div>
+    <!-- Toast message if link copied -->
+    <div *ngIf="showShareToast()" class="share-toast-pill-fixed animate-fade-in">
+      ✓ Link copied to clipboard!
     </div>
 
-    <!-- Main Ghazal Parchment Card -->
-    <article class="ghazal-parchment poetic-card">
-      <!-- Header Title & Poet Link -->
-      <header class="parchment-header">
-        <div class="parchment-genre-tag">
-          <span>✦ {{ getGenreName() }} ✦</span>
-        </div>
-
-        <h1 class="ghazal-main-title" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()">
+    <!-- Main Clean Reading Card (Rekhta Style) -->
+    <article class="rekhta-reading-card animate-fade-in">
+      <!-- Header: Pure Title Name & Author Name -->
+      <header class="rekhta-header">
+        <h1 class="rekhta-poem-title" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()">
           {{ currentPoemText()?.title || content().title }}
         </h1>
 
-        <div class="parchment-poet-meta">
-          <span class="by-text font-display">KALAAM-E-SHAYAR:</span>
-          <a [routerLink]="['/poet', content().author?.id || content().authorId || 1]" class="poet-name-link"
-            [ngClass]="getPoemFontClass()">
-            👤 {{ getAuthorName() }}
+        <div class="rekhta-poet-meta">
+          <a [routerLink]="['/poet', content().author?.id || content().authorId || 1]" class="rekhta-poet-link">
+            {{ getAuthorName() | uppercase }}
           </a>
         </div>
 
-        <div class="poetic-divider">
-          <span>✦ ✒️ ✦</span>
-        </div>
+        <div class="rekhta-header-divider"></div>
       </header>
 
-      <!-- Couplet-by-Couplet Layout -->
-      <div class="couplets-stream" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()"
+      <!-- Couplets Stream: Clean, pure, spacious typography without card boxes -->
+      <div class="rekhta-couplets-stream" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()"
         [style.font-size.px]="readerFontSize()">
-        <div *ngFor="let couplet of couplets(); let idx = index; trackBy: trackByIndex" class="couplet-stanza">
-          <div class="couplet-stanza-header flex-between" dir="ltr">
-            <span class="couplet-number font-display">
-              {{ getCoupletNumeral(idx) }}
-            </span>
-
-            <div class="couplet-header-actions-col">
-              <button type="button" class="couplet-action-btn"
-                (click)="copyCouplet(idx, [couplet.line1, couplet.line2])"
-                [title]="scriptService.translate('copy_sher')">
-                {{ copiedIndex() === idx ? '✓ ' + scriptService.translate('copied') : '📋 ' +
-                scriptService.translate('copy_sher') }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Reading View of Lines -->
-          <div *ngIf="editingCoupletIndex() !== idx" class="couplet-lines">
-            <!-- Line 1 with Clickable Words -->
-            <p class="couplet-line first-line">
+        <div *ngFor="let couplet of couplets(); let idx = index; trackBy: trackByIndex" class="rekhta-couplet-stanza">
+          <div class="rekhta-couplet-lines">
+            <p class="rekhta-couplet-line first-line">
               <span *ngFor="let word of couplet.words1" class="interactive-word" (click)="openDictionary(word)"
                 [title]="'Click to see meaning of ' + word">{{ word }} </span>
             </p>
-
-            <!-- Line 2 with Clickable Words -->
-            <p class="couplet-line second-line">
+            <p class="rekhta-couplet-line second-line">
               <span *ngFor="let word of couplet.words2" class="interactive-word" (click)="openDictionary(word)"
                 [title]="'Click to see meaning of ' + word">{{ word }} </span>
             </p>
-          </div>
-
-          <!-- Inline Edit View for this Sher -->
-          <div *ngIf="editingCoupletIndex() === idx" class="couplet-inline-editor animate-fade-in">
-            <div class="inline-misra-field">
-              <label class="inline-misra-label font-display">
-                <span>MISRA 1 (مصرعہ اول)</span>
-              </label>
-              <input type="text" class="inline-misra-input" [ngModel]="editingCoupletLine1()"
-                (ngModelChange)="editingCoupletLine1.set($event)" [ngModelOptions]="{standalone: true}"
-                [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()" placeholder="First line of Sher..." />
-            </div>
-
-            <div class="inline-misra-field">
-              <label class="inline-misra-label font-display">
-                <span>MISRA 2 (مصرعہ ثانی)</span>
-              </label>
-              <input type="text" class="inline-misra-input" [ngModel]="editingCoupletLine2()"
-                (ngModelChange)="editingCoupletLine2.set($event)" [ngModelOptions]="{standalone: true}"
-                [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()" placeholder="Second line of Sher..." />
-            </div>
-
-            <div class="inline-editor-bottom-bar flex-between" dir="ltr">
-              <button type="button" class="btn btn-outline-cancel btn-sm" (click)="cancelEditingCouplet()">
-                ✕ Cancel
-              </button>
-              <button type="button" class="btn btn-save-primary btn-sm" (click)="saveEditingCouplet(idx)"
-                [disabled]="isSavingCouplet()">
-                <span *ngIf="isSavingCouplet()" class="btn-spinner"></span>
-                <span>💾 Save Sher (محفوظ کریں)</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="stanza-divider">
-            <span>❦</span>
           </div>
         </div>
       </div>
 
       <!-- Navigation between Ghazals -->
       <div class="ghazal-pager flex-between">
-        <button type="button" class="btn btn-outline-gold" (click)="navigateToPreviousGhazal()">
-          &larr; Previous Ghazal (پچھلی غزل)
+        <button type="button" class="btn btn-outline-cancel btn-sm" (click)="navigateToPreviousGhazal()">
+          &larr; Previous Kalam
         </button>
 
-        <button type="button" class="btn btn-blue btn-edit-center" (click)="startEditing()">
-          ✏️ Edit Kalam Directly
+        <button type="button" class="btn btn-edit-kalam-pill" (click)="startEditing()">
+          <span class="edit-icon">✏️</span>
+          <span>Edit Kalam</span>
         </button>
 
-        <button type="button" class="btn btn-outline-gold" (click)="navigateToNextGhazal()">
-          Next Ghazal (اگلی غزل) &rarr;
+        <button type="button" class="btn btn-outline-cancel btn-sm" (click)="navigateToNextGhazal()">
+          Next Kalam &rarr;
         </button>
       </div>
 
