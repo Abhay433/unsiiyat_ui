@@ -46,13 +46,6 @@
 
     <button 
       class="poet-tab-btn" 
-      [class.active]="activeTab() === 'ashar'" 
-      (click)="selectTab('ashar')">
-      ✒️ {{ scriptService.activeScript() === 'ur' ? 'منتخب اشعار' : (scriptService.activeScript() === 'hi' ? 'चुनिंदा अशआर' : 'Selected Couplets') }}
-    </button>
-
-    <button 
-      class="poet-tab-btn" 
       [class.active]="activeTab() === 'bio'" 
       (click)="selectTab('bio')">
       📖 {{ scriptService.activeScript() === 'ur' ? 'سوانح حیات' : (scriptService.activeScript() === 'hi' ? 'जीवन परिचय' : 'Biography & Life Era') }}
@@ -92,30 +85,44 @@
       <span>Fetching works...</span>
     </div>
 
-    <!-- Works Grid (10 items per page) -->
-    <div class="ghazals-feed-grid" *ngIf="!loadingContents() && poetContents().length > 0">
-      <div *ngFor="let item of poetContents()" class="ghazal-card poetic-card">
-        <div class="ghazal-card-header flex-between">
-          <span class="ghazal-poet-badge font-english">
-            {{ poet()?.primaryName }}
-          </span>
-          <span class="badge font-display">{{ getGenreBadge(item) }}</span>
+    <!-- Works List View (10 items per page) -->
+    <div class="works-list-feed" *ngIf="!loadingContents() && poetContents().length > 0">
+      <div *ngFor="let item of poetContents(); let idx = index" class="work-list-item poetic-card">
+        <!-- Serial Index Circle -->
+        <div class="item-serial-box">
+          <span class="serial-num font-mono">{{ (currentPage() * pageSize()) + idx + 1 }}</span>
         </div>
 
-        <h3 class="ghazal-card-title" [ngClass]="scriptService.fontClass()">
-          {{ item.primaryText?.title || item.title }}
-        </h3>
+        <!-- Main Info: Title, Poet, Meta, Couplet Excerpt -->
+        <div class="work-main-info">
+          <div class="work-header-line flex-between">
+            <h3 class="work-item-title" [ngClass]="scriptService.fontClass()">
+              <a [routerLink]="['/content', item.id]" class="work-title-link">
+                {{ item.primaryText?.title || item.title }}
+              </a>
+            </h3>
+            <span class="badge font-display">{{ getGenreBadge(item) }}</span>
+          </div>
 
-        <div class="ghazal-card-snippet" [ngClass]="scriptService.fontClass()">
-          <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)" class="snippet-line">{{ line }}</p>
+          <div class="work-meta-subline">
+            <span class="work-poet-byline">✒️ {{ poet()?.primaryName }}</span>
+            <span class="meta-dot">·</span>
+            <span class="work-genre-inline">✦ {{ getGenreBadge(item) }}</span>
+          </div>
+
+          <!-- Couplet Preview Snippet -->
+          <div class="work-snippet-box" [ngClass]="scriptService.fontClass()" *ngIf="getFirstCouplet(item.primaryText?.body)[0]">
+            <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)" class="work-snippet-line">
+              {{ line }}
+            </p>
+          </div>
         </div>
 
-        <div class="ghazal-card-footer flex-between">
-          <span class="status-count">
-            ✦ {{ getGenreBadge(item) }}
-          </span>
-          <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-sm">
-            {{ scriptService.translate('read_more') }} &rarr;
+        <!-- Right Side Action Button -->
+        <div class="work-item-action">
+          <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-read-action">
+            <span>{{ scriptService.translate('read_more') }}</span>
+            <span class="read-arrow">&rarr;</span>
           </a>
         </div>
       </div>
@@ -166,31 +173,7 @@
     </div>
   </div>
 
-  <!-- Tab 2: Ash'ar (Couplets Gallery) -->
-  <div *ngIf="activeTab() === 'ashar'" class="tab-content animate-fade-in">
-    <div class="ashar-gallery-grid">
-      <div *ngFor="let item of poetContents(); let idx = index" class="ashar-stanza-card poetic-card">
-        <div class="couplet-header flex-between">
-          <span class="badge font-display">Couplet #{{ idx + 1 }}</span>
-          <button class="tool-btn" (click)="copyCouplet(idx, getFirstCouplet(item.primaryText?.body))">
-            {{ copiedIndex() === idx ? '✓ Copied' : '📋 ' + scriptService.translate('copy_sher') }}
-          </button>
-        </div>
-
-        <div class="couplet-content-box" [ngClass]="scriptService.fontClass()">
-          <p class="couplet-line first-line">{{ getFirstCouplet(item.primaryText?.body)[0] }}</p>
-          <p class="couplet-line second-line">{{ getFirstCouplet(item.primaryText?.body)[1] }}</p>
-        </div>
-
-        <div class="couplet-footer flex-between">
-          <span class="attribution font-display">— {{ poet().primaryName }}</span>
-          <a [routerLink]="['/content', item.id]" class="view-link">View in context &rarr;</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tab 3: Detailed Biography -->
+  <!-- Tab 2: Detailed Biography -->
   <div *ngIf="activeTab() === 'bio'" class="tab-content animate-fade-in">
     <div class="bio-extended-card poetic-card">
       <h3 class="bio-heading font-display">LITERARY BIOGRAPHY & HISTORICAL CONTEXT</h3>

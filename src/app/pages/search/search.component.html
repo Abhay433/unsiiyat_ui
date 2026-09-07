@@ -46,37 +46,39 @@
         <span class="count-pill">{{ searchData()!.authors.length }} Poets Found</span>
       </div>
 
-      <!-- Authors Cards Grid -->
-      <div class="authors-grid">
-        <div *ngFor="let author of searchData()!.authors" class="author-result-card poetic-card">
-          <div class="author-card-top">
+      <!-- Authors List View -->
+      <div class="authors-list-feed">
+        <div *ngFor="let author of searchData()!.authors" class="author-list-item poetic-card">
+          <div class="author-list-left">
             <div class="author-avatar-wrap">
               <span class="author-initial font-display">{{ getAuthorInitial(author) }}</span>
             </div>
-            <div class="author-main-info">
-              <h3 class="author-title font-display" [ngClass]="scriptService.fontClass()">
-                {{ getAuthorName(author) }}
-              </h3>
-              <div class="author-meta-line">
+
+            <div class="author-info-block">
+              <div class="author-title-row">
+                <h3 class="author-title font-display" [ngClass]="scriptService.fontClass()">
+                  {{ getAuthorName(author) }}
+                </h3>
                 <span class="meta-tag">Master Shayar</span>
                 <span *ngIf="author.birthDate" class="era-tag">
                   {{ author.birthDate.slice(0, 4) }} <ng-container *ngIf="author.deathDate">– {{ author.deathDate.slice(0, 4) }}</ng-container>
                 </span>
               </div>
+
+              <!-- Multi-script Names Pill Row -->
+              <div class="author-scripts-preview">
+                <span *ngIf="author.urName" class="script-subtag font-urdu" title="Urdu Script">{{ author.urName }}</span>
+                <span *ngIf="author.hiName" class="script-subtag font-hindi" title="Hindi Script">{{ author.hiName }}</span>
+                <span *ngIf="author.enName" class="script-subtag font-sans" title="English / Latin">{{ author.enName }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- Multi-script Names Pill Row -->
-          <div class="author-scripts-preview">
-            <span *ngIf="author.urName" class="script-subtag font-urdu" title="Urdu Script">{{ author.urName }}</span>
-            <span *ngIf="author.hiName" class="script-subtag font-hindi" title="Hindi Script">{{ author.hiName }}</span>
-            <span *ngIf="author.enName" class="script-subtag font-sans" title="English / Latin">{{ author.enName }}</span>
-          </div>
-
-          <!-- Card Actions -->
-          <div class="card-action-row">
+          <!-- Card Action -->
+          <div class="author-list-action">
             <a [routerLink]="['/poet', author.id]" class="btn btn-outline-gold btn-sm">
-              View Poet Profile →
+              <span>View Poet Profile</span>
+              <span class="action-arrow">→</span>
             </a>
           </div>
         </div>
@@ -115,39 +117,43 @@
           <span class="count-pill">{{ genreGroup.totalCount }} {{ genreGroup.genreName }} Found</span>
         </div>
 
-        <!-- Content Cards Grid -->
-        <div class="contents-grid">
-          <div *ngFor="let poem of genreGroup.contents" class="content-result-card poetic-card">
-            <!-- Card Header: Title & Poet -->
-            <div class="content-card-head">
-              <div class="content-heading-group">
-                <span class="genre-mini-pill">{{ genreGroup.genreName }}</span>
-                <h3 class="content-poem-title" [ngClass]="scriptService.fontClass()">
-                  {{ getContentTitle(poem) }}
-                </h3>
-              </div>
-              <div class="content-poet-byline">
-                <span class="poet-pen-icon">✒️</span>
-                <span class="poet-name">{{ getAuthorName(poem.author) }}</span>
-              </div>
+        <!-- Content List View (Replaces Grid) -->
+        <div class="contents-list-feed">
+          <div *ngFor="let poem of genreGroup.contents; let cIdx = index" class="content-list-item poetic-card">
+            <!-- Serial Number Box -->
+            <div class="content-serial-box">
+              <span class="serial-num font-mono">{{ cIdx + 1 }}</span>
             </div>
 
-            <!-- First Two Lines of Body (Couplet Preview) -->
-            <div class="couplet-preview-box">
-              <div class="couplet-ornament">❝</div>
-              <div class="couplet-lines" [ngClass]="scriptService.fontClass()">
-                <ng-container *ngIf="getFirstTwoLines(poem).length > 0; else noLinesBlock">
+            <!-- Main Content Area -->
+            <div class="content-main-info">
+              <div class="content-header-row flex-between">
+                <div class="content-title-wrap">
+                  <h3 class="content-poem-title" [ngClass]="scriptService.fontClass()">
+                    <a [routerLink]="['/content', poem.id]" class="content-title-link">
+                      {{ getContentTitle(poem) }}
+                    </a>
+                  </h3>
+                  <div class="content-poet-byline">
+                    <span class="poet-pen-icon">✒️</span>
+                    <span class="poet-name">{{ getAuthorName(poem.author) }}</span>
+                    <span class="byline-dot">·</span>
+                    <span class="genre-mini-pill">{{ genreGroup.genreName }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- First Two Lines of Body (Couplet Preview) -->
+              <div class="couplet-preview-box" *ngIf="getFirstTwoLines(poem).length > 0">
+                <div class="couplet-lines" [ngClass]="scriptService.fontClass()">
                   <p class="couplet-line line-1">{{ getFirstTwoLines(poem)[0] }}</p>
                   <p *ngIf="getFirstTwoLines(poem).length > 1" class="couplet-line line-2">{{ getFirstTwoLines(poem)[1] }}</p>
-                </ng-container>
-                <ng-template #noLinesBlock>
-                  <p class="couplet-line muted-fallback">View full verses inside...</p>
-                </ng-template>
+                </div>
               </div>
             </div>
 
             <!-- Card Bottom Action -->
-            <div class="content-card-footer">
+            <div class="content-list-action">
               <a [routerLink]="['/content', poem.id]" class="btn btn-read-poem">
                 <span>Read Full {{ genreGroup.genreName }}</span>
                 <span class="arrow-icon">→</span>
