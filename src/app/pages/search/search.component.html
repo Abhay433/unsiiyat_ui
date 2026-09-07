@@ -16,7 +16,9 @@
     </div>
 
     <!-- No Results State -->
-    <div *ngIf="hasSearched() && !loading() && searchData() && searchData()?.authors?.length === 0 && searchData()?.resultsByGenre?.length === 0" class="search-empty-state poetic-card">
+    <div
+      *ngIf="hasSearched() && !loading() && searchData() && searchData()?.authors?.length === 0 && searchData()?.resultsByGenre?.length === 0"
+      class="search-empty-state poetic-card">
       <div class="empty-emblem">📜</div>
       <h3 class="empty-title font-display">No Matches Discovered</h3>
       <p class="empty-desc">
@@ -24,77 +26,100 @@
       </p>
       <div class="empty-suggestions">
         <span>Try searching for:</span>
-        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('jaan'); onSearchSubmit()">jaan</button>
-        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('farar'); onSearchSubmit()">farar</button>
-        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('Zohaib'); onSearchSubmit()">Zohaib</button>
-        <button type="button" class="btn btn-outline-gold btn-sm" (click)="query.set('Ghalib'); onSearchSubmit()">Ghalib</button>
+        <button type="button" class="btn btn-outline-gold btn-sm"
+          (click)="query.set('jaan'); onSearchSubmit()">jaan</button>
+        <button type="button" class="btn btn-outline-gold btn-sm"
+          (click)="query.set('farar'); onSearchSubmit()">farar</button>
+        <button type="button" class="btn btn-outline-gold btn-sm"
+          (click)="query.set('Zohaib'); onSearchSubmit()">Zohaib</button>
+        <button type="button" class="btn btn-outline-gold btn-sm"
+          (click)="query.set('Ghalib'); onSearchSubmit()">Ghalib</button>
       </div>
     </div>
 
-    <!-- 1. AUTHOR SECTION (Author Pehle) -->
-    <section *ngIf="searchData() && searchData()!.authors && searchData()!.authors.length > 0" class="results-section authors-section">
+    <!-- 1. AUTHOR SECTION (Explore Authors Carousel - Size: 3 with Left & Right arrows) -->
+    <section *ngIf="carouselAuthors().length > 0 || (searchData() && searchData()!.authors && searchData()!.authors.length > 0)"
+      class="results-section authors-section">
       <div class="section-header-block">
         <div class="header-left">
           <span class="section-icon-badge">👤</span>
           <div>
             <h2 class="section-heading font-display">
-              Poets & Shayars <span class="font-urdu heading-native">شعراء / रचनाकार</span>
+              Authors & Shayars <span class="font-urdu heading-native">شعراء / रचनाकार</span>
             </h2>
             <p class="section-subtext">Renowned literary figures matching your search</p>
           </div>
         </div>
-        <span class="count-pill">{{ searchData()!.authors.length }} Poets Found</span>
+        <div class="carousel-header-right">
+          <span class="carousel-count-indicator font-mono" *ngIf="authorsCarouselTotalPages() > 1">
+            Page {{ authorsCarouselPage() + 1 }} / {{ authorsCarouselTotalPages() }}
+          </span>
+          <span class="count-pill">
+            {{ authorsCarouselTotalElements() || carouselAuthors().length }} {{ (authorsCarouselTotalElements() || carouselAuthors().length) === 1 ? 'Author' : 'Authors' }} Found
+          </span>
+        </div>
       </div>
 
-      <!-- Authors List View -->
-      <div class="authors-list-feed">
-        <div *ngFor="let author of searchData()!.authors" class="author-list-item poetic-card">
-          <div class="author-list-left">
-            <div class="author-avatar-wrap">
-              <span class="author-initial font-display">{{ getAuthorInitial(author) }}</span>
-            </div>
+      <!-- Authors Carousel with Left and Right Arrows (Size: 3) -->
+      <div class="authors-carousel-container">
+        <!-- Left Arrow Button -->
+        <button type="button" 
+                class="carousel-nav-btn prev-arrow" 
+                [disabled]="authorsCarouselPage() <= 0 || authorsCarouselLoading()" 
+                (click)="prevAuthorsPage()" 
+                title="Previous Authors"
+                aria-label="Previous Authors">
+          <span class="arrow-symbol">&#8249;</span>
+        </button>
 
-            <div class="author-info-block">
-              <div class="author-title-row">
-                <h3 class="author-title font-display" [ngClass]="scriptService.fontClass()">
-                  {{ getAuthorName(author) }}
-                </h3>
-                <span class="meta-tag">Master Shayar</span>
-                <span *ngIf="author.birthDate" class="era-tag">
-                  {{ author.birthDate.slice(0, 4) }} <ng-container *ngIf="author.deathDate">– {{ author.deathDate.slice(0, 4) }}</ng-container>
-                </span>
-              </div>
+        <!-- 3 Authors Cards Track -->
+        <div class="authors-carousel-track" [class.is-loading]="authorsCarouselLoading()">
+          <a *ngFor="let author of carouselAuthors()" [routerLink]="['/poet', author.id]" class="poet-card poetic-card carousel-card">
+            <div class="poet-portrait-ring">
+              <img [src]="getAuthorAvatar(author)" [alt]="getAuthorName(author)" (error)="onImgError($event, author)" />
+            </div>
+            <div class="poet-card-info">
+              <span class="poet-era-tag font-display">MASTER SHAYAR</span>
+              <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ getAuthorName(author) }}</h3>
+              <span class="poet-dates font-english" *ngIf="author.birthDate">
+                {{ author.birthDate | date:'yyyy' }} <ng-container *ngIf="author.deathDate">– {{ author.deathDate | date:'yyyy' }}</ng-container>
+              </span>
 
               <!-- Multi-script Names Pill Row -->
-              <div class="author-scripts-preview">
+              <div class="author-scripts-preview" *ngIf="author.urName || author.hiName || author.enName">
                 <span *ngIf="author.urName" class="script-subtag font-urdu" title="Urdu Script">{{ author.urName }}</span>
                 <span *ngIf="author.hiName" class="script-subtag font-hindi" title="Hindi Script">{{ author.hiName }}</span>
                 <span *ngIf="author.enName" class="script-subtag font-sans" title="English / Latin">{{ author.enName }}</span>
               </div>
-            </div>
-          </div>
 
-          <!-- Card Action -->
-          <div class="author-list-action">
-            <a [routerLink]="['/poet', author.id]" class="btn btn-outline-gold btn-sm">
-              <span>View Poet Profile</span>
-              <span class="action-arrow">→</span>
-            </a>
-          </div>
+              <p class="poet-brief" *ngIf="getAuthorBio(author)" [ngClass]="scriptService.fontClass()">
+                {{ getAuthorBio(author) | slice:0:75 }}...
+              </p>
+
+              <span class="poet-works-count">✦ View Works & Profile &rarr;</span>
+            </div>
+          </a>
         </div>
+
+        <!-- Right Arrow Button -->
+        <button type="button" 
+                class="carousel-nav-btn next-arrow" 
+                [disabled]="authorsCarouselIsLast() || authorsCarouselLoading()" 
+                (click)="nextAuthorsPage()" 
+                title="Next Authors"
+                aria-label="Next Authors">
+          <span class="arrow-symbol">&#8250;</span>
+        </button>
       </div>
 
-      <!-- Section Load More Button -->
-      <div class="section-load-more-wrap" *ngIf="authorsHasMore()">
-        <button 
-          type="button" 
-          class="btn btn-secondary-load" 
-          [disabled]="authorsLoading()" 
-          (click)="loadMoreAuthors()">
-          <span *ngIf="!authorsLoading()">Load More Poets</span>
-          <span *ngIf="authorsLoading()">Loading Poets...</span>
-          <span class="load-icon" *ngIf="!authorsLoading()">▾</span>
-          <span class="loading-spin" *ngIf="authorsLoading()">⏳</span>
+      <!-- Carousel Pagination Dots -->
+      <div class="carousel-dots-wrap" *ngIf="authorsCarouselTotalPages() > 1">
+        <button *ngFor="let p of getAuthorsCarouselPageArray(); let idx = index" 
+                type="button" 
+                class="carousel-dot-btn" 
+                [class.active]="idx === authorsCarouselPage()" 
+                (click)="goToAuthorsPage(idx)" 
+                [attr.aria-label]="'Go to page ' + (idx + 1)">
         </button>
       </div>
     </section>
@@ -147,7 +172,8 @@
               <div class="couplet-preview-box" *ngIf="getFirstTwoLines(poem).length > 0">
                 <div class="couplet-lines" [ngClass]="scriptService.fontClass()">
                   <p class="couplet-line line-1">{{ getFirstTwoLines(poem)[0] }}</p>
-                  <p *ngIf="getFirstTwoLines(poem).length > 1" class="couplet-line line-2">{{ getFirstTwoLines(poem)[1] }}</p>
+                  <p *ngIf="getFirstTwoLines(poem).length > 1" class="couplet-line line-2">{{ getFirstTwoLines(poem)[1]
+                    }}</p>
                 </div>
               </div>
             </div>
@@ -164,10 +190,7 @@
 
         <!-- Section Load More Button -->
         <div class="section-load-more-wrap" *ngIf="getGenreHasMore(genreGroup.genreId, genreGroup)">
-          <button 
-            type="button" 
-            class="btn btn-secondary-load" 
-            [disabled]="getGenreLoading(genreGroup.genreId)" 
+          <button type="button" class="btn btn-secondary-load" [disabled]="getGenreLoading(genreGroup.genreId)"
             (click)="loadMoreGenreContents(genreGroup)">
             <span *ngIf="!getGenreLoading(genreGroup.genreId)">Load More {{ genreGroup.genreName }}</span>
             <span *ngIf="getGenreLoading(genreGroup.genreId)">Loading {{ genreGroup.genreName }}...</span>

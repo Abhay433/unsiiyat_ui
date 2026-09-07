@@ -88,7 +88,7 @@
         </div>
         <div class="poet-card-details">
           <div class="poet-card-top-row flex-between">
-            <span class="poet-label font-display">ABOUT THE MASTER SHAYAR</span>
+            <span class="poet-label font-display">ABOUT THE AUTHOR & SHAYAR</span>
           </div>
           <h4 class="poet-name-sm" [ngClass]="getPoemFontClass()">
             {{ getAuthorName() }}
@@ -98,7 +98,7 @@
           </p>
           <div class="poet-card-actions">
             <a [routerLink]="['/poet', content()?.author?.id || content()?.authorId || 1]" class="btn btn-gold btn-sm">
-              View Complete Works & Biography &rarr;
+              View Author Profile & Works &rarr;
             </a>
           </div>
         </div>

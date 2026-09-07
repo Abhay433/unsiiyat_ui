@@ -41,13 +41,9 @@
     <div class="unsiiyat-container flex-between nav-main-row">
       <!-- Brand Logo -->
       <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
-        <div class="brand-emblem-wrap">
-          <span class="brand-emblem">✒️</span>
-        </div>
-        <div class="brand-text-block">
-          <span class="brand-name font-urdu gold-gradient-text">{{ scriptService.translate('brand') }}</span>
-          <span class="brand-subtext font-display">UNSIIYAT POETRY</span>
-        </div>
+        <span class="brand-name gold-gradient-text" [ngClass]="scriptService.activeScript() === 'ur' ? 'font-urdu' : 'font-display'">
+          {{ scriptService.translate('brand') }}
+        </span>
       </a>
 
       <!-- Live Search Box with Auto-Complete Dropdown -->
@@ -70,7 +66,7 @@
             <div *ngFor="let item of searchResults()" class="search-result-row" (click)="selectResult(item)">
               <span class="result-type-badge" [class.type-poet]="item.type === 'poet'"
                 [class.type-ghazal]="item.type === 'ghazal'">
-                {{ item.type === 'poet' ? '👤 Poet' : (item.type === 'ghazal' ? '📜 Ghazal' : '✦ Theme') }}
+                {{ item.type === 'poet' ? '👤 Author' : (item.type === 'ghazal' ? '📜 Ghazal' : '✦ Theme') }}
               </span>
               <div class="result-info">
                 <span class="result-title" [ngClass]="scriptService.fontClass()">{{ item.title }}</span>

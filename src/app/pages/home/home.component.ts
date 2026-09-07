@@ -25,6 +25,16 @@ export interface WordOfTheDay {
   };
 }
 
+export interface HeroCouplet {
+  id: number;
+  firstLine: string;
+  secondLine: string;
+  poet: string;
+  poetAvatar?: string;
+  poemTitle: string;
+  meaning: string;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -53,9 +63,17 @@ export class HomeComponent implements OnInit {
 
   // Data signals
   poets = signal<any[]>([]);
+  carouselAuthors = signal<any[]>([]);
+  authorCarouselPage = signal<number>(0);
+  authorCarouselTotalPages = signal<number>(1);
+  authorCarouselTotalElements = signal<number>(0);
+  authorCarouselLoading = signal<boolean>(false);
+  authorCarouselIsLast = signal<boolean>(false);
+
   genres = signal<any[]>([]);
   themes = signal<any[]>([]);
   contents = signal<any[]>([]);
+  ghazalOfTheDay = signal<any>(null);
   loading = signal(true);
 
   // --- Combined Multi-Filter & Search Signals (Part B) ---
@@ -150,11 +168,12 @@ export class HomeComponent implements OnInit {
   readonly currentWord = computed(() => this.wordsOfTheDay[this.activeWordIndex()]);
 
   // Featured Sher of the Day
-  readonly heroCouplets: Record<ScriptCode, { firstLine: string; secondLine: string; poet: string; poemTitle: string; id: number; meaning: string }> = {
+  readonly heroCouplets: Record<ScriptCode, HeroCouplet> = {
     ur: {
       firstLine: 'ہزاروں خواہشیں ایسی کہ ہر خواہش پہ دم نکلے',
       secondLine: 'بہت نکلے مرے ارمان لیکن پھر بھی کم نکلے',
       poet: 'مرزا اسد اللہ خاں غالب',
+      poetAvatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100',
       poemTitle: 'ہزاروں خواہشیں ایسی',
       id: 1,
       meaning: 'انسان کی آرزوئیں اور تمنائیں لامحدود ہیں، اگرچہ عمر بھر تمنائیں پوری ہوتی رہیں لیکن دل کی پیاس کبھی نہیں بجھتی۔'
@@ -163,6 +182,7 @@ export class HomeComponent implements OnInit {
       firstLine: 'हज़ारों ख़्वाहिशें ऐसी कि हर ख़्वाहिश पे दम निकले',
       secondLine: 'बहुत निकले मिरे अरमान लेकिन फिर भी कम निकले',
       poet: 'मिर्ज़ा ग़ालिब',
+      poetAvatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100',
       poemTitle: 'हज़ारों ख़्वाहिशें ऐसी',
       id: 1,
       meaning: 'मनुष्य की इच्छाएं अनंत हैं, जीवन भर अनगिनत अरमान पूरे होने के बावजूद आत्मा की तृष्णा कभी ख़त्म नहीं होती।'
@@ -171,6 +191,7 @@ export class HomeComponent implements OnInit {
       firstLine: 'Hazaron khwahishen aisi ke har khwahish pe dam nikle',
       secondLine: 'Bahut nikle mire armaan lekin phir bhi kam nikle',
       poet: 'Mirza Ghalib',
+      poetAvatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100',
       poemTitle: 'Hazaron Khwahishen Aisi',
       id: 1,
       meaning: 'Human desires are endless and boundless; even when thousands of longings are fulfilled, the soul remains yearning for more.'
@@ -178,7 +199,25 @@ export class HomeComponent implements OnInit {
   };
 
   readonly currentHero = computed(() => {
+    const ghazal = this.ghazalOfTheDay();
     const lang = this.scriptService.activeScript();
+    if (ghazal && (ghazal.primaryText?.body?.trim() || ghazal.title?.trim())) {
+      const body = ghazal.primaryText?.body || '';
+      const lines = body.split(String.fromCharCode(10)).map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+      const firstLine = lines.length > 0 ? lines[0] : (ghazal.title || 'Ghazal of the Day');
+      const secondLine = lines.length > 1 ? lines[1] : '';
+      const poet = ghazal.author?.primaryName || ghazal.author?.name || 'Classical Shayar';
+      const poetAvatar = this.authorService.getAuthorAvatar(ghazal.author);
+      return {
+        id: ghazal.id,
+        firstLine,
+        secondLine,
+        poet,
+        poetAvatar,
+        poemTitle: ghazal.title || 'Ghazal of the Day',
+        meaning: ''
+      };
+    }
     return this.heroCouplets[lang] || this.heroCouplets['ur'];
   });
 
@@ -337,11 +376,26 @@ export class HomeComponent implements OnInit {
     this.loadData();
   }
 
+  loadGhazalOfTheDay(scriptId?: number) {
+    this.contentService.getGhazalOfTheDay(scriptId).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          this.ghazalOfTheDay.set(res.data);
+        }
+      },
+      error: () => {}
+    });
+  }
+
   loadData() {
     this.loading.set(true);
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+    this.loadGhazalOfTheDay(scriptId);
 
-    // Load authors
+    // Load authors for carousel (strictly size: 3 for 3 cards per slide)
+    this.loadCarouselAuthors(0);
+
+    // Load authors for dropdown filter
     this.authorService.getEnrichedAuthors(scriptId).subscribe({
       next: (data) => {
         if (data && data.length > 0) {
@@ -383,6 +437,80 @@ export class HomeComponent implements OnInit {
       },
       error: () => this.themes.set(this.seedService.initialThemes)
     });
+  }
+
+  // --- Authors Carousel with size: 3 and Left/Right Arrows ---
+  loadCarouselAuthors(page: number = 0) {
+    this.authorCarouselLoading.set(true);
+    const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+
+    this.authorService.getEnrichedAuthorsPaged(scriptId, {
+      page,
+      size: 3,
+      sortBy: 'id',
+      sortDirection: 'asc'
+    }).subscribe({
+      next: (res) => {
+        const list = res.data || (res as any).content || [];
+        if (list.length > 0) {
+          this.carouselAuthors.set(list);
+          this.authorCarouselPage.set(res.page ?? page);
+          const total = res.totalElements ?? list.length;
+          this.authorCarouselTotalElements.set(total);
+          this.authorCarouselTotalPages.set(res.totalPages || Math.ceil(total / 3) || 1);
+          this.authorCarouselIsLast.set(res.last ?? (list.length < 3));
+        } else if (page === 0) {
+          this.setFallbackCarouselAuthors();
+        } else {
+          this.authorCarouselIsLast.set(true);
+        }
+        this.authorCarouselLoading.set(false);
+      },
+      error: () => {
+        if (page === 0) {
+          this.setFallbackCarouselAuthors();
+        }
+        this.authorCarouselLoading.set(false);
+      }
+    });
+  }
+
+  nextAuthorPage() {
+    if (this.authorCarouselIsLast() || this.authorCarouselLoading()) return;
+    const next = this.authorCarouselPage() + 1;
+    this.loadCarouselAuthors(next);
+  }
+
+  prevAuthorPage() {
+    if (this.authorCarouselPage() <= 0 || this.authorCarouselLoading()) return;
+    const prev = this.authorCarouselPage() - 1;
+    this.loadCarouselAuthors(prev);
+  }
+
+  goToAuthorPage(page: number) {
+    if (page < 0 || page >= this.authorCarouselTotalPages() || this.authorCarouselLoading()) return;
+    this.loadCarouselAuthors(page);
+  }
+
+  getCarouselPageArray(): number[] {
+    const total = this.authorCarouselTotalPages();
+    return Array.from({ length: Math.min(total, 12) }, (_, i) => i);
+  }
+
+  private setFallbackCarouselAuthors() {
+    const lang = this.scriptService.activeScript();
+    const list = this.seedService.classicalPoets.slice(0, 3).map(p => ({
+      id: p.id,
+      birthDate: p.birthDate,
+      deathDate: p.deathDate,
+      avatarUrl: p.avatarUrl,
+      primaryName: p.details[lang]?.name || p.details.ur.name,
+      primaryBio: p.details[lang]?.biography || p.details.ur.biography
+    }));
+    this.carouselAuthors.set(list);
+    this.authorCarouselTotalPages.set(Math.ceil(this.seedService.classicalPoets.length / 3));
+    this.authorCarouselTotalElements.set(this.seedService.classicalPoets.length);
+    this.authorCarouselIsLast.set(list.length < 3);
   }
 
   private setFallbackPoets() {

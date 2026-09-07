@@ -7,7 +7,7 @@
         <div class="hero-toolbar flex-between">
           <div class="hero-badge">
             <span class="badge-icon">✦</span>
-            <span class="badge-text">{{ scriptService.translate('sher_of_day') }}</span>
+            <span class="badge-text">{{ scriptService.translate('ghazal_of_day') || 'Ghazal of the Day' }}</span>
           </div>
 
           <div class="hero-controls">
@@ -17,20 +17,6 @@
               <button class="tool-btn" (click)="changeFontSize(-2)" title="Decrease font size">A-</button>
               <button class="tool-btn" (click)="changeFontSize(2)" title="Increase font size">A+</button>
             </div>
-
-            <!-- Audio Simulation Button with Waveform -->
-            <button class="tool-btn audio-btn" (click)="toggleAudio()" [class.playing]="isPlayingAudio()"
-              title="Listen to Recitation">
-              <div *ngIf="isPlayingAudio()" class="audio-waveform">
-                <span class="waveform-bar"></span>
-                <span class="waveform-bar"></span>
-                <span class="waveform-bar"></span>
-                <span class="waveform-bar"></span>
-                <span class="waveform-bar"></span>
-              </div>
-              <span>{{ isPlayingAudio() ? 'Reciting (0:' + (audioProgress() < 10 ? '0' : '' ) + audioProgress() + ')'
-                  : '▶ Recitation' }}</span>
-            </button>
 
             <!-- Copy Button -->
             <button class="tool-btn copy-btn" (click)="copyHeroCouplet()">
@@ -47,7 +33,7 @@
         </div>
 
         <!-- Couplet Meaning Breakdown -->
-        <div class="hero-meaning-box">
+        <div class="hero-meaning-box" *ngIf="currentHero().meaning">
           <span class="meaning-tag">📖 Mafhoom / भावार्थ:</span>
           <p class="meaning-text" [ngClass]="scriptService.fontClass()">{{ currentHero().meaning }}</p>
         </div>
@@ -56,7 +42,7 @@
         <div class="hero-footer flex-between">
           <div class="poet-citation">
             <div class="poet-citation-avatar">
-              <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?w=100" alt="Mirza Ghalib" />
+              <img [src]="currentHero().poetAvatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100'" [alt]="currentHero().poet" />
             </div>
             <div class="poet-citation-info">
               <span class="citation-label font-display">MASTER SHAYAR</span>
@@ -77,7 +63,7 @@
     </div>
   </section>
 
-  <!-- Section 1: Shayar Spotlight (شاعروں کی محفل / प्रमुख शायर) -->
+  <!-- Section 1: Shayar Spotlight (شاعروں کی محفل / प्रमुख शायर - Explore Authors Carousel) -->
   <section class="section-padding poets-section">
     <div class="unsiiyat-container">
       <div class="section-header flex-between">
@@ -85,25 +71,66 @@
           <h2 class="section-title font-display">{{ scriptService.translate('explore_poets') }}</h2>
           <p class="section-subtitle">Masters of timeless verse, classical gazals, and philosophical poetry</p>
         </div>
-        <a routerLink="/poets" class="view-all-link">
-          {{ scriptService.translate('all_poets') }} &rarr;
-        </a>
+        <div class="section-header-right">
+          <span class="carousel-count-indicator font-mono" *ngIf="authorCarouselTotalPages() > 1">
+            Page {{ authorCarouselPage() + 1 }} / {{ authorCarouselTotalPages() }}
+          </span>
+          <a routerLink="/poets" class="view-all-link">
+            {{ scriptService.translate('all_poets') }} &rarr;
+          </a>
+        </div>
       </div>
 
-      <div class="poets-grid">
-        <a *ngFor="let poet of poets()" [routerLink]="['/poet', poet.id]" class="poet-card poetic-card">
-          <div class="poet-portrait-ring">
-            <img [src]="getPoetAvatar(poet)" [alt]="poet.primaryName" (error)="onImgError($event, poet)" />
-          </div>
-          <div class="poet-card-info">
-            <span class="poet-era-tag font-display">CLASSICAL SHAYAR</span>
-            <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
-            <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy'
-              }}</span>
-            <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio | slice:0:75 }}...</p>
-            <span class="poet-works-count">✦ 40+ Ghazals & Nazms</span>
-          </div>
-        </a>
+      <!-- Authors Carousel with Left and Right Arrows (Size: 3) -->
+      <div class="authors-carousel-container">
+        <!-- Left Arrow Button -->
+        <button type="button" 
+                class="carousel-nav-btn prev-arrow" 
+                [disabled]="authorCarouselPage() <= 0 || authorCarouselLoading()" 
+                (click)="prevAuthorPage()" 
+                title="Previous Authors"
+                aria-label="Previous Authors">
+          <span class="arrow-symbol">&#8249;</span>
+        </button>
+
+        <!-- 3 Authors Cards Grid -->
+        <div class="authors-carousel-track" [class.is-loading]="authorCarouselLoading()">
+          <a *ngFor="let poet of carouselAuthors()" [routerLink]="['/poet', poet.id]" class="poet-card poetic-card carousel-card">
+            <div class="poet-portrait-ring">
+              <img [src]="getPoetAvatar(poet)" [alt]="poet.primaryName" (error)="onImgError($event, poet)" />
+            </div>
+            <div class="poet-card-info">
+              <span class="poet-era-tag font-display">CLASSICAL SHAYAR</span>
+              <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
+              <span class="poet-dates font-english">
+                {{ poet.birthDate | date:'yyyy' }} <ng-container *ngIf="poet.deathDate">– {{ poet.deathDate | date:'yyyy' }}</ng-container>
+              </span>
+              <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ (poet.primaryBio || poet.biography || '') | slice:0:75 }}...</p>
+              <span class="poet-works-count">✦ 40+ Ghazals & Nazms</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Right Arrow Button -->
+        <button type="button" 
+                class="carousel-nav-btn next-arrow" 
+                [disabled]="authorCarouselIsLast() || authorCarouselLoading()" 
+                (click)="nextAuthorPage()" 
+                title="Next Authors"
+                aria-label="Next Authors">
+          <span class="arrow-symbol">&#8250;</span>
+        </button>
+      </div>
+
+      <!-- Carousel Pagination Dots -->
+      <div class="carousel-dots-wrap" *ngIf="authorCarouselTotalPages() > 1">
+        <button *ngFor="let p of getCarouselPageArray(); let idx = index" 
+                type="button" 
+                class="carousel-dot-btn" 
+                [class.active]="idx === authorCarouselPage()" 
+                (click)="goToAuthorPage(idx)" 
+                [attr.aria-label]="'Go to page ' + (idx + 1)">
+        </button>
       </div>
     </div>
   </section>

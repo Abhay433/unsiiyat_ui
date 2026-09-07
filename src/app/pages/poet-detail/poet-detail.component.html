@@ -1,7 +1,7 @@
 <div class="poet-detail-view unsiiyat-container animate-fade-in" *ngIf="poet()">
   <!-- Back Nav -->
   <div class="detail-nav-bar flex-between">
-    <a routerLink="/poets" class="back-link">&larr; Back to All Poets (تمام شعراء)</a>
+    <a routerLink="/poets" class="back-link">&larr; Back to All Authors (تمام شعراء و مصنفین)</a>
     <span class="badge">Master Shayar Profile</span>
   </div>
 
@@ -15,7 +15,7 @@
       </div>
 
       <div class="poet-hero-details">
-        <span class="poet-hero-era font-display">EMINENT POET / شاعرِ بے مثال</span>
+        <span class="poet-hero-era font-display">EMINENT AUTHOR / مصنف و شاعرِ بے مثال</span>
         <h1 class="poet-hero-title" [ngClass]="scriptService.fontClass()">{{ poet().primaryName }}</h1>
         <span class="poet-hero-lifespan font-english">
           {{ poet().birthDate | date:'yyyy' }} – {{ poet().deathDate | date:'yyyy' }}

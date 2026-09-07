@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +7,7 @@ import { ScriptService } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
 import { AuthorDto } from '../../core/models/author.models';
-import { ContentDto, ContentFilterRequest } from '../../core/models/content.models';
+import { ContentDto, ContentFilterRequest, ContentText } from '../../core/models/content.models';
 
 export interface StaticWordMeaning {
   word: string;
@@ -46,7 +46,15 @@ export class SearchComponent implements OnInit {
   searchData = signal<SearchResultData | null>(null);
   errorMessage = signal<string | null>(null);
 
-  // Pagination for Poets & Shayars
+  // Carousel for Authors & Shayars (Size: 3 with Left & Right arrows - same as Home Page)
+  carouselAuthors = signal<AuthorDto[]>([]);
+  authorsCarouselPage = signal<number>(0);
+  authorsCarouselTotalPages = signal<number>(1);
+  authorsCarouselTotalElements = signal<number>(0);
+  authorsCarouselLoading = signal<boolean>(false);
+  authorsCarouselIsLast = signal<boolean>(false);
+
+  // Backward-compatibility signals
   authorsPage = signal<number>(0);
   authorsLoading = signal<boolean>(false);
   authorsHasMore = signal<boolean>(true);
@@ -94,6 +102,16 @@ export class SearchComponent implements OnInit {
     }
   ];
 
+  constructor() {
+    effect(() => {
+      this.scriptService.activeScript();
+      const q = this.query().trim();
+      if (q && this.hasSearched()) {
+        this.loadAuthorsCarousel(this.authorsCarouselPage(), q);
+      }
+    });
+  }
+
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       const q = params['q'] || params['text'] || '';
@@ -120,30 +138,112 @@ export class SearchComponent implements OnInit {
     this.loading.set(true);
     this.hasSearched.set(true);
     this.errorMessage.set(null);
+    this.authorsCarouselPage.set(0);
+    this.authorsCarouselLoading.set(false);
+    this.authorsCarouselIsLast.set(false);
+    this.carouselAuthors.set([]);
     this.authorsPage.set(0);
     this.authorsLoading.set(false);
     this.authorsHasMore.set(true);
     this.genrePaginationState.set({});
 
+    const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+
     this.searchService.search(text).subscribe({
       next: res => {
-        this.loading.set(false);
         if (res && res.success && res.data) {
-          this.searchData.set(res.data);
-          this.authorsHasMore.set(!!res.data.authors && res.data.authors.length > 0);
+          const searchResult = res.data;
+          this.searchData.set(searchResult);
 
+          // 1. Initial 3 Authors for Carousel from /api/authors/list (Size: 3)
+          this.loadAuthorsCarousel(0, text);
+
+          // 2. Initial 5 Contents for each Genre from /api/contents/list
           const initialGenreState: Record<number, GenrePaginationState> = {};
-          res.data.resultsByGenre?.forEach(g => {
-            const hasMore = g.totalCount ? g.contents.length < g.totalCount : g.contents.length >= 3;
-            initialGenreState[g.genreId] = {
-              page: 0,
-              loading: false,
-              hasMore: hasMore
-            };
-          });
-          this.genrePaginationState.set(initialGenreState);
+
+          if (searchResult.resultsByGenre && searchResult.resultsByGenre.length > 0) {
+            let completedCount = 0;
+            const totalGenres = searchResult.resultsByGenre.length;
+
+            searchResult.resultsByGenre.forEach(genreGroup => {
+              const genreId = genreGroup.genreId;
+
+              initialGenreState[genreId] = {
+                page: 1,
+                loading: false,
+                hasMore: true
+              };
+
+              const filterReq: ContentFilterRequest = {
+                genreId: genreId,
+                search: text || undefined,
+                scriptId: scriptId,
+                page: 0,
+                size: 5,
+                sortBy: 'id',
+                sortDirection: 'desc'
+              };
+
+              this.contentService.filterContents(filterReq).subscribe({
+                next: (contentRes) => {
+                  const rawList = contentRes.data || (contentRes as any).content || [];
+                  const targetCode = this.scriptService.getCodeFromId(scriptId);
+
+                  if (rawList.length > 0) {
+                    const enrichedContents = rawList.map(item => {
+                      const itemTexts = (item.contentTexts && item.contentTexts.length > 0)
+                        ? item.contentTexts
+                        : (item.texts || []);
+                      const currentText = itemTexts.find((t: ContentText) => (t.scriptId && t.scriptId === scriptId) || this.scriptService.isScriptMatch(t, targetCode))
+                        || item.primaryText
+                        || itemTexts[0];
+                      const matchedAuthor = item.author || searchResult.authors?.find(a => a.id === item.authorId);
+                      return {
+                        ...item,
+                        contentTexts: itemTexts,
+                        texts: itemTexts,
+                        primaryText: currentText,
+                        author: matchedAuthor || item.author
+                      };
+                    });
+
+                    genreGroup.contents = enrichedContents;
+                    const totalFromRes = contentRes.totalElements || 0;
+                    genreGroup.totalCount = Math.max(genreGroup.totalCount || 0, totalFromRes, genreGroup.contents.length);
+                    this.searchData.set({ ...searchResult });
+                  }
+
+                  const hasMore = !contentRes.last && rawList.length === 5;
+                  this.genrePaginationState.update(prev => ({
+                    ...prev,
+                    [genreId]: {
+                      page: 1,
+                      loading: false,
+                      hasMore: hasMore
+                    }
+                  }));
+
+                  completedCount++;
+                  if (completedCount >= totalGenres) {
+                    this.loading.set(false);
+                  }
+                },
+                error: () => {
+                  completedCount++;
+                  if (completedCount >= totalGenres) {
+                    this.loading.set(false);
+                  }
+                }
+              });
+            });
+
+            this.genrePaginationState.set(initialGenreState);
+          } else {
+            this.loading.set(false);
+          }
         } else {
           this.searchData.set(null);
+          this.loading.set(false);
         }
       },
       error: err => {
@@ -163,7 +263,7 @@ export class SearchComponent implements OnInit {
       // Find text matching active script if available
       const targetScriptId = this.scriptService.getScriptId(active);
 
-      let match = content.contentTexts.find(t => t.scriptId === targetScriptId || this.scriptService.isScriptMatch(t, active));
+      let match = content.contentTexts.find(t => (t.scriptId && t.scriptId === targetScriptId) || this.scriptService.isScriptMatch(t, active));
       if (!match) {
         match = content.contentTexts[0];
       }
@@ -189,7 +289,7 @@ export class SearchComponent implements OnInit {
     if (content.contentTexts && content.contentTexts.length > 0) {
       const targetScriptId = this.scriptService.getScriptId(active);
 
-      const match = content.contentTexts.find(t => t.scriptId === targetScriptId || this.scriptService.isScriptMatch(t, active));
+      const match = content.contentTexts.find(t => (t.scriptId && t.scriptId === targetScriptId) || this.scriptService.isScriptMatch(t, active));
       if (match && match.title) {
         return match.title;
       }
@@ -213,51 +313,122 @@ export class SearchComponent implements OnInit {
     return name ? name.charAt(0).toUpperCase() : '✒';
   }
 
-  // 1. Load 5 More Poets from /api/authors/list
-  loadMoreAuthors() {
-    if (this.authorsLoading() || !this.authorsHasMore()) return;
-    const q = this.query().trim();
-    const currentData = this.searchData();
-    if (!currentData) return;
+  getAuthorAvatar(author: AuthorDto): string {
+    return this.authorService.getAuthorAvatar(author);
+  }
 
-    const nextPage = this.authorsPage() + 1;
-    this.authorsLoading.set(true);
+  getAuthorBio(author: AuthorDto): string {
+    const active = this.scriptService.activeScript();
+    if (active === 'ur' && author.urBio) return author.urBio;
+    if (active === 'hi' && author.hiBio) return author.hiBio;
+    if (active === 'en' && author.enBio) return author.enBio;
+    return author.primaryBio || (author as any).biography || author.enBio || author.urBio || author.hiBio || '';
+  }
+
+  onImgError(event: Event, author: any) {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      const name = this.getAuthorName(author) || 'Author';
+      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
+    }
+  }
+
+  // --- Authors Carousel with size: 3 and Left/Right Arrows (Same as Home Page) ---
+  loadAuthorsCarousel(page: number = 0, searchText?: string) {
+    this.authorsCarouselLoading.set(true);
+    const q = (searchText !== undefined ? searchText : this.query()).trim();
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
 
-    this.authorService.getEnrichedAuthorsPaged(scriptId, {
+    const filterReq = {
       search: q || undefined,
-      name: q || undefined,
-      page: nextPage,
-      size: 5,
+      scriptId: scriptId,
+      page: page,
+      size: 3,
       sortBy: 'id',
       sortDirection: 'asc'
-    } as any).subscribe({
+    };
+
+    console.log(`[SearchComponent] Loading authors carousel page ${page}:`, filterReq);
+
+    this.authorService.getEnrichedAuthorsPaged(scriptId, filterReq as any).subscribe({
       next: (res) => {
-        this.authorsLoading.set(false);
-        const newAuthors = res.data || [];
-        const existingIds = new Set((currentData.authors || []).map(a => a.id));
-        const uniqueNew = newAuthors.filter(a => a.id && !existingIds.has(a.id));
+        const list = res.data || (res as any).content || [];
+        if (list.length > 0) {
+          this.carouselAuthors.set(list);
+          this.authorsCarouselPage.set(res.page ?? page);
+          const total = res.totalElements ?? list.length;
+          this.authorsCarouselTotalElements.set(total);
+          this.authorsCarouselTotalPages.set(res.totalPages || Math.ceil(total / 3) || 1);
+          this.authorsCarouselIsLast.set(res.last ?? (list.length < 3));
 
-        if (uniqueNew.length > 0) {
-          currentData.authors = [...(currentData.authors || []), ...uniqueNew];
-          this.searchData.set({ ...currentData });
+          // Keep searchData().authors in sync
+          const current = this.searchData();
+          if (current) {
+            current.authors = list;
+            this.searchData.set({ ...current });
+          }
+        } else if (page === 0) {
+          const existing = this.searchData()?.authors || [];
+          if (existing.length > 0) {
+            this.carouselAuthors.set(existing.slice(0, 3));
+            this.authorsCarouselPage.set(0);
+            this.authorsCarouselTotalElements.set(existing.length);
+            this.authorsCarouselTotalPages.set(Math.ceil(existing.length / 3) || 1);
+            this.authorsCarouselIsLast.set(existing.length <= 3);
+          } else {
+            this.carouselAuthors.set([]);
+            this.authorsCarouselTotalPages.set(1);
+            this.authorsCarouselIsLast.set(true);
+          }
+        } else {
+          this.authorsCarouselIsLast.set(true);
         }
-
-        this.authorsPage.set(nextPage);
-
-        if (res.last || newAuthors.length < 5 || uniqueNew.length === 0) {
-          this.authorsHasMore.set(false);
-        }
+        this.authorsCarouselLoading.set(false);
       },
       error: (err) => {
-        this.authorsLoading.set(false);
-        console.error('[SearchComponent] Error loading more authors:', err);
-        this.authorsHasMore.set(false);
+        console.error('[SearchComponent] Error loading authors carousel:', err);
+        const existing = this.searchData()?.authors || [];
+        if (existing.length > 0) {
+          const start = page * 3;
+          this.carouselAuthors.set(existing.slice(start, start + 3));
+          this.authorsCarouselPage.set(page);
+          this.authorsCarouselTotalElements.set(existing.length);
+          this.authorsCarouselTotalPages.set(Math.ceil(existing.length / 3) || 1);
+          this.authorsCarouselIsLast.set(start + 3 >= existing.length);
+        }
+        this.authorsCarouselLoading.set(false);
       }
     });
   }
 
-  // 2. Load 5 More Contents for a specific Genre from /api/contents/list
+  nextAuthorsPage() {
+    if (this.authorsCarouselIsLast() || this.authorsCarouselLoading()) return;
+    const next = this.authorsCarouselPage() + 1;
+    this.loadAuthorsCarousel(next);
+  }
+
+  prevAuthorsPage() {
+    if (this.authorsCarouselPage() <= 0 || this.authorsCarouselLoading()) return;
+    const prev = this.authorsCarouselPage() - 1;
+    this.loadAuthorsCarousel(prev);
+  }
+
+  goToAuthorsPage(page: number) {
+    if (page < 0 || page >= this.authorsCarouselTotalPages() || this.authorsCarouselLoading()) return;
+    this.loadAuthorsCarousel(page);
+  }
+
+  getAuthorsCarouselPageArray(): number[] {
+    const total = this.authorsCarouselTotalPages();
+    return Array.from({ length: Math.min(total, 12) }, (_, i) => i);
+  }
+
+  // Alias for backward compatibility
+  loadMoreAuthors() {
+    this.nextAuthorsPage();
+  }
+
+  // 2. Load 5 More Contents for a specific Genre from /api/contents/list (Expands to 10, 15...)
   getGenreLoading(genreId: number): boolean {
     return !!this.genrePaginationState()[genreId]?.loading;
   }
@@ -266,9 +437,6 @@ export class SearchComponent implements OnInit {
     const state = this.genrePaginationState()[genreId];
     if (state !== undefined) {
       return state.hasMore;
-    }
-    if (group && group.totalCount !== undefined && group.contents.length >= group.totalCount) {
-      return false;
     }
     return (group?.contents?.length || 0) > 0;
   }
@@ -281,12 +449,12 @@ export class SearchComponent implements OnInit {
     if (!currentData) return;
 
     const currentState = this.genrePaginationState()[genreId] || {
-      page: 0,
+      page: 1,
       loading: false,
       hasMore: true
     };
 
-    const nextPage = currentState.page + 1;
+    const pageToFetch = currentState.page;
 
     this.genrePaginationState.update(prev => ({
       ...prev,
@@ -299,38 +467,71 @@ export class SearchComponent implements OnInit {
     const filterReq: ContentFilterRequest = {
       genreId: genreId,
       search: q || undefined,
-      title: q || undefined,
       scriptId: scriptId,
-      page: nextPage,
+      page: pageToFetch,
       size: 5,
       sortBy: 'id',
       sortDirection: 'desc'
     };
 
+    console.log(`[SearchComponent] Requesting /api/contents/list for genre ${genreId}:`, filterReq);
+
     this.contentService.filterContents(filterReq).subscribe({
       next: (res) => {
-        const newContents = res.data || [];
+        console.log(`[SearchComponent] Response from /api/contents/list for genre ${genreId}:`, res);
+        this.genrePaginationState.update(prev => ({
+          ...prev,
+          [genreId]: { ...currentState, loading: false }
+        }));
+
+        const rawList = res.data || (res as any).content || [];
+        const targetCode = this.scriptService.getCodeFromId(scriptId);
+
+        const newContents: ContentDto[] = rawList.map(item => {
+          const itemTexts = (item.contentTexts && item.contentTexts.length > 0)
+            ? item.contentTexts
+            : (item.texts || []);
+          const currentText = itemTexts.find((t: ContentText) => (t.scriptId && t.scriptId === scriptId) || this.scriptService.isScriptMatch(t, targetCode))
+            || item.primaryText
+            || itemTexts[0];
+          const matchedAuthor = item.author || currentData.authors?.find(a => a.id === item.authorId);
+          return {
+            ...item,
+            contentTexts: itemTexts,
+            texts: itemTexts,
+            primaryText: currentText,
+            author: matchedAuthor || item.author
+          };
+        });
+
         const existingIds = new Set(genreGroup.contents.map(c => c.id));
         const uniqueNew = newContents.filter(c => c.id && !existingIds.has(c.id));
 
         if (uniqueNew.length > 0) {
           genreGroup.contents = [...genreGroup.contents, ...uniqueNew];
-          if (res.totalElements && res.totalElements > genreGroup.totalCount) {
-            genreGroup.totalCount = res.totalElements;
-          }
+          const totalFromRes = res.totalElements || 0;
+          genreGroup.totalCount = Math.max(genreGroup.totalCount || 0, totalFromRes, genreGroup.contents.length);
           this.searchData.set({ ...currentData });
+
+          const isLast = res.last || newContents.length < 5;
+          this.genrePaginationState.update(prev => ({
+            ...prev,
+            [genreId]: {
+              page: pageToFetch + 1,
+              loading: false,
+              hasMore: !isLast
+            }
+          }));
+        } else {
+          this.genrePaginationState.update(prev => ({
+            ...prev,
+            [genreId]: {
+              page: pageToFetch + 1,
+              loading: false,
+              hasMore: false
+            }
+          }));
         }
-
-        const isLast = res.last || newContents.length < 5 || uniqueNew.length === 0 || (res.totalElements ? genreGroup.contents.length >= res.totalElements : false);
-
-        this.genrePaginationState.update(prev => ({
-          ...prev,
-          [genreId]: {
-            page: nextPage,
-            loading: false,
-            hasMore: !isLast
-          }
-        }));
       },
       error: (err) => {
         console.error(`[SearchComponent] Error loading more contents for genre ${genreId}:`, err);
@@ -339,7 +540,7 @@ export class SearchComponent implements OnInit {
           [genreId]: {
             ...currentState,
             loading: false,
-            hasMore: false
+            hasMore: true
           }
         }));
       }

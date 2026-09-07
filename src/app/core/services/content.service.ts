@@ -24,6 +24,11 @@ export class ContentService {
     this.cachedTexts = null;
   }
 
+  getGhazalOfTheDay(scriptId?: number): Observable<ApiResponse<Content>> {
+    const query = scriptId ? `?scriptId=${scriptId}` : '';
+    return this.api.get<ApiResponse<Content>>(`/api/home/ghazal-of-the-day${query}`);
+  }
+
   filterContents(request: ContentFilterRequest = {}): Observable<PagedResponse<Content>> {
     const payload = {
       page: request.page ?? 0,
