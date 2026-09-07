@@ -82,11 +82,17 @@
         </div>
       </div>
 
-      <!-- Section Load More Button (Dummy) -->
-      <div class="section-load-more-wrap">
-        <button type="button" class="btn btn-secondary-load" (click)="loadMore('authors')">
-          <span>Load More Poets</span>
-          <span class="load-icon">▾</span>
+      <!-- Section Load More Button -->
+      <div class="section-load-more-wrap" *ngIf="authorsHasMore()">
+        <button 
+          type="button" 
+          class="btn btn-secondary-load" 
+          [disabled]="authorsLoading()" 
+          (click)="loadMoreAuthors()">
+          <span *ngIf="!authorsLoading()">Load More Poets</span>
+          <span *ngIf="authorsLoading()">Loading Poets...</span>
+          <span class="load-icon" *ngIf="!authorsLoading()">▾</span>
+          <span class="loading-spin" *ngIf="authorsLoading()">⏳</span>
         </button>
       </div>
     </section>
@@ -150,11 +156,17 @@
           </div>
         </div>
 
-        <!-- Section Load More Button (Dummy) -->
-        <div class="section-load-more-wrap">
-          <button type="button" class="btn btn-secondary-load" (click)="loadMore(genreGroup.genreName)">
-            <span>Load More {{ genreGroup.genreName }}</span>
-            <span class="load-icon">▾</span>
+        <!-- Section Load More Button -->
+        <div class="section-load-more-wrap" *ngIf="getGenreHasMore(genreGroup.genreId, genreGroup)">
+          <button 
+            type="button" 
+            class="btn btn-secondary-load" 
+            [disabled]="getGenreLoading(genreGroup.genreId)" 
+            (click)="loadMoreGenreContents(genreGroup)">
+            <span *ngIf="!getGenreLoading(genreGroup.genreId)">Load More {{ genreGroup.genreName }}</span>
+            <span *ngIf="getGenreLoading(genreGroup.genreId)">Loading {{ genreGroup.genreName }}...</span>
+            <span class="load-icon" *ngIf="!getGenreLoading(genreGroup.genreId)">▾</span>
+            <span class="loading-spin" *ngIf="getGenreLoading(genreGroup.genreId)">⏳</span>
           </button>
         </div>
       </section>

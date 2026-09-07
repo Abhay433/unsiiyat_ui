@@ -4,8 +4,10 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SearchService, SearchResultData, GenreSearchResultGroup } from '../../core/services/search.service';
 import { ScriptService } from '../../core/services/script.service';
+import { AuthorService } from '../../core/services/author.service';
+import { ContentService } from '../../core/services/content.service';
 import { AuthorDto } from '../../core/models/author.models';
-import { ContentDto } from '../../core/models/content.models';
+import { ContentDto, ContentFilterRequest } from '../../core/models/content.models';
 
 export interface StaticWordMeaning {
   word: string;
@@ -15,6 +17,12 @@ export interface StaticWordMeaning {
   synonyms: string;
   exampleCouplet: string;
   poet: string;
+}
+
+export interface GenrePaginationState {
+  page: number;
+  loading: boolean;
+  hasMore: boolean;
 }
 
 @Component({
@@ -27,6 +35,8 @@ export interface StaticWordMeaning {
 export class SearchComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   private readonly searchService = inject(SearchService);
+  private readonly authorService = inject(AuthorService);
+  private readonly contentService = inject(ContentService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -35,6 +45,14 @@ export class SearchComponent implements OnInit {
   hasSearched = signal(false);
   searchData = signal<SearchResultData | null>(null);
   errorMessage = signal<string | null>(null);
+
+  // Pagination for Poets & Shayars
+  authorsPage = signal<number>(0);
+  authorsLoading = signal<boolean>(false);
+  authorsHasMore = signal<boolean>(true);
+
+  // Pagination state for each Genre section
+  genrePaginationState = signal<Record<number, GenrePaginationState>>({});
 
   // Static dictionary / word meaning section (as requested)
   readonly staticWordMeanings: StaticWordMeaning[] = [
@@ -102,12 +120,28 @@ export class SearchComponent implements OnInit {
     this.loading.set(true);
     this.hasSearched.set(true);
     this.errorMessage.set(null);
+    this.authorsPage.set(0);
+    this.authorsLoading.set(false);
+    this.authorsHasMore.set(true);
+    this.genrePaginationState.set({});
 
     this.searchService.search(text).subscribe({
       next: res => {
         this.loading.set(false);
-        if (res && res.success) {
+        if (res && res.success && res.data) {
           this.searchData.set(res.data);
+          this.authorsHasMore.set(!!res.data.authors && res.data.authors.length > 0);
+
+          const initialGenreState: Record<number, GenrePaginationState> = {};
+          res.data.resultsByGenre?.forEach(g => {
+            const hasMore = g.totalCount ? g.contents.length < g.totalCount : g.contents.length >= 3;
+            initialGenreState[g.genreId] = {
+              page: 0,
+              loading: false,
+              hasMore: hasMore
+            };
+          });
+          this.genrePaginationState.set(initialGenreState);
         } else {
           this.searchData.set(null);
         }
@@ -179,8 +213,145 @@ export class SearchComponent implements OnInit {
     return name ? name.charAt(0).toUpperCase() : '✒';
   }
 
-  // Dummy load more handler as requested (does nothing for now)
-  loadMore(sectionName: string) {
-    // Intentionally no-op per user requirement
+  // 1. Load 5 More Poets from /api/authors/list
+  loadMoreAuthors() {
+    if (this.authorsLoading() || !this.authorsHasMore()) return;
+    const q = this.query().trim();
+    const currentData = this.searchData();
+    if (!currentData) return;
+
+    const nextPage = this.authorsPage() + 1;
+    this.authorsLoading.set(true);
+    const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+
+    this.authorService.getEnrichedAuthorsPaged(scriptId, {
+      search: q || undefined,
+      name: q || undefined,
+      page: nextPage,
+      size: 5,
+      sortBy: 'id',
+      sortDirection: 'asc'
+    } as any).subscribe({
+      next: (res) => {
+        this.authorsLoading.set(false);
+        const newAuthors = res.data || [];
+        const existingIds = new Set((currentData.authors || []).map(a => a.id));
+        const uniqueNew = newAuthors.filter(a => a.id && !existingIds.has(a.id));
+
+        if (uniqueNew.length > 0) {
+          currentData.authors = [...(currentData.authors || []), ...uniqueNew];
+          this.searchData.set({ ...currentData });
+        }
+
+        this.authorsPage.set(nextPage);
+
+        if (res.last || newAuthors.length < 5 || uniqueNew.length === 0) {
+          this.authorsHasMore.set(false);
+        }
+      },
+      error: (err) => {
+        this.authorsLoading.set(false);
+        console.error('[SearchComponent] Error loading more authors:', err);
+        this.authorsHasMore.set(false);
+      }
+    });
+  }
+
+  // 2. Load 5 More Contents for a specific Genre from /api/contents/list
+  getGenreLoading(genreId: number): boolean {
+    return !!this.genrePaginationState()[genreId]?.loading;
+  }
+
+  getGenreHasMore(genreId: number, group?: GenreSearchResultGroup): boolean {
+    const state = this.genrePaginationState()[genreId];
+    if (state !== undefined) {
+      return state.hasMore;
+    }
+    if (group && group.totalCount !== undefined && group.contents.length >= group.totalCount) {
+      return false;
+    }
+    return (group?.contents?.length || 0) > 0;
+  }
+
+  loadMoreGenreContents(genreGroup: GenreSearchResultGroup) {
+    const genreId = genreGroup.genreId;
+    if (this.getGenreLoading(genreId) || !this.getGenreHasMore(genreId, genreGroup)) return;
+
+    const currentData = this.searchData();
+    if (!currentData) return;
+
+    const currentState = this.genrePaginationState()[genreId] || {
+      page: 0,
+      loading: false,
+      hasMore: true
+    };
+
+    const nextPage = currentState.page + 1;
+
+    this.genrePaginationState.update(prev => ({
+      ...prev,
+      [genreId]: { ...currentState, loading: true }
+    }));
+
+    const q = this.query().trim();
+    const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+
+    const filterReq: ContentFilterRequest = {
+      genreId: genreId,
+      search: q || undefined,
+      title: q || undefined,
+      scriptId: scriptId,
+      page: nextPage,
+      size: 5,
+      sortBy: 'id',
+      sortDirection: 'desc'
+    };
+
+    this.contentService.filterContents(filterReq).subscribe({
+      next: (res) => {
+        const newContents = res.data || [];
+        const existingIds = new Set(genreGroup.contents.map(c => c.id));
+        const uniqueNew = newContents.filter(c => c.id && !existingIds.has(c.id));
+
+        if (uniqueNew.length > 0) {
+          genreGroup.contents = [...genreGroup.contents, ...uniqueNew];
+          if (res.totalElements && res.totalElements > genreGroup.totalCount) {
+            genreGroup.totalCount = res.totalElements;
+          }
+          this.searchData.set({ ...currentData });
+        }
+
+        const isLast = res.last || newContents.length < 5 || uniqueNew.length === 0 || (res.totalElements ? genreGroup.contents.length >= res.totalElements : false);
+
+        this.genrePaginationState.update(prev => ({
+          ...prev,
+          [genreId]: {
+            page: nextPage,
+            loading: false,
+            hasMore: !isLast
+          }
+        }));
+      },
+      error: (err) => {
+        console.error(`[SearchComponent] Error loading more contents for genre ${genreId}:`, err);
+        this.genrePaginationState.update(prev => ({
+          ...prev,
+          [genreId]: {
+            ...currentState,
+            loading: false,
+            hasMore: false
+          }
+        }));
+      }
+    });
+  }
+
+  // Alias for backward compatibility if called
+  loadMore(sectionName: string, genreGroup?: GenreSearchResultGroup) {
+    if (sectionName === 'authors') {
+      this.loadMoreAuthors();
+    } else if (genreGroup) {
+      this.loadMoreGenreContents(genreGroup);
+    }
   }
 }
