@@ -30,41 +30,99 @@
           <span class="stat-badge">⭐ Top 10 Classical Rating</span>
           <span class="stat-badge">🎧 Audio Recitations Available</span>
         </div>
+
+        <!-- All Genres Quick Chips -->
+        <div class="poet-hero-genres-row" *ngIf="genres().length > 0">
+          <span class="hero-genres-label font-display">
+            {{ scriptService.activeScript() === 'ur' ? 'اصنافِ سخن:' : (scriptService.activeScript() === 'hi' ? 'विधाएँ:' : 'Genres:') }}
+          </span>
+          <div class="hero-genres-chips">
+            <button 
+              type="button" 
+              class="hero-genre-chip" 
+              [class.active]="activeTab() === 'works' && selectedGenreId() === 'all'"
+              (click)="selectGenreTab('all')">
+              {{ scriptService.activeScript() === 'ur' ? 'تمام' : (scriptService.activeScript() === 'hi' ? 'सभी' : 'All') }}
+              <span class="hero-chip-count">{{ poetContents().length }}</span>
+            </button>
+            <button 
+              type="button" 
+              *ngFor="let g of genres()" 
+              class="hero-genre-chip" 
+              [class.active]="activeTab() === 'works' && selectedGenreId() === g.id"
+              (click)="selectGenreTab(g.id!)">
+              {{ getGenreIcon(g) }} {{ getGenreDisplayName(g) }}
+              <span class="hero-chip-count" [class.hero-chip-count-zero]="getGenreCount(g.id) === 0">
+                {{ getGenreCount(g.id) }}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Tabbed Navigation Ribbon -->
+  <!-- Tabbed Navigation Ribbon with All Genres -->
   <div class="poet-tabs-ribbon flex-center">
+    <!-- All Works Tab -->
     <button 
       class="poet-tab-btn" 
-      [class.active]="activeTab() === 'ghazals'" 
-      (click)="activeTab.set('ghazals')">
-      📜 Ghazals & Nazms (غزلیات)
+      [class.active]="activeTab() === 'works' && selectedGenreId() === 'all'" 
+      (click)="selectGenreTab('all')">
+      📜 {{ scriptService.activeScript() === 'ur' ? 'تمام کلام' : (scriptService.activeScript() === 'hi' ? 'सम्पूर्ण रचनाएँ' : 'All Works') }}
+      <span class="tab-pill-count">{{ poetContents().length }}</span>
     </button>
+
+    <!-- Each Genre Tab -->
+    <button 
+      *ngFor="let g of genres()" 
+      class="poet-tab-btn" 
+      [class.active]="activeTab() === 'works' && selectedGenreId() === g.id" 
+      (click)="selectGenreTab(g.id!)">
+      {{ getGenreIcon(g) }} {{ getGenreDisplayName(g) }}
+      <span class="tab-pill-count" [class.count-zero]="getGenreCount(g.id) === 0">
+        {{ getGenreCount(g.id) }}
+      </span>
+    </button>
+
+    <!-- Ashar Tab -->
     <button 
       class="poet-tab-btn" 
       [class.active]="activeTab() === 'ashar'" 
       (click)="activeTab.set('ashar')">
-      ✒️ Selected Couplets (منتخب اشعار)
+      ✒️ {{ scriptService.activeScript() === 'ur' ? 'منتخب اشعار' : (scriptService.activeScript() === 'hi' ? 'चुनिंदा अशआर' : 'Selected Couplets') }}
     </button>
+
+    <!-- Bio Tab -->
     <button 
       class="poet-tab-btn" 
       [class.active]="activeTab() === 'bio'" 
       (click)="activeTab.set('bio')">
-      📖 Biography & Life Era (سوانح حیات)
+      📖 {{ scriptService.activeScript() === 'ur' ? 'سوانح حیات' : (scriptService.activeScript() === 'hi' ? 'जीवन परिचय' : 'Biography & Life Era') }}
     </button>
   </div>
 
-  <!-- Tab 1: Ghazals Stream -->
-  <div *ngIf="activeTab() === 'ghazals'" class="tab-content animate-fade-in">
-    <div class="ghazals-feed-grid">
-      <div *ngFor="let item of poetContents()" class="ghazal-card poetic-card">
+  <!-- Works by Genre Stream -->
+  <div *ngIf="activeTab() === 'works'" class="tab-content animate-fade-in">
+    <!-- Genre Filter Notice Header if filtered -->
+    <div class="works-genre-header flex-between" *ngIf="selectedGenreId() !== 'all'">
+      <div class="works-genre-title-wrap">
+        <span class="works-genre-badge font-display">{{ getSelectedGenreTitle() }}</span>
+        <span class="works-genre-count">{{ filteredPoetContents().length }} {{ filteredPoetContents().length === 1 ? 'composition' : 'compositions' }}</span>
+      </div>
+      <button type="button" class="btn-clear-genre-filter" (click)="selectGenreTab('all')">
+        ✕ {{ scriptService.activeScript() === 'ur' ? 'تمام کلام دیکھیں' : (scriptService.activeScript() === 'hi' ? 'सभी रचनाएँ देखें' : 'View All Works') }}
+      </button>
+    </div>
+
+    <!-- Works Grid -->
+    <div class="ghazals-feed-grid" *ngIf="filteredPoetContents().length > 0">
+      <div *ngFor="let item of filteredPoetContents()" class="ghazal-card poetic-card">
         <div class="ghazal-card-header flex-between">
           <span class="ghazal-poet-badge font-english">
             {{ poet().primaryName }}
           </span>
-          <span class="badge">Ghazal</span>
+          <span class="badge font-display">{{ getGenreBadge(item) }}</span>
         </div>
 
         <h3 class="ghazal-card-title" [ngClass]="scriptService.fontClass()">
@@ -76,12 +134,28 @@
         </div>
 
         <div class="ghazal-card-footer flex-between">
-          <span class="status-count">5 Stanzas</span>
+          <span class="status-count">
+            ✦ {{ getGenreBadge(item) }}
+          </span>
           <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-sm">
-            Read Full Ghazal &rarr;
+            {{ scriptService.translate('read_more') }} &rarr;
           </a>
         </div>
       </div>
+    </div>
+
+    <!-- Empty Genre State -->
+    <div *ngIf="filteredPoetContents().length === 0" class="empty-genre-container poetic-card text-center">
+      <span class="empty-genre-icon">📜</span>
+      <h4 class="empty-genre-title font-display">
+        {{ scriptService.activeScript() === 'ur' ? 'اس صنف میں کوئی کلام دستیاب نہیں ہے' : (scriptService.activeScript() === 'hi' ? 'इस विधा में अभी कोई रचना उपलब्ध नहीं है' : 'No compositions in this genre yet') }}
+      </h4>
+      <p class="empty-genre-subtitle">
+        {{ scriptService.activeScript() === 'ur' ? ((poet()?.primaryName || 'شاعر') + ' کا اس صنف میں فی الحال کوئی کلام شامل نہیں کیا گیا ہے۔') : (scriptService.activeScript() === 'hi' ? ((poet()?.primaryName || 'शायर') + ' की इस विधा में अभी कोई रचना दर्ज नहीं है।') : ('No works under this genre have been added yet for ' + (poet()?.primaryName || 'this poet') + '.')) }}
+      </p>
+      <button type="button" class="btn btn-gold btn-sm" (click)="selectGenreTab('all')">
+        &larr; {{ scriptService.activeScript() === 'ur' ? 'تمام کلام دیکھیں' : (scriptService.activeScript() === 'hi' ? 'सम्पूर्ण रचनाएँ देखें' : 'View All Works') }}
+      </button>
     </div>
   </div>
 

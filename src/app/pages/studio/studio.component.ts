@@ -1329,7 +1329,8 @@ export class StudioComponent implements OnInit, OnDestroy {
     if ((!this.contentForm().selectedThemeIds || this.contentForm().selectedThemeIds.length === 0) && this.themes().length > 0) {
       this.contentForm.update(f => ({ ...f, selectedThemeIds: [this.themes()[0].id || 1] }));
     }
-    this.isAuthorDropdownOpen.set(true);
+    this.refreshModalAuthors(true);
+    this.contentCreationStep.set('editor');
   }
 
   hasScriptText(script: 'ur' | 'hi' | 'en'): boolean {
