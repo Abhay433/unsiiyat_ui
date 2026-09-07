@@ -325,7 +325,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     // Split lines, trim each, filter empty
     const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const couplets: string[] = [];
-    
+
     for (let i = 0; i < lines.length; i += 2) {
       if (i + 1 < lines.length) {
         couplets.push(`${lines[i]}\n${lines[i + 1]}`);
@@ -804,7 +804,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   getGenreDescriptionForActiveScript(g: Genre): string {
     const lang = this.scriptService.activeScript();
     const slug = (g.slug || '').toLowerCase();
-    
+
     const descMap: Record<string, Record<ScriptCode, string>> = {
       ghazal: {
         ur: 'مطلع، مقطع، ردیف اور قافیہ پر مشتمل روایتی کلام۔',
@@ -899,7 +899,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     const q = this.genreSearchQuery().toLowerCase().trim();
     const all = this.genres();
     if (!q) return all;
-    return all.filter(g => 
+    return all.filter(g =>
       (g.name || '').toLowerCase().includes(q) ||
       (this.getGenreNameForActiveScript(g.id, g) || '').toLowerCase().includes(q) ||
       (g.slug || '').toLowerCase().includes(q)
@@ -938,15 +938,27 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   getAuthorDisplayLabel(author?: Author): string {
     if (!author) return '';
+    let name = author.primaryName || author.name || '';
+    if (!name || name.startsWith('Poet #')) {
+      const seedPoet = this.seedService.classicalPoets.find(p => p.id === author.id);
+      if (seedPoet?.details?.en?.name) name = seedPoet.details.en.name;
+    }
+    if (!name) name = `Poet #${author.id || 1}`;
     const urdu = this.getAuthorUrduName(author);
-    const name = author.primaryName || author.name || 'Unknown Poet';
     return urdu && urdu !== name ? `${name} (${urdu})` : name;
   }
 
   syncAuthorSearchInput() {
     const currentAuthorId = this.contentForm().authorId;
     const list = this.allModalAuthors().length > 0 ? this.allModalAuthors() : this.authors();
-    const current = list.find(a => a.id === currentAuthorId) || (currentAuthorId ? { id: currentAuthorId, primaryName: `Poet #${currentAuthorId}` } as Author : list[0]);
+    let current = list.find(a => a.id === currentAuthorId);
+    if (!current && currentAuthorId) {
+      const seedPoet = this.seedService.classicalPoets.find(p => p.id === currentAuthorId);
+      const poetName = seedPoet?.details?.en?.name || `Poet #${currentAuthorId}`;
+      current = { id: currentAuthorId, primaryName: poetName, details: [] } as unknown as Author;
+    } else if (!current && list.length > 0) {
+      current = list[0];
+    }
     if (current) {
       this.authorSearchQuery.set(this.getAuthorDisplayLabel(current));
     }
@@ -988,7 +1000,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   filteredAdmins = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     if (!q) return this.adminUsers();
-    return this.adminUsers().filter(u => 
+    return this.adminUsers().filter(u =>
       u.name.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
       u.role.toLowerCase().includes(q)
@@ -1130,7 +1142,7 @@ export class StudioComponent implements OnInit, OnDestroy {
           const url = res.data;
           if (url) {
             this.poetForm.update(f => ({ ...f, avatarUrl: url }));
-            try { localStorage.setItem(`author_avatar_${editId}`, url); } catch (_) {}
+            try { localStorage.setItem(`author_avatar_${editId}`, url); } catch (_) { }
             this.showStatus('success', 'Author photo uploaded to R2 and updated in database!');
             this.loadAuthors();
           }
@@ -1197,7 +1209,7 @@ export class StudioComponent implements OnInit, OnDestroy {
           this.populateContentForm(item, freshUr, freshHi, freshEn);
         }
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -1317,12 +1329,20 @@ export class StudioComponent implements OnInit, OnDestroy {
     if ((!this.contentForm().selectedThemeIds || this.contentForm().selectedThemeIds.length === 0) && this.themes().length > 0) {
       this.contentForm.update(f => ({ ...f, selectedThemeIds: [this.themes()[0].id || 1] }));
     }
-    this.contentCreationStep.set('editor');
+    this.isAuthorDropdownOpen.set(true);
   }
 
-  selectGenreForContent(genre: Genre) {
-    if (genre && genre.id) {
-      this.contentForm.update(f => ({ ...f, genreId: genre.id! }));
+  hasScriptText(script: 'ur' | 'hi' | 'en'): boolean {
+    const f = this.contentForm();
+    if (script === 'ur') return !!(f.urTitle?.trim() || f.urBody?.trim());
+    if (script === 'hi') return !!(f.hiTitle?.trim() || f.hiBody?.trim());
+    if (script === 'en') return !!(f.enTitle?.trim() || f.enBody?.trim());
+    return false;
+  }
+
+  selectGenreCard(genreId?: number) {
+    if (genreId !== undefined) {
+      this.contentForm.update(f => ({ ...f, genreId }));
     }
     this.refreshModalAuthors(true);
     this.contentCreationStep.set('editor');
@@ -1391,7 +1411,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   saveContentWithTexts() {
     const f = this.contentForm();
     const editId = this.editingContentId();
-    
+
     // Auto-derive title from master title, script titles, or first verse line
     const firstLine = (f.urBody || f.hiBody || f.enBody || '').split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
     const finalTitle = (f.title || f.urTitle || f.hiTitle || f.enTitle || firstLine || 'Untitled Kalam').trim();
@@ -1453,8 +1473,8 @@ export class StudioComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.isSavingContent.set(false);
-        const actionMsg = editId 
-          ? `✏️ "${finalTitle}" updated successfully in the database!` 
+        const actionMsg = editId
+          ? `✏️ "${finalTitle}" updated successfully in the database!`
           : `🎉 "${finalTitle}" published successfully across Urdu, Hindi & English!`;
         this.showStatus('success', actionMsg);
 
@@ -1619,7 +1639,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       next: () => {
         this.showStatus('success', editId ? 'Shayar profile updated successfully!' : 'Shayar profile saved into database!');
         if (editId && f.avatarUrl) {
-          try { localStorage.setItem(`author_avatar_${editId}`, f.avatarUrl); } catch (_) {}
+          try { localStorage.setItem(`author_avatar_${editId}`, f.avatarUrl); } catch (_) { }
         }
         this.editingAuthorId.set(null);
         this.poetForm.set({ birthDate: '', deathDate: '', avatarUrl: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
@@ -1649,7 +1669,7 @@ export class StudioComponent implements OnInit, OnDestroy {
           this.adminUsers.set(mapped);
         }
       },
-      error: () => {}
+      error: () => { }
     });
   }
 

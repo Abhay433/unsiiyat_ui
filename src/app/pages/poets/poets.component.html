@@ -9,38 +9,6 @@
     </div>
   </div>
 
-  <!-- Filter & Search Bar -->
-  <div class="poets-filter-bar poetic-card">
-    <div class="filter-top-row flex-between">
-      <div class="filter-input-wrapper">
-        <span class="search-icon">🔍</span>
-        <input 
-          type="text" 
-          class="poets-search-input"
-          placeholder="Search poet by name or historical era..."
-          [ngModel]="searchFilter()"
-          (ngModelChange)="searchFilter.set($event)" />
-      </div>
-
-      <div class="era-filter-pills">
-        <button class="era-pill" [class.active]="selectedEra() === 'all'" (click)="setEra('all')">All Eras</button>
-        <button class="era-pill" [class.active]="selectedEra() === 'classical'" (click)="setEra('classical')">Classical (کلاسیکی)</button>
-        <button class="era-pill" [class.active]="selectedEra() === 'progressive'" (click)="setEra('progressive')">Progressive (ترقی پسند)</button>
-        <button class="era-pill" [class.active]="selectedEra() === 'modern'" (click)="setEra('modern')">Modern (جدید)</button>
-      </div>
-    </div>
-
-    <!-- Alphabetical Filter Ribbon -->
-    <div class="alphabet-ribbon">
-      <button 
-        *ngFor="let letter of alphabet" 
-        class="letter-btn" 
-        [class.active]="selectedLetter() === letter"
-        (click)="setLetter(letter)">
-        {{ letter }}
-      </button>
-    </div>
-  </div>
 
   <!-- Stats row -->
   <div class="poets-stats-row flex-between">

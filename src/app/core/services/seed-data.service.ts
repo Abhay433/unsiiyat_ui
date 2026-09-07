@@ -501,7 +501,7 @@ Tire saamne aasmaan aur bhi hain`
       observer.next([...logs]);
 
       const scriptTasks = this.initialScripts.map(s => this.taxonomyService.saveScript({ code: s.code, name: s.name }));
-      
+
       forkJoin(scriptTasks).subscribe({
         next: () => {
           logs.push('✅ Scripts seeded successfully.');
