@@ -252,9 +252,53 @@ export class ContentService {
     );
   }
 
-  // Page-specific API for Poet Detail Page: Fetch ONLY poems by this author
+  // Page-specific API for Poet Detail Page: Fetch ONLY poems by this author with pagination (size: 10) & optional genreId
+  getContentsByAuthorPaged(request: {
+    authorId: number;
+    genreId?: number | null;
+    scriptId?: number;
+    page?: number;
+    size?: number;
+  }): Observable<PagedResponse<Content>> {
+    const sId = request.scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const filterReq: ContentFilterRequest = {
+      authorId: request.authorId,
+      scriptId: sId,
+      page: request.page ?? 0,
+      size: request.size ?? 10,
+      sortBy: 'id',
+      sortDirection: 'desc'
+    };
+    if (request.genreId && request.genreId > 0) {
+      filterReq.genreId = request.genreId;
+    }
+    const targetCode = this.scriptService.getCodeFromId(sId);
+    return this.filterContents(filterReq).pipe(
+      map(res => {
+        const rawList = res.data || [];
+        const enriched = rawList.map(item => {
+          const itemTexts: ContentText[] = (item.contentTexts && item.contentTexts.length > 0)
+            ? item.contentTexts
+            : [];
+          const currentText = itemTexts.find((t: ContentText) => this.scriptService.isScriptMatch(t, targetCode))
+            || item.primaryText
+            || itemTexts[0];
+          return {
+            ...item,
+            texts: itemTexts,
+            primaryText: currentText
+          };
+        });
+        return {
+          ...res,
+          data: enriched
+        };
+      })
+    );
+  }
+
   getContentsByAuthorId(authorId: number, scriptId?: number): Observable<Content[]> {
-    return this.getEnrichedContentsPaged(scriptId, { authorId, size: 50 }).pipe(
+    return this.getContentsByAuthorPaged({ authorId, scriptId, size: 50 }).pipe(
       map(res => res.data || [])
     );
   }

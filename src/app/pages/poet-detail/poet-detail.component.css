@@ -122,78 +122,11 @@
   font-weight: 600;
 }
 
-/* Hero Genres Row */
-.poet-hero-genres-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  flex-wrap: wrap;
-}
-
-.hero-genres-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--accent-gold);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.hero-genres-chips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.hero-genre-chip {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  color: var(--text-primary);
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all var(--transition-fast);
-}
-
-.hero-genre-chip:hover {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
-  transform: translateY(-1px);
-}
-
-.hero-genre-chip.active {
-  background: var(--accent-blue);
-  border-color: var(--accent-blue);
-  color: #ffffff;
-}
-
-.hero-chip-count {
-  font-size: 0.72rem;
-  background: rgba(0, 0, 0, 0.08);
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-weight: 700;
-}
-
-.hero-genre-chip.active .hero-chip-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-}
-
-.hero-chip-count-zero {
-  opacity: 0.55;
-}
-
 /* Tabs Ribbon */
 .poet-tabs-ribbon {
   display: flex;
   gap: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
@@ -201,14 +134,14 @@
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   color: var(--text-secondary);
-  padding: 9px 18px;
+  padding: 10px 22px;
   border-radius: var(--radius-full);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   transition: all var(--transition-fast);
 }
 
@@ -232,51 +165,171 @@
   color: #ffffff;
 }
 
-.tab-pill-count.count-zero {
-  opacity: 0.55;
-}
-
-/* Works Genre Filter Header */
-.works-genre-header {
-  margin-bottom: 20px;
-  padding: 12px 18px;
+/* Works Filter Toolbar with Genre Dropdown */
+.works-filter-toolbar {
+  padding: 16px 22px;
+  margin-bottom: 24px;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-}
-
-.works-genre-title-wrap {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.works-genre-badge {
-  font-size: 1.05rem;
+.genre-select-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.genre-select-label {
+  font-size: 0.84rem;
   font-weight: 700;
   color: var(--accent-gold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.works-genre-count {
-  font-size: 0.84rem;
+.genre-select-box {
+  position: relative;
+  min-width: 250px;
+}
+
+.genre-dropdown-select {
+  width: 100%;
+  padding: 9px 36px 9px 16px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-card);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: all var(--transition-fast);
+}
+
+.genre-dropdown-select:hover {
+  border-color: var(--accent-blue);
+}
+
+.genre-dropdown-select:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.works-meta-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
   color: var(--text-muted);
 }
 
-.btn-clear-genre-filter {
-  background: transparent;
-  border: 1px solid var(--border-card);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
+.meta-count {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.meta-label {
   font-weight: 600;
-  padding: 5px 12px;
+}
+
+.meta-page {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+}
+
+/* Works Loading Indicator */
+.works-loading-indicator {
+  padding: 40px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  gap: 10px;
+}
+
+.loading-spin-icon {
+  font-size: 1.5rem;
+  display: inline-block;
+}
+
+/* Works Pagination Bar */
+.works-pagination-bar {
+  margin-top: 36px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-nav-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 8px 20px;
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.btn-clear-genre-filter:hover {
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
+.page-nav-btn:hover:not(:disabled) {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  transform: translateY(-1px);
+}
+
+.page-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.page-numbers-list {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.page-num-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-num-btn:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.page-num-btn.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Empty Genre State */

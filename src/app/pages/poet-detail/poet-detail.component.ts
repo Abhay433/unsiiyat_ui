@@ -1,6 +1,8 @@
 import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Observable, of, map, catchError } from 'rxjs';
 import { ScriptService, ScriptCode } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
@@ -11,7 +13,7 @@ import { Genre } from '../../core/models/taxonomy.models';
 @Component({
   selector: 'app-poet-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './poet-detail.component.html',
   styleUrls: ['./poet-detail.component.css']
 })
@@ -31,18 +33,14 @@ export class PoetDetailComponent implements OnInit {
   selectedGenreId = signal<number | 'all'>('all');
   copiedIndex = signal<number | null>(null);
   loading = signal(true);
+  loadingContents = signal(false);
 
-  filteredPoetContents = computed(() => {
-    const list = this.poetContents();
-    const gId = this.selectedGenreId();
-    if (gId === 'all') {
-      return list;
-    }
-    return list.filter(item => {
-      const itemGid = item.genreId || item.genre?.id;
-      return Number(itemGid) === Number(gId);
-    });
-  });
+  // Pagination (size: 10)
+  currentPage = signal<number>(0);
+  pageSize = signal<number>(10);
+  totalElements = signal<number>(0);
+  totalPages = signal<number>(0);
+  isLastPage = signal<boolean>(true);
 
   constructor() {
     effect(() => {
@@ -55,7 +53,6 @@ export class PoetDetailComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadGenres();
     this.route.params.subscribe(params => {
       const id = Number(params['id']);
       if (id) {
@@ -65,32 +62,58 @@ export class PoetDetailComponent implements OnInit {
     });
   }
 
-  loadGenres() {
-    this.taxonomyService.getAllGenres().subscribe({
-      next: (data) => {
-        if (data && data.length > 0) {
-          this.genres.set(data);
-        } else {
-          this.genres.set(this.seedService.initialGenres);
+  loadGenres(): Observable<Genre[]> {
+    return this.taxonomyService.getAllGenres().pipe(
+      map(data => {
+        const list = (data && data.length > 0) ? data : this.seedService.initialGenres;
+        this.genres.set(list);
+        if (list.length > 0 && (this.selectedGenreId() === 'all' || !this.selectedGenreId())) {
+          this.selectedGenreId.set(list[0].id!);
         }
-      },
-      error: () => {
-        this.genres.set(this.seedService.initialGenres);
-      }
-    });
+        return list;
+      }),
+      catchError(() => {
+        const list = this.seedService.initialGenres;
+        this.genres.set(list);
+        if (list.length > 0 && (this.selectedGenreId() === 'all' || !this.selectedGenreId())) {
+          this.selectedGenreId.set(list[0].id!);
+        }
+        return of(list);
+      })
+    );
   }
 
-  selectGenreTab(genreId: number | 'all') {
-    this.activeTab.set('works');
-    this.selectedGenreId.set(genreId);
+  onGenreChange(newGenreId: any) {
+    const val = newGenreId === 'all' ? 'all' : Number(newGenreId);
+    this.selectedGenreId.set(val);
+    this.currentPage.set(0);
+    this.loadAuthorContents();
   }
 
-  getGenreCount(genreId?: number): number {
-    if (!genreId) return 0;
-    return this.poetContents().filter(item => {
-      const itemGid = item.genreId || item.genre?.id;
-      return Number(itemGid) === Number(genreId);
-    }).length;
+  goToPage(page: number) {
+    if (page < 0 || (this.totalPages() > 0 && page >= this.totalPages())) return;
+    this.currentPage.set(page);
+    this.loadAuthorContents();
+    const el = document.getElementById('author-works-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  getPageRange(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pages: number[] = [];
+    const start = Math.max(0, current - 2);
+    const end = Math.min(total, start + 5);
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  selectTab(tab: string) {
+    this.activeTab.set(tab);
   }
 
   getGenreIcon(genre?: Genre): string {
@@ -216,22 +239,51 @@ export class PoetDetailComponent implements OnInit {
         } else {
           this.setFallbackPoet(id);
         }
-      },
-      error: () => this.setFallbackPoet(id)
-    });
-
-    this.contentService.getContentsByAuthorId(id, scriptId).subscribe({
-      next: (filtered) => {
-        if (filtered && filtered.length > 0) {
-          this.poetContents.set(filtered);
-        } else {
-          this.setFallbackContents(id);
-        }
         this.loading.set(false);
       },
       error: () => {
-        this.setFallbackContents(id);
+        this.setFallbackPoet(id);
         this.loading.set(false);
+      }
+    });
+
+    if (this.genres().length === 0) {
+      this.loadGenres().subscribe(() => {
+        this.loadAuthorContents();
+      });
+    } else {
+      if (this.selectedGenreId() === 'all' || !this.selectedGenreId()) {
+        this.selectedGenreId.set(this.genres()[0].id!);
+      }
+      this.loadAuthorContents();
+    }
+  }
+
+  loadAuthorContents() {
+    const id = this.poetId();
+    if (!id) return;
+    this.loadingContents.set(true);
+    const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+    const gId = this.selectedGenreId();
+    const genreId = (gId !== 'all' && gId !== null) ? Number(gId) : null;
+
+    this.contentService.getContentsByAuthorPaged({
+      authorId: id,
+      genreId: genreId,
+      scriptId: scriptId,
+      page: this.currentPage(),
+      size: this.pageSize()
+    }).subscribe({
+      next: (res) => {
+        this.poetContents.set(res.data || []);
+        this.totalElements.set(res.totalElements ?? (res.data?.length || 0));
+        this.totalPages.set(res.totalPages || (res.data && res.data.length > 0 ? 1 : 0));
+        this.isLastPage.set(res.last ?? true);
+        this.loadingContents.set(false);
+      },
+      error: () => {
+        this.setFallbackContents(id);
+        this.loadingContents.set(false);
       }
     });
   }
