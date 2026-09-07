@@ -2007,4 +2007,99 @@
   color: var(--text-muted);
 }
 
+/* Author Modal Photo Section */
+.author-modal-photo-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-card);
+  border-radius: var(--radius-lg);
+}
+
+.author-modal-avatar-preview {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: #2d1f14;
+  border: 2px solid var(--accent-gold);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.author-modal-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.author-modal-avatar-placeholder {
+  font-size: 1.5rem;
+  color: #d4af37;
+}
+
+.author-modal-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.author-modal-avatar-preview:hover .author-modal-avatar-overlay {
+  opacity: 1;
+}
+
+.author-modal-photo-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.author-modal-photo-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-clear-photo {
+  background: none;
+  border: 1px solid var(--border-card);
+  color: var(--text-muted);
+  border-radius: var(--radius-full);
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.btn-clear-photo:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+.author-modal-photo-hint {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+
 

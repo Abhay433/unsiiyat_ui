@@ -191,6 +191,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   poetForm = signal({
     birthDate: '1797-12-27',
     deathDate: '1869-02-15',
+    avatarUrl: '',
     urName: '',
     urBio: '',
     hiName: '',
@@ -198,6 +199,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     enName: '',
     enBio: ''
   });
+  isUploadingAuthorPhoto = signal<boolean>(false);
 
   newAdminForm = signal({
     name: '',
@@ -904,9 +906,8 @@ export class StudioComponent implements OnInit, OnDestroy {
     );
   });
 
-  getAuthorAvatarUrl(a: Author): string | null {
-    if (!a?.id) return null;
-    return localStorage.getItem(`author_avatar_${a.id}`) || a.avatarUrl || null;
+  getAuthorAvatarUrl(a: Author): string {
+    return this.authorService.getAuthorAvatar(a);
   }
 
   getAuthorUrduName(a: Author): string {
@@ -1028,6 +1029,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       this.poetForm.set({
         birthDate: '',
         deathDate: '',
+        avatarUrl: '',
         urName: '',
         urBio: '',
         hiName: '',
@@ -1081,9 +1083,12 @@ export class StudioComponent implements OnInit, OnDestroy {
     const hiDetail = details.find((d: any) => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'hi'));
     const enDetail = details.find((d: any) => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'en'));
 
+    const avatarUrl = author.avatarUrl || (author.id ? localStorage.getItem(`author_avatar_${author.id}`) : '') || '';
+
     this.poetForm.set({
       birthDate: author.birthDate || '',
       deathDate: author.deathDate || '',
+      avatarUrl: avatarUrl,
       urName: author.urName || urDetail?.name || '',
       urBio: urDetail?.biography || author.primaryBio || '',
       hiName: author.hiName || hiDetail?.name || '',
@@ -1092,6 +1097,69 @@ export class StudioComponent implements OnInit, OnDestroy {
       enBio: enDetail?.biography || ''
     });
     this.showAddModal.set(true);
+  }
+
+  triggerAuthorPhotoUpload(fileInput: HTMLInputElement) {
+    if (fileInput) fileInput.click();
+  }
+
+  onAuthorModalPhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    if (!file.type.startsWith('image/')) {
+      this.showStatus('error', 'Please select a valid image file (PNG, JPG, WebP).');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.showStatus('error', 'Image size must be less than 5MB.');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingAuthorPhoto.set(true);
+    const editId = this.editingAuthorId();
+
+    if (editId) {
+      this.authorService.uploadAuthorPhoto(editId, file).subscribe({
+        next: (res) => {
+          this.isUploadingAuthorPhoto.set(false);
+          const url = res.data;
+          if (url) {
+            this.poetForm.update(f => ({ ...f, avatarUrl: url }));
+            try { localStorage.setItem(`author_avatar_${editId}`, url); } catch (_) {}
+            this.showStatus('success', 'Author photo uploaded to R2 and updated in database!');
+            this.loadAuthors();
+          }
+          input.value = '';
+        },
+        error: (err) => {
+          this.isUploadingAuthorPhoto.set(false);
+          this.showStatus('error', err?.error?.message || 'Failed to upload photo.');
+          input.value = '';
+        }
+      });
+    } else {
+      this.userService.uploadProfilePhoto(file).subscribe({
+        next: (res) => {
+          this.isUploadingAuthorPhoto.set(false);
+          const url = res.data;
+          if (url) {
+            this.poetForm.update(f => ({ ...f, avatarUrl: url }));
+            this.showStatus('success', 'Photo uploaded! Click "Save Shayar" to save.');
+          }
+          input.value = '';
+        },
+        error: (err) => {
+          this.isUploadingAuthorPhoto.set(false);
+          this.showStatus('error', err?.error?.message || 'Failed to upload photo.');
+          input.value = '';
+        }
+      });
+    }
   }
 
   private isScriptText(text?: string, script?: 'ur' | 'hi' | 'en'): boolean {
@@ -1540,7 +1608,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     const existingDetails = existingItem?.details || existingItem?.authorDetails;
 
     this.authorService.saveAuthorWithDetails(
-      { id: editId || undefined, birthDate: f.birthDate, deathDate: f.deathDate },
+      { id: editId || undefined, birthDate: f.birthDate, deathDate: f.deathDate, avatarUrl: f.avatarUrl?.trim() || undefined },
       {
         ur: { name: f.urName?.trim() || '', biography: f.urBio?.trim() || '' },
         hi: { name: f.hiName?.trim() || '', biography: f.hiBio?.trim() || '' },
@@ -1550,8 +1618,11 @@ export class StudioComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         this.showStatus('success', editId ? 'Shayar profile updated successfully!' : 'Shayar profile saved into database!');
+        if (editId && f.avatarUrl) {
+          try { localStorage.setItem(`author_avatar_${editId}`, f.avatarUrl); } catch (_) {}
+        }
         this.editingAuthorId.set(null);
-        this.poetForm.set({ birthDate: '', deathDate: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
+        this.poetForm.set({ birthDate: '', deathDate: '', avatarUrl: '', urName: '', urBio: '', hiName: '', hiBio: '', enName: '', enBio: '' });
         this.closeAddModal();
         this.authorService.clearCache();
         this.allModalAuthors.set([]);

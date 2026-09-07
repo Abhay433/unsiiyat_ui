@@ -179,7 +179,16 @@ export class ContentService {
           const currentText = itemTexts.find((t: ContentText) => this.scriptService.isScriptMatch(t, targetCode))
             || item.primaryText
             || itemTexts[0];
-          const author = item.author || (authors || []).find(a => a.id === item.authorId);
+          const matchedAuthor = (authors || []).find(a => a.id === (item.authorId || item.author?.id));
+          const author = matchedAuthor 
+            ? { ...item.author, ...matchedAuthor, avatarUrl: matchedAuthor.avatarUrl || item.author?.avatarUrl }
+            : item.author;
+          if (author && !author.avatarUrl && author.id) {
+            try {
+              const stored = localStorage.getItem(`author_avatar_${author.id}`);
+              if (stored) author.avatarUrl = stored;
+            } catch (_) {}
+          }
           const genre = item.genre || (genres || []).find((g: Genre) => g.id === item.genreId);
           const itemThemes = (themes || []).filter((t: Theme) => item.themeIds?.includes(t.id!));
 

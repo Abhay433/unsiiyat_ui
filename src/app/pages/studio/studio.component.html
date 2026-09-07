@@ -494,8 +494,7 @@
                 <td class="col-main">
                   <div class="poet-table-identity">
                     <div class="poet-mini-avatar">
-                      <img *ngIf="getAuthorAvatarUrl(a)" [src]="getAuthorAvatarUrl(a)" [alt]="a.primaryName" class="poet-table-avatar-img" />
-                      <span *ngIf="!getAuthorAvatarUrl(a)">👤</span>
+                      <img [src]="getAuthorAvatarUrl(a)" [alt]="a.primaryName" class="poet-table-avatar-img" />
                     </div>
                     <div>
                       <strong class="poet-table-name" [ngClass]="scriptService.fontClass()">
@@ -1059,6 +1058,34 @@
 
         <!-- Add Author Form -->
         <form *ngIf="activeTab() === 'authors'" (submit)="saveAuthorWithDetails()">
+          <!-- Author Photo Section -->
+          <div class="author-modal-photo-section">
+            <div class="author-modal-avatar-preview" (click)="triggerAuthorPhotoUpload(authorModalPhotoInput)" title="Click to upload/change photo">
+              <img *ngIf="poetForm().avatarUrl" [src]="poetForm().avatarUrl" alt="Shayar Portrait" class="author-modal-avatar-img" />
+              <div *ngIf="!poetForm().avatarUrl" class="author-modal-avatar-placeholder">
+                <span>📷</span>
+              </div>
+              <div class="author-modal-avatar-overlay">
+                <span>{{ isUploadingAuthorPhoto() ? '⏳' : '📷' }}</span>
+              </div>
+            </div>
+            <div class="author-modal-photo-controls">
+              <input type="file" #authorModalPhotoInput hidden accept="image/*" (change)="onAuthorModalPhotoSelected($event)" />
+              <div class="author-modal-photo-controls-row">
+                <button type="button" class="btn btn-outline btn-sm" (click)="triggerAuthorPhotoUpload(authorModalPhotoInput)" [disabled]="isUploadingAuthorPhoto()">
+                  {{ isUploadingAuthorPhoto() ? 'Uploading to R2...' : (poetForm().avatarUrl ? 'Change Photo' : 'Upload Photo') }}
+                </button>
+                <button type="button" *ngIf="poetForm().avatarUrl" class="btn-clear-photo" (click)="poetForm().avatarUrl = ''" title="Remove photo">✕</button>
+              </div>
+              <span class="author-modal-photo-hint">Upload to Cloudflare R2 (PNG, JPG, WebP up to 5MB)</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Photo URL (Cloudflare R2 / Direct Link)</label>
+            <input type="url" class="form-input" placeholder="https://pub-....r2.dev/..." [(ngModel)]="poetForm().avatarUrl" name="avatarUrl" />
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Birth Date</label>

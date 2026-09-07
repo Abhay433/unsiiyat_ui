@@ -16,7 +16,7 @@ import { UserService } from '../../core/services/user.service';
 })
 export class PoetDetailComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
-  private readonly authorService = inject(AuthorService);
+  readonly authorService = inject(AuthorService);
   private readonly contentService = inject(ContentService);
   private readonly userService = inject(UserService);
   readonly seedService = inject(SeedDataService);
@@ -55,6 +55,18 @@ export class PoetDetailComponent implements OnInit {
     }
   }
 
+  getPoetAvatar(poet: any): string {
+    return this.authorService.getAuthorAvatar(poet);
+  }
+
+  onImgError(event: Event, poet: any) {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      const name = poet?.primaryName || poet?.name || 'Poet';
+      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
+    }
+  }
+
   onAuthorPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -72,8 +84,9 @@ export class PoetDetailComponent implements OnInit {
       return;
     }
 
+    const poetId = this.poetId();
     this.isUploading.set(true);
-    this.userService.uploadProfilePhoto(file).subscribe({
+    this.authorService.uploadAuthorPhoto(poetId, file).subscribe({
       next: (res) => {
         this.isUploading.set(false);
         const photoUrl = res.data;
@@ -82,11 +95,10 @@ export class PoetDetailComponent implements OnInit {
           if (current) {
             this.poet.set({ ...current, avatarUrl: photoUrl });
           }
-          const id = this.poetId();
-          if (id) {
-            localStorage.setItem(`author_avatar_${id}`, photoUrl);
+          if (poetId) {
+            try { localStorage.setItem(`author_avatar_${poetId}`, photoUrl); } catch (_) {}
           }
-          this.showStatus('success', 'Author photo updated successfully!');
+          this.showStatus('success', 'Author photo updated and saved successfully!');
         } else {
           this.showStatus('success', 'Photo uploaded!');
         }

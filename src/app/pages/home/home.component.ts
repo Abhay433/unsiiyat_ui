@@ -35,9 +35,21 @@ export interface WordOfTheDay {
 export class HomeComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   private readonly contentService = inject(ContentService);
-  private readonly authorService = inject(AuthorService);
+  readonly authorService = inject(AuthorService);
   private readonly taxonomyService = inject(TaxonomyService);
   readonly seedService = inject(SeedDataService);
+
+  getPoetAvatar(poet: any): string {
+    return this.authorService.getAuthorAvatar(poet);
+  }
+
+  onImgError(event: Event, poet: any) {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      const name = poet?.primaryName || poet?.name || 'Poet';
+      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
+    }
+  }
 
   // Data signals
   poets = signal<any[]>([]);

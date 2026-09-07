@@ -18,11 +18,23 @@ import { DictionaryModalComponent } from '../../components/dictionary-modal/dict
 export class ContentDetailComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   private readonly contentService = inject(ContentService);
-  private readonly authorService = inject(AuthorService);
+  readonly authorService = inject(AuthorService);
   readonly seedService = inject(SeedDataService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
+
+  getAuthorAvatar(author: any): string {
+    return this.authorService.getAuthorAvatar(author);
+  }
+
+  onAuthorImgError(event: Event) {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      const name = this.getAuthorName() || 'Poet';
+      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
+    }
+  }
 
   contentId = signal<number>(1);
   content = signal<any>(null);

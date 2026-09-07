@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, catchError, tap } from 'rxjs';
+import { Observable, forkJoin, map, of, catchError, tap, switchMap } from 'rxjs';
 import { ApiService } from './api.service';
 import { ScriptService } from './script.service';
 import { Author, AuthorDetail, AuthorFilterRequest, AuthorDetailFilterRequest } from '../models/author.models';
@@ -16,6 +16,21 @@ export class AuthorService {
 
   clearCache() {
     this.cachedEnrichedAuthors = {};
+  }
+
+  getAuthorAvatar(author: Partial<Author> | null | undefined): string {
+    if (!author) return 'https://ui-avatars.com/api/?name=Poet&background=3d2216&color=d4af37&font-size=0.38&bold=true';
+    if (author.avatarUrl && author.avatarUrl.trim().length > 0) {
+      return author.avatarUrl.trim();
+    }
+    if (author.id) {
+      try {
+        const stored = localStorage.getItem(`author_avatar_${author.id}`);
+        if (stored && stored.trim().length > 0) return stored.trim();
+      } catch (_) {}
+    }
+    const name = author.primaryName || author.enName || author.name || 'Poet';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
   }
 
   filterAuthors(request: AuthorFilterRequest = {}): Observable<PagedResponse<Author>> {
@@ -60,7 +75,7 @@ export class AuthorService {
 
   // Unified single-call author save/update with multi-script details (Urdu, Hindi, English)
   saveAuthorWithDetails(
-    authorData: { id?: number; birthDate?: string; deathDate?: string },
+    authorData: { id?: number; birthDate?: string; deathDate?: string; avatarUrl?: string },
     scriptDetails: {
       ur?: { name: string; biography?: string };
       hi?: { name: string; biography?: string };
@@ -109,8 +124,13 @@ export class AuthorService {
       });
     }
 
+    const avatarUrl = authorData.avatarUrl 
+      || (authorData.id ? localStorage.getItem(`author_avatar_${authorData.id}`) : undefined) 
+      || undefined;
+
     const payload: Author = {
       id: authorData.id,
+      avatarUrl,
       birthDate: authorData.birthDate || undefined,
       deathDate: authorData.deathDate || undefined,
       urName: scriptDetails.ur?.name?.trim() || '',
@@ -127,6 +147,35 @@ export class AuthorService {
     };
 
     return this.saveAuthor(payload);
+  }
+
+  // Upload author photo and synchronize with database & local storage
+  uploadAuthorPhoto(authorId: number, file: File): Observable<ApiResponse<string>> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.api.post<ApiResponse<string>>(`/api/authors/${authorId}/photo`, formData).pipe(
+      tap((res) => {
+        if (res.data) {
+          try { localStorage.setItem(`author_avatar_${authorId}`, res.data); } catch (_) {}
+          this.clearCache();
+        }
+      }),
+      catchError(() => {
+        return this.api.post<ApiResponse<string>>('/api/users/profile/photo', formData).pipe(
+          switchMap((res) => {
+            if (res.data) {
+              try { localStorage.setItem(`author_avatar_${authorId}`, res.data); } catch (_) {}
+              return this.saveAuthor({ id: authorId, avatarUrl: res.data }).pipe(
+                map(() => res),
+                catchError(() => of(res))
+              );
+            }
+            return of(res);
+          }),
+          tap(() => this.clearCache())
+        );
+      })
+    );
   }
 
   // Helper to load authors enriched with their multi-script details dynamically (Paged)
@@ -161,12 +210,20 @@ export class AuthorService {
             || (targetCode === 'ur' ? author.urBio : (targetCode === 'hi' ? author.hiBio : author.enBio))
             || '';
 
+          // Look up avatar from backend avatarUrl or persistent storage
+          const storedAvatar = author.id ? localStorage.getItem(`author_avatar_${author.id}`) : null;
+          const avatarUrl = author.avatarUrl || storedAvatar || undefined;
+          if (author.id && author.avatarUrl) {
+            try { localStorage.setItem(`author_avatar_${author.id}`, author.avatarUrl); } catch (_) {}
+          }
+
           return {
             ...author,
             details: authorDetails,
             authorDetails,
             primaryName,
-            primaryBio
+            primaryBio,
+            avatarUrl
           };
         });
 

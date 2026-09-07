@@ -15,7 +15,7 @@ import { SeedDataService } from '../../core/services/seed-data.service';
 })
 export class PoetsComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
-  private readonly authorService = inject(AuthorService);
+  readonly authorService = inject(AuthorService);
   private readonly seedService = inject(SeedDataService);
   private readonly route = inject(ActivatedRoute);
 
@@ -40,14 +40,26 @@ export class PoetsComponent implements OnInit {
         this.searchFilter.set(params['q']);
       }
     });
-    this.loadPoets();
+    this.loadPoets(true);
   }
 
-  loadPoets() {
+  getPoetAvatar(poet: any): string {
+    return this.authorService.getAuthorAvatar(poet);
+  }
+
+  onImgError(event: Event, poet: any) {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      const name = poet?.primaryName || poet?.name || 'Poet';
+      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
+    }
+  }
+
+  loadPoets(forceRefresh = false) {
     this.loading.set(true);
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
 
-    this.authorService.getEnrichedAuthors(scriptId).subscribe({
+    this.authorService.getEnrichedAuthors(scriptId, forceRefresh).subscribe({
       next: (data) => {
         if (data && data.length > 0) {
           this.poets.set(data);

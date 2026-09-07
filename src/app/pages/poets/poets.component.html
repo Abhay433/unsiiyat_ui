@@ -55,7 +55,7 @@
       [routerLink]="['/poet', poet.id]" 
       class="poet-card poetic-card">
       <div class="poet-portrait-ring">
-        <img [src]="poet.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=300'" [alt]="poet.primaryName" />
+        <img [src]="getPoetAvatar(poet)" [alt]="poet.primaryName" (error)="onImgError($event, poet)" />
       </div>
       
       <div class="poet-card-info">

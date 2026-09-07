@@ -82,8 +82,9 @@
       <div class="poet-summary-card">
         <div class="poet-portrait-ring">
           <img
-            [src]="content()?.author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'"
-            [alt]="getAuthorName()" />
+            [src]="getAuthorAvatar(content()?.author)"
+            [alt]="getAuthorName()"
+            (error)="onAuthorImgError($event)" />
         </div>
         <div class="poet-card-details">
           <div class="poet-card-top-row flex-between">
