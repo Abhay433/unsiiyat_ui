@@ -58,12 +58,11 @@
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
-  cursor: pointer;
   transition: transform var(--transition-fast);
 }
 
 .poet-portrait-ring-lg:hover {
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
 .poet-portrait-ring-lg img {
@@ -72,85 +71,6 @@
   border-radius: 50%;
   object-fit: cover;
   display: block;
-}
-
-.poet-portrait-overlay {
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #ffffff;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-  text-align: center;
-  padding: 8px;
-}
-
-.poet-portrait-ring-lg:hover .poet-portrait-overlay {
-  opacity: 1;
-}
-
-.btn-poet-upload-pill {
-  padding: 6px 14px;
-  border-radius: 9999px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  color: var(--text-primary);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-fast);
-}
-
-.btn-poet-upload-pill:hover {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
-  transform: translateY(-1px);
-}
-
-.poet-upload-spin {
-  display: inline-block;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.status-toast-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  border-radius: var(--radius-md);
-  margin-bottom: 18px;
-  font-size: 0.92rem;
-  font-weight: 500;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  box-shadow: var(--shadow-sm);
-}
-
-.status-toast-bar.alert-success {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.3);
-  color: #15803d;
-}
-
-.status-toast-bar.alert-error {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #b91c1c;
 }
 
 .poet-hero-details {

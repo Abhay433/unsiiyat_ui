@@ -1,11 +1,10 @@
-import { Component, inject, signal, OnInit, computed, effect } from '@angular/core';
+import { Component, inject, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { ScriptService } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
 import { SeedDataService } from '../../core/services/seed-data.service';
-import { UserService } from '../../core/services/user.service';
 
 @Component({
   selector: 'app-poet-detail',
@@ -18,7 +17,6 @@ export class PoetDetailComponent implements OnInit {
   readonly scriptService = inject(ScriptService);
   readonly authorService = inject(AuthorService);
   private readonly contentService = inject(ContentService);
-  private readonly userService = inject(UserService);
   readonly seedService = inject(SeedDataService);
   private readonly route = inject(ActivatedRoute);
 
@@ -28,8 +26,6 @@ export class PoetDetailComponent implements OnInit {
   activeTab = signal<'ghazals' | 'ashar' | 'bio'>('ghazals');
   copiedIndex = signal<number | null>(null);
   loading = signal(true);
-  isUploading = signal<boolean>(false);
-  uploadStatusMsg = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   constructor() {
     effect(() => {
@@ -49,12 +45,6 @@ export class PoetDetailComponent implements OnInit {
     });
   }
 
-  triggerPhotoUpload(fileInput: HTMLInputElement) {
-    if (fileInput) {
-      fileInput.click();
-    }
-  }
-
   getPoetAvatar(poet: any): string {
     return this.authorService.getAuthorAvatar(poet);
   }
@@ -65,57 +55,6 @@ export class PoetDetailComponent implements OnInit {
       const name = poet?.primaryName || poet?.name || 'Poet';
       target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3d2216&color=d4af37&font-size=0.38&bold=true`;
     }
-  }
-
-  onAuthorPhotoSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
-
-    if (!file.type.startsWith('image/')) {
-      this.showStatus('error', 'Please select a valid image file (PNG, JPG, WebP).');
-      input.value = '';
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      this.showStatus('error', 'Image size must be less than 5MB.');
-      input.value = '';
-      return;
-    }
-
-    const poetId = this.poetId();
-    this.isUploading.set(true);
-    this.authorService.uploadAuthorPhoto(poetId, file).subscribe({
-      next: (res) => {
-        this.isUploading.set(false);
-        const photoUrl = res.data;
-        if (photoUrl) {
-          const current = this.poet();
-          if (current) {
-            this.poet.set({ ...current, avatarUrl: photoUrl });
-          }
-          if (poetId) {
-            try { localStorage.setItem(`author_avatar_${poetId}`, photoUrl); } catch (_) {}
-          }
-          this.showStatus('success', 'Author photo updated and saved successfully!');
-        } else {
-          this.showStatus('success', 'Photo uploaded!');
-        }
-        input.value = '';
-      },
-      error: (err) => {
-        this.isUploading.set(false);
-        const msg = err?.error?.message || err?.message || 'Failed to upload photo.';
-        this.showStatus('error', msg);
-        input.value = '';
-      }
-    });
-  }
-
-  private showStatus(type: 'success' | 'error', text: string) {
-    this.uploadStatusMsg.set({ type, text });
-    setTimeout(() => this.uploadStatusMsg.set(null), 4000);
   }
 
   loadPoetData(id: number) {

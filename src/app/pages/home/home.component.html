@@ -19,7 +19,8 @@
             </div>
 
             <!-- Audio Simulation Button with Waveform -->
-            <button class="tool-btn audio-btn" (click)="toggleAudio()" [class.playing]="isPlayingAudio()" title="Listen to Recitation">
+            <button class="tool-btn audio-btn" (click)="toggleAudio()" [class.playing]="isPlayingAudio()"
+              title="Listen to Recitation">
               <div *ngIf="isPlayingAudio()" class="audio-waveform">
                 <span class="waveform-bar"></span>
                 <span class="waveform-bar"></span>
@@ -27,12 +28,14 @@
                 <span class="waveform-bar"></span>
                 <span class="waveform-bar"></span>
               </div>
-              <span>{{ isPlayingAudio() ? 'Reciting (0:' + (audioProgress() < 10 ? '0' : '') + audioProgress() + ')' : '▶ Recitation' }}</span>
+              <span>{{ isPlayingAudio() ? 'Reciting (0:' + (audioProgress() < 10 ? '0' : '' ) + audioProgress() + ')'
+                  : '▶ Recitation' }}</span>
             </button>
 
             <!-- Copy Button -->
             <button class="tool-btn copy-btn" (click)="copyHeroCouplet()">
-              {{ copiedHero() ? '✓ ' + scriptService.translate('copied') : '📋 ' + scriptService.translate('copy_sher') }}
+              {{ copiedHero() ? '✓ ' + scriptService.translate('copied') : '📋 ' + scriptService.translate('copy_sher')
+              }}
             </button>
           </div>
         </div>
@@ -60,7 +63,7 @@
               <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ currentHero().poet }}</span>
             </div>
           </div>
-          
+
           <div class="hero-action-links">
             <button class="btn btn-ghost btn-sm" (click)="openDictionaryWith('Khwahish')">
               📖 Explore Words
@@ -88,17 +91,15 @@
       </div>
 
       <div class="poets-grid">
-        <a 
-          *ngFor="let poet of poets()" 
-          [routerLink]="['/poet', poet.id]" 
-          class="poet-card poetic-card">
+        <a *ngFor="let poet of poets()" [routerLink]="['/poet', poet.id]" class="poet-card poetic-card">
           <div class="poet-portrait-ring">
             <img [src]="getPoetAvatar(poet)" [alt]="poet.primaryName" (error)="onImgError($event, poet)" />
           </div>
           <div class="poet-card-info">
             <span class="poet-era-tag font-display">CLASSICAL SHAYAR</span>
             <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
-            <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy' }}</span>
+            <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy'
+              }}</span>
             <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio | slice:0:75 }}...</p>
             <span class="poet-works-count">✦ 40+ Ghazals & Nazms</span>
           </div>
@@ -153,7 +154,8 @@
         </div>
 
         <div class="lughat-footer flex-between">
-          <span class="lughat-info-text">Enrich your literary vocabulary with Rekhta & Unsiiyat classical dictionary</span>
+          <span class="lughat-info-text">Enrich your literary vocabulary with Rekhta & Unsiiyat classical
+            dictionary</span>
           <button class="btn btn-outline-gold btn-sm" (click)="openDictionaryWith(currentWord().word)">
             Open Full Lughat &rarr;
           </button>
@@ -169,9 +171,10 @@
         <div>
           <div class="section-badge font-display">TREASURY OF VERSE</div>
           <h2 class="section-title font-display">{{ scriptService.translate('recent_ghazals') }}</h2>
-          <p class="section-subtitle">Discover timeless poetry with combined filters across Shayars, Genres, Themes, and popularity</p>
+          <p class="section-subtitle">Discover timeless poetry with combined filters across Shayars, Genres, Themes, and
+            popularity</p>
         </div>
-        
+
         <!-- Live Results Count -->
         <div class="results-counter-badge">
           <span>📜 {{ filteredContents().length }} Ghazals / Kalam Found</span>
@@ -187,12 +190,8 @@
           <div class="filter-control-item search-input-col">
             <label class="filter-label font-display">🔍 KEYWORD SEARCH</label>
             <div class="filter-input-wrap">
-              <input 
-                type="text" 
-                class="filter-input-field" 
-                placeholder="Search title, misra, or poet..." 
-                [ngModel]="searchKeyword()" 
-                (ngModelChange)="searchKeyword.set($event)" />
+              <input type="text" class="filter-input-field" placeholder="Search title, misra, or poet..."
+                [ngModel]="searchKeyword()" (ngModelChange)="searchKeyword.set($event)" />
               <button *ngIf="searchKeyword()" class="filter-clear-btn" (click)="clearSearch()">✕</button>
             </div>
           </div>
@@ -200,7 +199,8 @@
           <!-- 2. Shayar / Author Dropdown -->
           <div class="filter-control-item">
             <label class="filter-label font-display">👤 SHAYAR / POET</label>
-            <select class="filter-select-field" [ngModel]="selectedAuthorId()" (ngModelChange)="selectedAuthorId.set($event)">
+            <select class="filter-select-field" [ngModel]="selectedAuthorId()"
+              (ngModelChange)="selectedAuthorId.set($event)">
               <option value="all">All Shayars (تمام شعراء)</option>
               <option *ngFor="let p of poets()" [value]="p.id">
                 {{ p.primaryName }}
@@ -211,7 +211,8 @@
           <!-- 3. Genre Dropdown -->
           <div class="filter-control-item">
             <label class="filter-label font-display">🏷️ POETIC GENRE</label>
-            <select class="filter-select-field" [ngModel]="selectedGenreId()" (ngModelChange)="selectedGenreId.set($event)">
+            <select class="filter-select-field" [ngModel]="selectedGenreId()"
+              (ngModelChange)="selectedGenreId.set($event)">
               <option value="all">All Genres (تمام اصناف)</option>
               <option *ngFor="let g of genres()" [value]="g.id">
                 {{ g.name }}
@@ -222,7 +223,8 @@
           <!-- 4. Theme / Mood Dropdown -->
           <div class="filter-control-item">
             <label class="filter-label font-display">✦ THEMATIC MOOD</label>
-            <select class="filter-select-field" [ngModel]="selectedThemeId()" (ngModelChange)="selectedThemeId.set($event)">
+            <select class="filter-select-field" [ngModel]="selectedThemeId()"
+              (ngModelChange)="selectedThemeId.set($event)">
               <option value="all">All Moods (تمام موضوعات)</option>
               <option *ngFor="let t of themes()" [value]="t.id">
                 {{ t.name }}
@@ -287,39 +289,23 @@
 
       <!-- Quick Category Filter Pills -->
       <div class="feed-tabs-row">
-        <button 
-          class="feed-tab-btn" 
-          [class.active]="activeFeedCategory() === 'all'" 
-          (click)="setFeedCategory('all')">
+        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'all'" (click)="setFeedCategory('all')">
           All Ghazals (تمام کلام)
         </button>
-        <button 
-          class="feed-tab-btn" 
-          [class.active]="activeFeedCategory() === 'ishq'" 
-          (click)="setFeedCategory('ishq')">
+        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'ishq'" (click)="setFeedCategory('ishq')">
           💖 Ishq & Romance (عشق)
         </button>
-        <button 
-          class="feed-tab-btn" 
-          [class.active]="activeFeedCategory() === 'dard'" 
-          (click)="setFeedCategory('dard')">
+        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'dard'" (click)="setFeedCategory('dard')">
           💔 Dard & Longing (درد)
         </button>
-        <button 
-          class="feed-tab-btn" 
-          [class.active]="activeFeedCategory() === 'zindagi'" 
+        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'zindagi'"
           (click)="setFeedCategory('zindagi')">
           🌿 Life & Philosophy (زندگی)
         </button>
-        <button 
-          class="feed-tab-btn" 
-          [class.active]="activeFeedCategory() === 'sufi'" 
-          (click)="setFeedCategory('sufi')">
+        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'sufi'" (click)="setFeedCategory('sufi')">
           🕯️ Sufism & Mysticism (تصوف)
         </button>
-        <button 
-          class="feed-tab-btn" 
-          [class.active]="activeFeedCategory() === 'inqilab'" 
+        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'inqilab'"
           (click)="setFeedCategory('inqilab')">
           🚩 Revolution & Hope (انقلاب)
         </button>
@@ -345,15 +331,11 @@
 
           <div class="ghazal-card-footer flex-between">
             <div class="card-interaction-btns">
-              <button 
-                class="icon-action-btn" 
-                [class.liked]="likedItems()[item.id]" 
-                (click)="toggleLike(item.id)" 
+              <button class="icon-action-btn" [class.liked]="likedItems()[item.id]" (click)="toggleLike(item.id)"
                 title="Like this ghazal">
                 {{ likedItems()[item.id] ? '❤️' : '🤍' }} {{ likeCounts()[item.id] || 120 }}
               </button>
-              <button 
-                class="icon-action-btn" 
+              <button class="icon-action-btn"
                 (click)="copyFeedCouplet(idx, getFirstCouplet(item.primaryText?.body), item.author?.primaryName || item.authorName)"
                 title="Copy Couplet">
                 {{ copiedIndex() === idx ? '✓' : '📋' }}
@@ -390,10 +372,7 @@
       </div>
 
       <div class="themes-chips-wrapper">
-        <a 
-          *ngFor="let theme of themes()" 
-          [routerLink]="['/themes']" 
-          class="theme-chip-card poetic-card">
+        <a *ngFor="let theme of themes()" [routerLink]="['/themes']" class="theme-chip-card poetic-card">
           <div class="theme-chip-icon">✦</div>
           <div class="theme-chip-details">
             <h4 class="theme-chip-name" [ngClass]="scriptService.fontClass()">{{ theme.name }}</h4>
@@ -410,7 +389,8 @@
       <div class="section-header flex-between">
         <div>
           <h2 class="section-title font-display">{{ scriptService.translate('audio_lounge') }}</h2>
-          <p class="section-subtitle">Immerse yourself in acoustic recitations, mushaira recordings, and classical tarannum</p>
+          <p class="section-subtitle">Immerse yourself in acoustic recitations, mushaira recordings, and classical
+            tarannum</p>
         </div>
       </div>
 
@@ -449,9 +429,6 @@
   </section>
 
   <!-- Dictionary Modal Popup -->
-  <app-dictionary-modal 
-    *ngIf="showDictModal()"
-    [selectedWord]="selectedDictWord()"
-    (close)="showDictModal.set(false)">
+  <app-dictionary-modal *ngIf="showDictModal()" [selectedWord]="selectedDictWord()" (close)="showDictModal.set(false)">
   </app-dictionary-modal>
 </div>
