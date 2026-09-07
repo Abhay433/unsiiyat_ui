@@ -1,204 +1,38 @@
 <div class="reader-view unsiiyat-container animate-fade-in" *ngIf="content()">
-  <!-- Minimal Top Header: Navigation, Edit Kalam & Language Switcher -->
+  <!-- Minimal Top Header: Back Navigation Only -->
   <div class="reader-top-nav animate-fade-in">
     <div class="nav-left">
       <!-- Back Navigation -->
       <button type="button" class="back-link" (click)="goBack()" title="Go Back">
         &larr; Back
       </button>
-      <span class="divider-dot">•</span>
-
-      <!-- Edit Kalam Button (Preserved for edit purpose) -->
-      <button *ngIf="!isEditing()" type="button" class="btn-edit-kalam-pill" (click)="startEditing()"
-        title="Edit this poem directly on this page">
-        <span class="edit-icon">✏️</span>
-        <span>Edit Kalam</span>
-      </button>
-
-      <span *ngIf="isEditing()" class="editing-indicator-pill animate-fade-in">
-        <span class="pulse-dot"></span>
-        <span>✏️ Editing Mode</span>
-      </span>
-    </div>
-
-    <!-- Script Switcher Tabs (when reading) or Language editor tabs (when editing) -->
-    <div class="reader-script-tabs" *ngIf="!isEditing()">
-      <button *ngFor="let s of scriptService.scripts()" class="reader-script-btn"
-        [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s)">
-        {{ s.nativeName || s.name }}
-      </button>
-    </div>
-
-    <div class="reader-script-tabs edit-script-tabs" *ngIf="isEditing()">
-      <button type="button" class="reader-script-btn" [class.active]="editScriptTab() === 'ur'"
-        (click)="editScriptTab.set('ur')">
-        اردو (Urdu)
-      </button>
-      <button type="button" class="reader-script-btn" [class.active]="editScriptTab() === 'hi'"
-        (click)="editScriptTab.set('hi')">
-        हिन्दी (Hindi)
-      </button>
-      <button type="button" class="reader-script-btn" [class.active]="editScriptTab() === 'en'"
-        (click)="editScriptTab.set('en')">
-        English
-      </button>
-    </div>
-
-    <!-- When Editing: Top Save & Cancel Actions -->
-    <div class="nav-right" *ngIf="isEditing()">
-      <button type="button" class="tool-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" (click)="deleteCurrentContent()" title="Delete this Kalam">
-        🗑️ Delete
-      </button>
-      <button type="button" class="tool-btn cancel-edit-btn" (click)="cancelEditing()">
-        ✕ Cancel
-      </button>
-      <button type="button" class="btn-save-kalam-top" (click)="saveEditedContent()" [disabled]="isSaving()">
-        <span *ngIf="isSaving()" class="btn-spinner"></span>
-        <span>💾 Save Changes</span>
-      </button>
     </div>
   </div>
 
-  <!-- Status Notification Toast / Alert -->
-  <div *ngIf="editStatusMsg()" class="editor-toast-banner animate-fade-in"
-    [class.toast-error]="editStatusMsg()?.type === 'error'">
-    <span>{{ editStatusMsg()?.text }}</span>
+  <!-- Toast message if link copied -->
+  <div *ngIf="showShareToast()" class="share-toast-pill-fixed animate-fade-in">
+    ✓ Link copied to clipboard!
   </div>
 
-  <!-- ======================================================================= -->
-  <!-- 1. IN-PLACE LIVE EDITOR VIEW (When isEditing is TRUE)                   -->
-  <!-- ======================================================================= -->
-  <div *ngIf="isEditing()" class="in-place-editor-card poetic-card animate-fade-in">
-    <div class="editor-card-header flex-between">
-      <div>
-        <span class="editor-tag-small">DIRECT IN-PLACE EDITOR</span>
-        <h2 class="editor-main-heading">Edit Kalam & Verses (کلام میں ترمیم)</h2>
-        <p class="editor-sub-desc">You can edit the title and couplets directly. Switch between Urdu, Hindi, and English
-          tabs to edit each script.</p>
-      </div>
-      <div class="editor-header-btn-row">
-        <button type="button" class="btn btn-outline-cancel" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" (click)="deleteCurrentContent()" title="Delete this Kalam">🗑️ Delete Kalam</button>
-        <button type="button" class="btn btn-outline-cancel" (click)="cancelEditing()">✕ Cancel</button>
-        <button type="button" class="btn btn-save-primary" (click)="saveEditedContent()" [disabled]="isSaving()">
-          <span *ngIf="isSaving()" class="btn-spinner"></span>
-          <span>💾 Save Changes</span>
-        </button>
-      </div>
-    </div>
+  <!-- Main Clean Reading Card (Rekhta Style) -->
+  <article class="rekhta-reading-card animate-fade-in">
+    <!-- Header: Pure Title Name & Author Name -->
+    <header class="rekhta-header">
+      <h1 class="rekhta-poem-title" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()">
+        {{ displayTitle() }}
+      </h1>
 
-    <!-- Script Tabs Selector Bar -->
-    <div class="editor-script-pills-bar">
-      <button type="button" class="script-pill-btn" [class.active]="editScriptTab() === 'ur'"
-        (click)="editScriptTab.set('ur')">
-        <span>اردو (Urdu)</span>
-        <span class="pill-dot" [class.filled]="editForm().urBody.trim()"></span>
-      </button>
-      <button type="button" class="script-pill-btn" [class.active]="editScriptTab() === 'hi'"
-        (click)="editScriptTab.set('hi')">
-        <span>हिन्दी (Hindi)</span>
-        <span class="pill-dot" [class.filled]="editForm().hiBody.trim()"></span>
-      </button>
-      <button type="button" class="script-pill-btn" [class.active]="editScriptTab() === 'en'"
-        (click)="editScriptTab.set('en')">
-        <span>English</span>
-        <span class="pill-dot" [class.filled]="editForm().enBody.trim()"></span>
-      </button>
-    </div>
-
-    <!-- Edit Form Fields -->
-    <div class="editor-form-canvas">
-      <!-- Title Input -->
-      <div class="form-field-group">
-        <label class="field-label flex-between">
-          <span>Title (عنوان / शीर्षक) — {{ editScriptTab() === 'ur' ? 'اردو' : (editScriptTab() === 'hi' ? 'हिन्दी' :
-            'English') }}</span>
-          <span class="field-sub-hint">Auto-derived if left empty</span>
-        </label>
-        <input type="text" class="field-input-title"
-          [placeholder]="editScriptTab() === 'ur' ? 'غزل کا عنوان درج کریں...' : (editScriptTab() === 'hi' ? 'ग़ज़ल का शीर्षक दर्ज करें...' : 'Enter poem title in English...')"
-          [ngModel]="getActiveEditTitle()" (ngModelChange)="updateActiveEditTitle($event)"
-          [ngClass]="editScriptTab() === 'ur' ? 'font-urdu' : (editScriptTab() === 'hi' ? 'font-hindi' : 'font-english')"
-          [dir]="editScriptTab() === 'ur' ? 'rtl' : 'ltr'" />
+      <div class="rekhta-poet-meta">
+        <a [routerLink]="['/poet', content()?.author?.id || content()?.authorId || 1]" class="rekhta-poet-link">
+          {{ getAuthorName() | uppercase }}
+        </a>
       </div>
 
-      <!-- Verses Textarea -->
-      <div class="form-field-group">
-        <div class="field-textarea-toolbar flex-between">
-          <label class="field-label">
-            <span>Verses (اشعار / کلام) — 2 Lines per Couplet</span>
-          </label>
-          <div class="toolbar-stat-actions">
-            <span class="couplet-counter-badge">
-              📊 {{ activeCoupletStats().couplets }} Ash'ar ({{ activeCoupletStats().lines }} Misre)
-            </span>
-            <button type="button" class="btn-format-quick" (click)="formatActiveEditCouplets()"
-              title="Auto-format verses into standard couplets">
-              🪄 Format Couplets
-            </button>
-          </div>
-        </div>
+      <div class="rekhta-header-divider"></div>
+    </header>
 
-        <textarea rows="11" class="field-textarea-verses"
-          [placeholder]="editScriptTab() === 'ur' ? 'یہاں اشعار درج کریں... ہر شعر دو مصرعوں پر مشتمل ہو۔' : (editScriptTab() === 'hi' ? 'यहाँ शेर लिखें... हर शेर दो पंक्तियों का हो।' : 'Enter couplets here... 2 lines per stanza.')"
-          [ngModel]="getActiveEditBody()" (ngModelChange)="updateActiveEditBody($event)"
-          [ngClass]="editScriptTab() === 'ur' ? 'font-urdu' : (editScriptTab() === 'hi' ? 'font-hindi' : 'font-english')"
-          [dir]="editScriptTab() === 'ur' ? 'rtl' : 'ltr'"></textarea>
-      </div>
-
-      <!-- Live Couplet Preview Box -->
-      <div *ngIf="editCoupletsPreview().length > 0" class="live-couplets-preview-section">
-        <div class="preview-section-title">
-          <span>👁️ Live Render Preview (پیش منظر)</span>
-        </div>
-        <div class="preview-couplets-stream"
-          [ngClass]="editScriptTab() === 'ur' ? 'font-urdu' : (editScriptTab() === 'hi' ? 'font-hindi' : 'font-english')"
-          [dir]="editScriptTab() === 'ur' ? 'rtl' : 'ltr'">
-          <div *ngFor="let c of editCoupletsPreview(); let idx = index; trackBy: trackByIndex"
-            class="preview-couplet-card">
-            <span class="preview-sher-num font-display" dir="ltr">Sher #{{ idx + 1 }}</span>
-            <p class="preview-misra line-one">{{ c[0] }}</p>
-            <p class="preview-misra line-two" *ngIf="c[1]">{{ c[1] }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Save Footer -->
-      <div class="editor-bottom-footer flex-between">
-        <button type="button" class="btn btn-outline-cancel" (click)="cancelEditing()">✕ Cancel</button>
-        <button type="button" class="btn btn-save-primary" (click)="saveEditedContent()" [disabled]="isSaving()">
-          <span *ngIf="isSaving()" class="btn-spinner"></span>
-          <span>💾 Save Changes (محفوظ کریں)</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ======================================================================= -->
-  <!-- 2. STANDARD READING VIEW (When isEditing is FALSE)                      -->
-  <!-- ======================================================================= -->
-  <ng-container *ngIf="!isEditing()">
-    <!-- Toast message if link copied -->
-    <div *ngIf="showShareToast()" class="share-toast-pill-fixed animate-fade-in">
-      ✓ Link copied to clipboard!
-    </div>
-
-    <!-- Main Clean Reading Card (Rekhta Style) -->
-    <article class="rekhta-reading-card animate-fade-in">
-      <!-- Header: Pure Title Name & Author Name -->
-      <header class="rekhta-header">
-        <h1 class="rekhta-poem-title" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()">
-          {{ currentPoemText()?.title || content().title }}
-        </h1>
-
-        <div class="rekhta-poet-meta">
-          <a [routerLink]="['/poet', content().author?.id || content().authorId || 1]" class="rekhta-poet-link">
-            {{ getAuthorName() | uppercase }}
-          </a>
-        </div>
-
-        <div class="rekhta-header-divider"></div>
-      </header>
-
+    <!-- Case A: Content is available in active script -->
+    <ng-container *ngIf="hasScriptContent()">
       <!-- Couplets Stream: Clean, pure, spacious typography without card boxes -->
       <div class="rekhta-couplets-stream" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()"
         [style.font-size.px]="readerFontSize()">
@@ -215,54 +49,61 @@
           </div>
         </div>
       </div>
+    </ng-container>
 
-      <!-- Navigation between Ghazals -->
-      <div class="ghazal-pager flex-between">
-        <button type="button" class="btn btn-outline-cancel btn-sm" (click)="navigateToPreviousGhazal()">
-          &larr; Previous Kalam
-        </button>
+    <!-- Case B: Content not yet available in the selected script -->
+    <div *ngIf="!hasScriptContent() && !loading()" class="no-script-notice poetic-card animate-fade-in">
+      <div class="notice-icon">📜</div>
+      <h2 class="notice-title" [ngClass]="getPoemFontClass()">
+        {{ scriptService.activeScript() === 'ur' ? 'یہ کلام فی الحال اردو رسم الخط میں دستیاب نہیں ہے' :
+           (scriptService.activeScript() === 'hi' ? 'यह कलाम अभी हिन्दी लिपि में उपलब्ध नहीं है' :
+           'This Kalam is not yet available in English script') }}
+      </h2>
+      <p class="notice-desc">
+        {{ scriptService.activeScript() === 'ur' ? 'اوپر دیے گئے نیو بار سے رسم الخط تبدیل کریں۔' :
+           (scriptService.activeScript() === 'hi' ? 'ऊपर दिए गए नेवबार से लिपि बदलें।' :
+           'Please switch the script from the top navbar.') }}
+      </p>
+    </div>
 
-        <button type="button" class="btn btn-edit-kalam-pill" (click)="startEditing()">
-          <span class="edit-icon">✏️</span>
-          <span>Edit Kalam</span>
-        </button>
+    <!-- Navigation between Ghazals -->
+    <div class="ghazal-pager flex-between">
+      <button type="button" class="btn btn-outline-cancel btn-sm" (click)="navigateToPreviousGhazal()">
+        &larr; Previous Kalam
+      </button>
 
-        <button type="button" class="btn btn-outline-cancel btn-sm" (click)="navigateToNextGhazal()">
-          Next Kalam &rarr;
-        </button>
-      </div>
+      <button type="button" class="btn btn-outline-cancel btn-sm" (click)="navigateToNextGhazal()">
+        Next Kalam &rarr;
+      </button>
+    </div>
 
-      <!-- Parchment Footer with Author Bio Card -->
-      <footer class="parchment-footer">
-        <div class="poet-summary-card">
-          <div class="poet-portrait-ring">
-            <img
-              [src]="content().author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'"
-              [alt]="getAuthorName()" />
+    <!-- Parchment Footer with Author Bio Card -->
+    <footer class="parchment-footer">
+      <div class="poet-summary-card">
+        <div class="poet-portrait-ring">
+          <img
+            [src]="content()?.author?.avatarUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200'"
+            [alt]="getAuthorName()" />
+        </div>
+        <div class="poet-card-details">
+          <div class="poet-card-top-row flex-between">
+            <span class="poet-label font-display">ABOUT THE MASTER SHAYAR</span>
           </div>
-          <div class="poet-card-details">
-            <div class="poet-card-top-row flex-between">
-              <span class="poet-label font-display">ABOUT THE MASTER SHAYAR</span>
-              <button type="button" class="btn-studio-shortcut" (click)="startEditing()">
-                ✏️ Quick Edit Kalam
-              </button>
-            </div>
-            <h4 class="poet-name-sm" [ngClass]="getPoemFontClass()">
-              {{ getAuthorName() }}
-            </h4>
-            <p class="poet-bio-sm" [ngClass]="getPoemFontClass()">
-              {{ getAuthorBio() }}
-            </p>
-            <div class="poet-card-actions">
-              <a [routerLink]="['/poet', content().author?.id || content().authorId || 1]" class="btn btn-gold btn-sm">
-                View Complete Works & Biography &rarr;
-              </a>
-            </div>
+          <h4 class="poet-name-sm" [ngClass]="getPoemFontClass()">
+            {{ getAuthorName() }}
+          </h4>
+          <p class="poet-bio-sm" [ngClass]="getPoemFontClass()">
+            {{ getAuthorBio() }}
+          </p>
+          <div class="poet-card-actions">
+            <a [routerLink]="['/poet', content()?.author?.id || content()?.authorId || 1]" class="btn btn-gold btn-sm">
+              View Complete Works & Biography &rarr;
+            </a>
           </div>
         </div>
-      </footer>
-    </article>
-  </ng-container>
+      </div>
+    </footer>
+  </article>
 
   <!-- Dictionary Modal Popup -->
   <app-dictionary-modal *ngIf="showDict()" [selectedWord]="dictWord()" (close)="showDict.set(false)">

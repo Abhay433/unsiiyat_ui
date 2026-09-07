@@ -12,6 +12,9 @@ export interface Author {
   urName?: string;
   hiName?: string;
   enName?: string;
+  urBio?: string;
+  hiBio?: string;
+  enBio?: string;
   details?: AuthorDetail[];
   authorDetails?: AuthorDetail[];
   primaryBio?: string;
@@ -29,6 +32,8 @@ export interface AuthorDetail {
 
 export interface AuthorFilterRequest extends BaseFilterRequest {
   id?: number;
+  scriptId?: number;
+  scriptCode?: string;
   birthDate?: string;
   deathDate?: string;
   search?: string;

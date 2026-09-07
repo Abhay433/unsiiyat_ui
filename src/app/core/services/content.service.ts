@@ -102,31 +102,37 @@ export class ContentService {
     const contentTexts: ContentText[] = [];
 
     if (scriptTexts.ur?.body && scriptTexts.ur.body.trim().length > 0) {
+      const urTitle = scriptTexts.ur.title?.trim()
+        || (this.scriptService.isScriptMatch({ title: contentData.title }, 'ur') ? contentData.title : scriptTexts.ur.body.trim().split('\n')[0]?.trim() || '');
       contentTexts.push({
         id: existingUr?.id,
         contentId: contentData.id,
         scriptId: urScriptId,
-        title: scriptTexts.ur.title?.trim() || contentData.title,
+        title: urTitle,
         body: scriptTexts.ur.body.trim()
       });
     }
 
     if (scriptTexts.hi?.body && scriptTexts.hi.body.trim().length > 0) {
+      const hiTitle = scriptTexts.hi.title?.trim()
+        || (this.scriptService.isScriptMatch({ title: contentData.title }, 'hi') ? contentData.title : scriptTexts.hi.body.trim().split('\n')[0]?.trim() || '');
       contentTexts.push({
         id: existingHi?.id,
         contentId: contentData.id,
         scriptId: hiScriptId,
-        title: scriptTexts.hi.title?.trim() || contentData.title,
+        title: hiTitle,
         body: scriptTexts.hi.body.trim()
       });
     }
 
     if (scriptTexts.en?.body && scriptTexts.en.body.trim().length > 0) {
+      const enTitle = scriptTexts.en.title?.trim()
+        || (this.scriptService.isScriptMatch({ title: contentData.title }, 'en') ? contentData.title : scriptTexts.en.body.trim().split('\n')[0]?.trim() || '');
       contentTexts.push({
         id: existingEn?.id,
         contentId: contentData.id,
         scriptId: enScriptId,
-        title: scriptTexts.en.title?.trim() || contentData.title,
+        title: enTitle,
         body: scriptTexts.en.body.trim()
       });
     }

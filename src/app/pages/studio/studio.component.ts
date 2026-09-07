@@ -1094,6 +1094,14 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.showAddModal.set(true);
   }
 
+  private isScriptText(text?: string, script?: 'ur' | 'hi' | 'en'): boolean {
+    if (!text || !text.trim()) return false;
+    if (script === 'hi') return /[\u0900-\u097F]/.test(text);
+    if (script === 'ur') return /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+    if (script === 'en') return /[a-zA-Z]/.test(text) && !/[\u0900-\u097F\u0600-\u06FF]/.test(text);
+    return false;
+  }
+
   openEditContentModal(item: Content) {
     if (!item || !item.id) return;
 
@@ -1102,30 +1110,27 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.activeTab.set('content');
     this.contentCreationStep.set('editor');
 
+    // First populate immediately with existing texts so modal opens with no delay
     const allTexts = item.texts || item.contentTexts || [];
     const urText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
     const hiText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
     const enText = allTexts.find(t => this.scriptService.isScriptMatch(t, 'en'));
+    this.populateContentForm(item, urText, hiText, enText);
+    this.showAddModal.set(true);
 
-    if (!urText && !hiText && !enText) {
-      this.contentService.getContentDetailById(item.id).subscribe({
-        next: (detail) => {
-          const texts = detail?.texts || detail?.contentTexts || [];
-          const ur = texts.find(t => this.scriptService.isScriptMatch(t, 'ur'));
-          const hi = texts.find(t => this.scriptService.isScriptMatch(t, 'hi'));
-          const en = texts.find(t => this.scriptService.isScriptMatch(t, 'en'));
-          this.populateContentForm(item, ur, hi, en);
-          this.showAddModal.set(true);
-        },
-        error: () => {
-          this.populateContentForm(item, urText, hiText, enText);
-          this.showAddModal.set(true);
+    // Fetch full multi-script texts from server so all languages for this content are loaded accurately
+    this.contentService.filterContentTexts({ contentId: item.id, size: 50 }).subscribe({
+      next: (res) => {
+        const freshList = res.data || [];
+        if (freshList.length > 0) {
+          const freshUr = freshList.find(t => this.scriptService.isScriptMatch(t, 'ur'));
+          const freshHi = freshList.find(t => this.scriptService.isScriptMatch(t, 'hi'));
+          const freshEn = freshList.find(t => this.scriptService.isScriptMatch(t, 'en'));
+          this.populateContentForm(item, freshUr, freshHi, freshEn);
         }
-      });
-    } else {
-      this.populateContentForm(item, urText, hiText, enText);
-      this.showAddModal.set(true);
-    }
+      },
+      error: () => {}
+    });
   }
 
   private populateContentForm(item: Content, ur?: ContentText, hi?: ContentText, en?: ContentText) {
@@ -1135,25 +1140,57 @@ export class StudioComponent implements OnInit, OnDestroy {
       ? item.themeIds
       : (item.themes && item.themes.length > 0 ? item.themes.map(t => t.id!).filter(Boolean) : [this.themes()[0]?.id || 1]);
 
+    const rawTitle = (item.title || '').trim();
+
+    // Urdu title: ONLY if ur text has title or rawTitle is actually in Urdu script
+    let urTitle = (ur?.title || '').trim();
+    if (!urTitle && !ur?.body && this.isScriptText(rawTitle, 'ur')) {
+      urTitle = rawTitle;
+    }
+    // Clean up if a non-Urdu title previously leaked into Urdu text
+    if (urTitle && !this.isScriptText(urTitle, 'ur') && !this.isScriptText(ur?.body, 'ur')) {
+      urTitle = '';
+    }
+
+    // Hindi title: ONLY if hi text has title or rawTitle is actually in Devanagari script
+    let hiTitle = (hi?.title || '').trim();
+    if (!hiTitle && !hi?.body && this.isScriptText(rawTitle, 'hi')) {
+      hiTitle = rawTitle;
+    }
+    // Clean up if a non-Hindi title previously leaked into Hindi text
+    if (hiTitle && !this.isScriptText(hiTitle, 'hi') && !this.isScriptText(hi?.body, 'hi')) {
+      hiTitle = '';
+    }
+
+    // English title: ONLY if en text has title or rawTitle is actually in Latin/English script
+    let enTitle = (en?.title || '').trim();
+    if (!enTitle && !en?.body && this.isScriptText(rawTitle, 'en')) {
+      enTitle = rawTitle;
+    }
+    // Clean up if a non-English title previously leaked into English text
+    if (enTitle && !this.isScriptText(enTitle, 'en') && !this.isScriptText(en?.body, 'en')) {
+      enTitle = '';
+    }
+
     this.contentForm.set({
       id: item.id,
-      title: item.title || '',
+      title: rawTitle,
       authorId,
       genreId,
       selectedThemeIds: themeIds,
-      urTitle: ur?.title || item.title || '',
+      urTitle,
       urBody: ur?.body || '',
-      hiTitle: hi?.title || item.title || '',
+      hiTitle,
       hiBody: hi?.body || '',
-      enTitle: en?.title || item.title || '',
+      enTitle,
       enBody: en?.body || ''
     });
 
-    if (ur?.body) {
+    if (ur?.body || urTitle) {
       this.activeScriptEditorTab.set('ur');
-    } else if (hi?.body) {
+    } else if (hi?.body || hiTitle) {
       this.activeScriptEditorTab.set('hi');
-    } else if (en?.body) {
+    } else if (en?.body || enTitle) {
       this.activeScriptEditorTab.set('en');
     } else {
       const active = this.scriptService.activeScript();
@@ -1308,21 +1345,24 @@ export class StudioComponent implements OnInit, OnDestroy {
       en?: { title: string; body: string };
     } = {};
 
-    if (f.urBody.trim().length > 0) {
+    if (f.urBody.trim().length > 0 || f.urTitle.trim().length > 0) {
+      const urFirstLine = f.urBody.split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
       scriptTexts.ur = {
-        title: f.urTitle.trim() || finalTitle,
+        title: f.urTitle.trim() || (this.isScriptText(finalTitle, 'ur') ? finalTitle : urFirstLine || 'اردو کلام'),
         body: f.urBody.trim()
       };
     }
-    if (f.hiBody.trim().length > 0) {
+    if (f.hiBody.trim().length > 0 || f.hiTitle.trim().length > 0) {
+      const hiFirstLine = f.hiBody.split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
       scriptTexts.hi = {
-        title: f.hiTitle.trim() || finalTitle,
+        title: f.hiTitle.trim() || (this.isScriptText(finalTitle, 'hi') ? finalTitle : hiFirstLine || 'हिन्दी कलाम'),
         body: f.hiBody.trim()
       };
     }
-    if (f.enBody.trim().length > 0) {
+    if (f.enBody.trim().length > 0 || f.enTitle.trim().length > 0) {
+      const enFirstLine = f.enBody.split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
       scriptTexts.en = {
-        title: f.enTitle.trim() || finalTitle,
+        title: f.enTitle.trim() || (this.isScriptText(finalTitle, 'en') ? finalTitle : enFirstLine || 'English Couplet'),
         body: f.enBody.trim()
       };
     }
@@ -1496,49 +1536,17 @@ export class StudioComponent implements OnInit, OnDestroy {
     }
 
     const editId = this.editingAuthorId();
-    const payload: any = {
-      id: editId || undefined,
-      birthDate: f.birthDate || null,
-      deathDate: f.deathDate || null,
-      urName: f.urName?.trim() || '',
-      hiName: f.hiName?.trim() || '',
-      enName: f.enName?.trim() || '',
-      name: f.enName?.trim() || f.urName?.trim() || f.hiName?.trim() || '',
-      primaryName: f.enName?.trim() || f.urName?.trim() || f.hiName?.trim() || ''
-    };
+    const existingItem = this.authors().find(a => a.id === editId);
+    const existingDetails = existingItem?.details || existingItem?.authorDetails;
 
-    this.authorService.saveAuthor(payload).pipe(
-      switchMap((res: any) => {
-        const authorId = res?.data?.id || editId;
-        const detailRequests = [];
-        if (authorId) {
-          if (f.urName?.trim() || f.urBio?.trim()) {
-            detailRequests.push(this.authorService.saveAuthorDetail({
-              authorId,
-              scriptId: this.scriptService.getScriptId('ur'),
-              name: f.urName?.trim() || payload.primaryName,
-              biography: f.urBio?.trim()
-            }));
-          }
-          if (f.hiName?.trim() || f.hiBio?.trim()) {
-            detailRequests.push(this.authorService.saveAuthorDetail({
-              authorId,
-              scriptId: this.scriptService.getScriptId('hi'),
-              name: f.hiName?.trim() || payload.primaryName,
-              biography: f.hiBio?.trim()
-            }));
-          }
-          if (f.enName?.trim() || f.enBio?.trim()) {
-            detailRequests.push(this.authorService.saveAuthorDetail({
-              authorId,
-              scriptId: this.scriptService.getScriptId('en'),
-              name: f.enName?.trim() || payload.primaryName,
-              biography: f.enBio?.trim()
-            }));
-          }
-        }
-        return detailRequests.length > 0 ? forkJoin(detailRequests) : of([]);
-      })
+    this.authorService.saveAuthorWithDetails(
+      { id: editId || undefined, birthDate: f.birthDate, deathDate: f.deathDate },
+      {
+        ur: { name: f.urName?.trim() || '', biography: f.urBio?.trim() || '' },
+        hi: { name: f.hiName?.trim() || '', biography: f.hiBio?.trim() || '' },
+        en: { name: f.enName?.trim() || '', biography: f.enBio?.trim() || '' }
+      },
+      existingDetails
     ).subscribe({
       next: () => {
         this.showStatus('success', editId ? 'Shayar profile updated successfully!' : 'Shayar profile saved into database!');

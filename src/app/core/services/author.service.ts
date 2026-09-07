@@ -58,40 +58,115 @@ export class AuthorService {
     );
   }
 
+  // Unified single-call author save/update with multi-script details (Urdu, Hindi, English)
+  saveAuthorWithDetails(
+    authorData: { id?: number; birthDate?: string; deathDate?: string },
+    scriptDetails: {
+      ur?: { name: string; biography?: string };
+      hi?: { name: string; biography?: string };
+      en?: { name: string; biography?: string };
+    },
+    existingDetails?: AuthorDetail[]
+  ): Observable<ApiResponse<Author>> {
+    const detailsList = existingDetails || [];
+    const existingUr = detailsList.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'ur'));
+    const existingHi = detailsList.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'hi'));
+    const existingEn = detailsList.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, 'en'));
+
+    const urScriptId = existingUr?.scriptId || this.scriptService.getScriptId('ur');
+    const hiScriptId = existingHi?.scriptId || this.scriptService.getScriptId('hi');
+    const enScriptId = existingEn?.scriptId || this.scriptService.getScriptId('en');
+
+    const authorDetails: AuthorDetail[] = [];
+
+    if (scriptDetails.ur?.name?.trim() || scriptDetails.ur?.biography?.trim()) {
+      authorDetails.push({
+        id: existingUr?.id,
+        authorId: authorData.id || 0,
+        scriptId: urScriptId,
+        name: scriptDetails.ur.name?.trim() || '',
+        biography: scriptDetails.ur.biography?.trim() || ''
+      });
+    }
+
+    if (scriptDetails.hi?.name?.trim() || scriptDetails.hi?.biography?.trim()) {
+      authorDetails.push({
+        id: existingHi?.id,
+        authorId: authorData.id || 0,
+        scriptId: hiScriptId,
+        name: scriptDetails.hi.name?.trim() || '',
+        biography: scriptDetails.hi.biography?.trim() || ''
+      });
+    }
+
+    if (scriptDetails.en?.name?.trim() || scriptDetails.en?.biography?.trim()) {
+      authorDetails.push({
+        id: existingEn?.id,
+        authorId: authorData.id || 0,
+        scriptId: enScriptId,
+        name: scriptDetails.en.name?.trim() || '',
+        biography: scriptDetails.en.biography?.trim() || ''
+      });
+    }
+
+    const payload: Author = {
+      id: authorData.id,
+      birthDate: authorData.birthDate || undefined,
+      deathDate: authorData.deathDate || undefined,
+      urName: scriptDetails.ur?.name?.trim() || '',
+      urBio: scriptDetails.ur?.biography?.trim() || '',
+      hiName: scriptDetails.hi?.name?.trim() || '',
+      hiBio: scriptDetails.hi?.biography?.trim() || '',
+      enName: scriptDetails.en?.name?.trim() || '',
+      enBio: scriptDetails.en?.biography?.trim() || '',
+      primaryName: scriptDetails.en?.name?.trim() || scriptDetails.ur?.name?.trim() || scriptDetails.hi?.name?.trim() || '',
+      primaryBio: scriptDetails.en?.biography?.trim() || scriptDetails.ur?.biography?.trim() || scriptDetails.hi?.biography?.trim() || '',
+      name: scriptDetails.en?.name?.trim() || scriptDetails.ur?.name?.trim() || scriptDetails.hi?.name?.trim() || '',
+      authorDetails,
+      details: authorDetails
+    };
+
+    return this.saveAuthor(payload);
+  }
+
   // Helper to load authors enriched with their multi-script details dynamically (Paged)
   getEnrichedAuthorsPaged(scriptId?: number, request: AuthorFilterRequest = {}): Observable<PagedResponse<Author>> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
     const filterReq: AuthorFilterRequest = {
       page: request.page ?? 0,
       size: request.size ?? 10,
+      scriptId: sId,
       ...request
     };
 
-    return forkJoin({
-      authorsRes: this.filterAuthors(filterReq).pipe(catchError(() => of({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, last: true } as any))),
-      detailsRes: this.filterAuthorDetails({ size: 500 }).pipe(catchError(() => of({ data: [] } as any)))
-    }).pipe(
-      map(({ authorsRes, detailsRes }) => {
+    return this.filterAuthors(filterReq).pipe(
+      map((authorsRes) => {
         const rawAuthors: Author[] = authorsRes.data || [];
-        const details: AuthorDetail[] = detailsRes.data || [];
-        const targetCode = scriptId ? this.scriptService.getCodeFromId(scriptId) : this.scriptService.activeScript();
+        const targetCode = this.scriptService.getCodeFromId(sId);
 
         const enriched = rawAuthors.map(author => {
           const authorDetails = (author.details && author.details.length > 0) 
             ? author.details 
-            : details.filter(d => d.authorId === author.id);
+            : (author.authorDetails || []);
           const currentDetail = authorDetails.find(d => this.scriptService.isScriptMatch({ scriptId: d.scriptId, title: d.name, body: d.biography }, targetCode)) || authorDetails[0];
 
-          const primaryName = currentDetail?.name 
+          const primaryName = author.primaryName 
+            || currentDetail?.name 
             || (targetCode === 'ur' ? author.urName : (targetCode === 'hi' ? author.hiName : author.enName))
-            || author.primaryName 
             || author.name 
             || 'Unknown Poet';
+
+          const primaryBio = author.primaryBio
+            || currentDetail?.biography
+            || (targetCode === 'ur' ? author.urBio : (targetCode === 'hi' ? author.hiBio : author.enBio))
+            || '';
 
           return {
             ...author,
             details: authorDetails,
+            authorDetails,
             primaryName,
-            primaryBio: currentDetail?.biography || ''
+            primaryBio
           };
         });
 
