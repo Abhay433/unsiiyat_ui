@@ -254,5 +254,16 @@ export class AuthorService {
       })
     );
   }
+
+  getAuthorById(authorId: number, scriptId?: number): Observable<Author | null> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    return this.getEnrichedAuthorsPaged(sId, { id: authorId, size: 1 }).pipe(
+      map(res => (res.data && res.data.length > 0) ? res.data[0] : null),
+      catchError(err => {
+        console.error('[AuthorService] Failed to get author by ID:', err);
+        return of(null);
+      })
+    );
+  }
 }
 

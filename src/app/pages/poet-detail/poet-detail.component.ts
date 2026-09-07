@@ -23,7 +23,7 @@ export class PoetDetailComponent implements OnInit {
   readonly seedService = inject(SeedDataService);
   private readonly route = inject(ActivatedRoute);
 
-  poetId = signal<number>(1);
+  poetId = signal<number | null>(null);
   poet = signal<any>(null);
   poetContents = signal<any[]>([]);
   genres = signal<Genre[]>([]);
@@ -47,8 +47,9 @@ export class PoetDetailComponent implements OnInit {
   constructor() {
     effect(() => {
       this.scriptService.activeScript();
-      if (this.poetId()) {
-        this.loadPoetData(this.poetId());
+      const id = this.poetId();
+      if (id) {
+        this.loadPoetData(id);
       }
     });
   }
@@ -56,9 +57,10 @@ export class PoetDetailComponent implements OnInit {
   ngOnInit() {
     this.loadGenres();
     this.route.params.subscribe(params => {
-      const id = Number(params['id']) || 1;
-      this.poetId.set(id);
-      this.loadPoetData(id);
+      const id = Number(params['id']);
+      if (id) {
+        this.poetId.set(id);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
@@ -204,9 +206,8 @@ export class PoetDetailComponent implements OnInit {
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
     const cachedAvatar = localStorage.getItem(`author_avatar_${id}`);
 
-    this.authorService.getEnrichedAuthors(scriptId).subscribe({
-      next: (authors) => {
-        const found = authors.find(a => a.id === id);
+    this.authorService.getAuthorById(id, scriptId).subscribe({
+      next: (found) => {
         if (found) {
           if (cachedAvatar) {
             found.avatarUrl = cachedAvatar;

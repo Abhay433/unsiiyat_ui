@@ -167,7 +167,9 @@ export class ContentService {
       ),
       genres: this.taxonomyService.getAllGenres().pipe(catchError(() => of([]))),
       themes: this.taxonomyService.getAllThemes().pipe(catchError(() => of([]))),
-      authors: this.authorService.getEnrichedAuthors(sId).pipe(catchError(() => of([])))
+      authors: filterReq.authorId
+        ? of([])
+        : this.authorService.getEnrichedAuthors(sId).pipe(catchError(() => of([])))
     }).pipe(
       map(({ contentsRes, genres, themes, authors }) => {
         const rawContents: Content[] = contentsRes.data || [];
@@ -252,8 +254,8 @@ export class ContentService {
 
   // Page-specific API for Poet Detail Page: Fetch ONLY poems by this author
   getContentsByAuthorId(authorId: number, scriptId?: number): Observable<Content[]> {
-    return this.getEnrichedContents(scriptId).pipe(
-      map(contents => contents.filter(c => Number(c.authorId) === Number(authorId) || Number(c.author?.id) === Number(authorId)))
+    return this.getEnrichedContentsPaged(scriptId, { authorId, size: 50 }).pipe(
+      map(res => res.data || [])
     );
   }
 }
