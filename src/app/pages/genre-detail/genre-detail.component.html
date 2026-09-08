@@ -1,0 +1,103 @@
+<div class="genre-detail-page unsiiyat-container animate-fade-in">
+  <!-- Top Bar: Back Link -->
+  <div class="detail-top-nav">
+    <a routerLink="/genres" class="back-link">
+      &larr; {{ scriptService.translate('explore_genres') }}
+    </a>
+  </div>
+
+  <!-- Genre Header -->
+  <div class="genre-header flex-between" id="genre-works-top">
+    <div class="genre-header-info">
+      <div class="genre-title-row">
+        <span class="genre-header-icon">{{ getGenreIcon(genre()?.slug) }}</span>
+        <h1 class="genre-title font-display" [ngClass]="scriptService.fontClass()">
+          {{ getGenreTitle(genre()) }}
+        </h1>
+      </div>
+      <p class="genre-subtitle">
+        {{ getGenreDescription(genre()) }}
+      </p>
+    </div>
+
+    <div class="genre-stats font-mono" *ngIf="totalElements() > 0">
+      {{ totalElements() }} Works
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="contentsLoading()" class="loading-state text-center">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading poems...</p>
+  </div>
+
+  <!-- Poems List (10 per page) -->
+  <div *ngIf="!contentsLoading() && contents().length > 0" class="poems-list">
+    <div *ngFor="let item of contents(); let idx = index" class="poem-card poetic-card">
+      <div class="poem-card-header flex-between">
+        <a [routerLink]="['/poet', item.authorId]" class="poet-info">
+          <img [src]="getPoetAvatar(item)" [alt]="getPoetName(item)" class="poet-avatar" />
+          <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ getPoetName(item) }}</span>
+        </a>
+        <span class="poem-number font-mono">#{{ (currentPage() * 10) + idx + 1 }}</span>
+      </div>
+
+      <div class="poem-card-body">
+        <h3 class="poem-title" [ngClass]="scriptService.fontClass()">
+          {{ item.primaryText?.title || item.title }}
+        </h3>
+        <div class="poem-lines" [ngClass]="scriptService.fontClass()">
+          <p class="poem-line line-1">{{ getPoemLines(item)[0] }}</p>
+          <p class="poem-line line-2">{{ getPoemLines(item)[1] }}</p>
+        </div>
+      </div>
+
+      <div class="poem-card-footer flex-between">
+        <button type="button" class="copy-btn" (click)="copyCouplet(item)">
+          {{ copiedContentId() === item.id ? '✓ Copied' : '📋 ' + scriptService.translate('copy_sher') }}
+        </button>
+
+        <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-sm read-btn">
+          <span>Read full poem</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!contentsLoading() && contents().length === 0" class="empty-state text-center poetic-card">
+    <p class="empty-text">No poems found in this genre yet.</p>
+    <a routerLink="/genres" class="btn btn-outline-gold btn-sm">&larr; Back to Genres</a>
+  </div>
+
+  <!-- Numbered Pagination (10 per page) -->
+  <div class="pagination-bar flex-center" *ngIf="totalPages() > 1">
+    <button 
+      type="button" 
+      class="page-btn nav-btn" 
+      [disabled]="currentPage() === 0 || contentsLoading()" 
+      (click)="goToPage(currentPage() - 1)">
+      &larr; Prev
+    </button>
+
+    <div class="page-numbers">
+      <button 
+        type="button" 
+        *ngFor="let p of getPageRange()" 
+        class="page-btn num-btn" 
+        [class.active]="p === currentPage()" 
+        (click)="goToPage(p)">
+        {{ p + 1 }}
+      </button>
+    </div>
+
+    <button 
+      type="button" 
+      class="page-btn nav-btn" 
+      [disabled]="isLastPage() || currentPage() >= totalPages() - 1 || contentsLoading()" 
+      (click)="goToPage(currentPage() + 1)">
+      Next &rarr;
+    </button>
+  </div>
+</div>

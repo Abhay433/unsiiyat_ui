@@ -88,6 +88,20 @@ export class HomeComponent implements OnInit {
     const idx = this.selectedGhazalIndex();
     return list[idx] || list[0];
   });
+
+  // Selected Nazms Carousel Section
+  selectedNazms = signal<Content[]>([]);
+  selectedNazmIndex = signal<number>(0);
+  selectedNazmLoading = signal<boolean>(false);
+  selectedNazmFontSize = signal<number>(28);
+  copiedSelectedNazm = signal<boolean>(false);
+
+  readonly currentSelectedNazm = computed(() => {
+    const list = this.selectedNazms();
+    if (list.length === 0) return null;
+    const idx = this.selectedNazmIndex();
+    return list[idx] || list[0];
+  });
   contents = signal<any[]>([]);
   ghazalOfTheDay = signal<any>(null);
   loading = signal(true);
@@ -408,6 +422,7 @@ export class HomeComponent implements OnInit {
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
     this.loadGhazalOfTheDay(scriptId);
     this.loadSelectedGhazals(scriptId);
+    this.loadSelectedNazms(scriptId);
 
     // Load authors for carousel (strictly size: 3 for 3 cards per slide)
     this.loadCarouselAuthors(0);
@@ -725,6 +740,150 @@ export class HomeComponent implements OnInit {
   getSelectedGhazalPoetAvatar(ghazal?: Content | null): string {
     if (ghazal?.author) {
       return this.authorService.getAuthorAvatar(ghazal.author);
+    }
+    return 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100';
+  }
+
+  // --- Selected Nazms Carousel Methods ---
+  loadSelectedNazms(scriptId?: number) {
+    this.selectedNazmLoading.set(true);
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    this.contentService.getSelectedNazms(sId).subscribe({
+      next: (res) => {
+        const list = res?.data || [];
+        if (list.length > 0) {
+          this.selectedNazms.set(list);
+        } else {
+          this.setFallbackSelectedNazms();
+        }
+        if (this.selectedNazmIndex() >= this.selectedNazms().length) {
+          this.selectedNazmIndex.set(0);
+        }
+        this.selectedNazmLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load selected nazms:', err);
+        this.setFallbackSelectedNazms();
+        this.selectedNazmLoading.set(false);
+      }
+    });
+  }
+
+  private setFallbackSelectedNazms() {
+    const lang = this.scriptService.activeScript();
+    const fallbackNazms: Content[] = [
+      {
+        id: 101,
+        title: lang === 'ur' ? 'بول کہ لب آزاد ہیں ترے' : lang === 'hi' ? 'बोल कि लब आज़ाद हैं तेरे' : 'Bol Ke Lab Azaad Hain Tere',
+        author: {
+          id: 4,
+          primaryName: 'Faiz Ahmad Faiz',
+          urName: 'فیض احمد فیض',
+          hiName: 'फ़ैज़ अहमद फ़ैज़',
+          enName: 'Faiz Ahmad Faiz',
+          avatarUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100'
+        },
+        primaryText: {
+          id: 1,
+          scriptId: 1,
+          title: lang === 'ur' ? 'بول کہ لب آزاد ہیں ترے' : lang === 'hi' ? 'बोल कि लब आज़ाद हैं तेरे' : 'Bol Ke Lab Azaad Hain Tere',
+          body: lang === 'ur'
+            ? 'بول کہ لب آزاد ہیں ترے\nبول زبان اب تک تری ہے'
+            : lang === 'hi'
+            ? 'बोल कि लब आज़ाद हैं तेरे\nबोल ज़बाँ अब तक तिरी है'
+            : 'Bol ke lab azaad hain tere\nBol zaban ab tak teri hai'
+        }
+      },
+      {
+        id: 102,
+        title: lang === 'ur' ? 'تاج محل' : lang === 'hi' ? 'ताज महल' : 'Taj Mahal',
+        author: {
+          id: 6,
+          primaryName: 'Sahir Ludhianvi',
+          urName: 'ساحر لدھیانوی',
+          hiName: 'साहिर लुधियानवी',
+          enName: 'Sahir Ludhianvi',
+          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'
+        },
+        primaryText: {
+          id: 2,
+          scriptId: 1,
+          title: lang === 'ur' ? 'تاج محل' : lang === 'hi' ? 'ताज महल' : 'Taj Mahal',
+          body: lang === 'ur'
+            ? 'اک شہنشاہ نے دولت کا سہارا لے کر\nہم غریبوں کی محبت کا اڑایا ہے مذاق'
+            : lang === 'hi'
+            ? 'इक शहंशाह ने दौलत का सहारा ले कर\nहम ग़रीबों की मोहब्बत का उड़ाया है मज़ाक़'
+            : 'Ik shehenshah ne daulat ka sahara le kar\nHum ghareebon ki mohabbat ka udaya hai mazaq'
+        }
+      }
+    ];
+    this.selectedNazms.set(fallbackNazms);
+  }
+
+  prevSelectedNazm() {
+    if (this.selectedNazmIndex() > 0) {
+      this.selectedNazmIndex.update(i => i - 1);
+    }
+  }
+
+  nextSelectedNazm() {
+    if (this.selectedNazmIndex() < this.selectedNazms().length - 1) {
+      this.selectedNazmIndex.update(i => i + 1);
+    }
+  }
+
+  goToSelectedNazm(index: number) {
+    if (index >= 0 && index < this.selectedNazms().length) {
+      this.selectedNazmIndex.set(index);
+    }
+  }
+
+  changeSelectedNazmFontSize(delta: number) {
+    const newSize = this.selectedNazmFontSize() + delta;
+    if (newSize >= 18 && newSize <= 42) {
+      this.selectedNazmFontSize.set(newSize);
+    }
+  }
+
+  copySelectedNazmCouplet() {
+    const nazm = this.currentSelectedNazm();
+    if (!nazm) return;
+    const lines = this.getSelectedNazmLines(nazm);
+    const poet = this.getSelectedNazmPoetName(nazm);
+    const text = `${lines[0]}\n${lines[1]}\n\n— ${poet}\n(Via Unsiiyat Poetry - Rekhta Realm)`;
+    navigator.clipboard.writeText(text);
+    this.copiedSelectedNazm.set(true);
+    setTimeout(() => this.copiedSelectedNazm.set(false), 2200);
+  }
+
+  getSelectedNazmLines(nazm?: Content | null): [string, string] {
+    if (!nazm) return ['', ''];
+    const body = nazm.primaryText?.body || (nazm as any).contentTexts?.[0]?.body || (nazm as any).texts?.[0]?.body || '';
+    const lines = body.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    if (lines.length >= 2) {
+      return [lines[0], lines[1]];
+    }
+    if (lines.length === 1) {
+      return [lines[0], nazm.title && nazm.title !== lines[0] ? nazm.title : ''];
+    }
+    return [nazm.title || 'Selected Nazm', ''];
+  }
+
+  getSelectedNazmPoetName(nazm?: Content | null): string {
+    if (nazm?.author) {
+      const activeScript = this.scriptService.activeScript();
+      if (activeScript === 'ur' && nazm.author.urName) return nazm.author.urName;
+      if (activeScript === 'hi' && nazm.author.hiName) return nazm.author.hiName;
+      if (nazm.author.enName) return nazm.author.enName;
+      if (nazm.author.primaryName) return nazm.author.primaryName;
+      if (nazm.author.name) return nazm.author.name;
+    }
+    return (nazm as any)?.authorName || 'Master Shayar';
+  }
+
+  getSelectedNazmPoetAvatar(nazm?: Content | null): string {
+    if (nazm?.author) {
+      return this.authorService.getAuthorAvatar(nazm.author);
     }
     return 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100';
   }

@@ -41,6 +41,12 @@ export class ContentService {
     return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-ghazals${query}`);
   }
 
+  getSelectedNazms(scriptId?: number): Observable<ApiResponse<Content[]>> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const query = sId ? `?scriptId=${sId}` : '';
+    return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-nazm${query}`);
+  }
+
   countSelectedByGenre(genreId: number): Observable<ApiResponse<number>> {
     return this.api.get<ApiResponse<number>>(`/api/contents/count-selected?genreId=${genreId}`);
   }
@@ -322,6 +328,47 @@ export class ContentService {
   getContentsByAuthorId(authorId: number, scriptId?: number): Observable<Content[]> {
     return this.getContentsByAuthorPaged({ authorId, scriptId, size: 50 }).pipe(
       map(res => res.data || [])
+    );
+  }
+
+  // Page-specific API for Genre Works Detail Page: Fetch poems by genre with 10-item pagination
+  getContentsByGenrePaged(request: {
+    genreId: number;
+    scriptId?: number;
+    page?: number;
+    size?: number;
+  }): Observable<PagedResponse<Content>> {
+    const sId = request.scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const filterReq: ContentFilterRequest = {
+      genreId: request.genreId,
+      scriptId: sId,
+      page: request.page ?? 0,
+      size: request.size ?? 10,
+      sortBy: 'id',
+      sortDirection: 'desc'
+    };
+    const targetCode = this.scriptService.getCodeFromId(sId);
+    return this.filterContents(filterReq).pipe(
+      map(res => {
+        const rawList = res.data || [];
+        const enriched = rawList.map(item => {
+          const itemTexts: ContentText[] = (item.contentTexts && item.contentTexts.length > 0)
+            ? item.contentTexts
+            : [];
+          const currentText = itemTexts.find((t: ContentText) => this.scriptService.isScriptMatch(t, targetCode))
+            || item.primaryText
+            || itemTexts[0];
+          return {
+            ...item,
+            texts: itemTexts,
+            primaryText: currentText
+          };
+        });
+        return {
+          ...res,
+          data: enriched
+        };
+      })
     );
   }
 }

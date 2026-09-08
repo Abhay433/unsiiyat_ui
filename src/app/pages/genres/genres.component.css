@@ -1,137 +1,182 @@
 /* ==========================================================================
-   GENRES VIEW - CLEAN, ELEGANT & BEAUTIFUL STYLING
+   GENRES LIST VIEW - CLEAN, HORIZONTAL & RESPONSIVE
    ========================================================================== */
 
 .genres-page {
-  padding-top: 30px;
-  padding-bottom: 65px;
+  padding: 36px 0 64px;
+  max-width: 960px;
 }
 
 .page-header {
-  margin-bottom: 28px;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.header-icon {
-  font-size: 2rem;
-  margin-bottom: 6px;
+  margin-bottom: 32px;
 }
 
 .page-title {
-  font-size: 2.3rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .page-subtitle {
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
+  max-width: 540px;
+  margin: 0 auto;
 }
 
-/* Genre Cards Showcase */
-.genre-cards-showcase {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 34px;
-}
-
-.genre-interactive-card {
-  cursor: pointer;
-  padding: 26px;
+/* Genres List Container */
+.genres-list-container {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+}
+
+/* Horizontal List Card */
+.genre-list-card {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  transition: all var(--transition-normal);
-}
-
-.genre-interactive-card.active {
-  border-color: var(--accent-blue);
-  background: var(--bg-card-hover);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-3px);
-}
-
-.genre-icon-emblem {
-  font-size: 1.5rem;
-}
-
-.genre-card-title {
-  font-size: 1.45rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 14px 0 8px;
-}
-
-.genre-card-desc {
-  font-size: 0.86rem;
-  color: var(--text-secondary);
-  line-height: 1.55;
-  margin-bottom: 18px;
-}
-
-.genre-card-footer {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 12px;
-}
-
-.genre-count {
-  font-size: 0.78rem;
-  color: var(--accent-gold);
-  font-weight: 700;
-}
-
-.select-indicator {
-  font-size: 0.78rem;
-  color: var(--accent-blue);
-  font-weight: 700;
-}
-
-/* Genre Contents Grid */
-.genre-contents-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.poet-badge {
-  font-size: 0.82rem;
-  color: var(--accent-gold);
-  font-weight: 700;
+.genre-list-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background 0.25s ease;
 }
 
-.ghazal-title {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 14px 0 10px;
+.genre-list-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-gold);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(212, 175, 55, 0.2);
 }
 
-.ghazal-snippet {
-  margin: 12px 0 16px;
-  padding: 12px 14px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  border-left: 2.5px solid var(--accent-gold);
+.genre-list-card:hover::before {
+  background: var(--accent-gold);
 }
 
-.snippet-line {
-  font-size: 1.05rem;
+/* Left Section: Icon & Info */
+.genre-list-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.genre-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid var(--border-gold-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.genre-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.genre-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.genre-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.genre-title {
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
 }
 
-.read-hint {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+.genre-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--accent-gold);
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--border-gold-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
 }
 
-@media (max-width: 768px) {
-  .genre-cards-showcase, .genre-contents-grid {
-    grid-template-columns: 1fr;
+.genre-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Right Section: Action */
+.genre-list-action {
+  flex-shrink: 0;
+}
+
+.explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-gold);
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.genre-list-card:hover .explore-btn .action-arrow {
+  transform: translateX(4px);
+}
+
+.action-arrow {
+  transition: transform var(--transition-fast);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .genre-list-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 20px;
+  }
+
+  .genre-list-main {
+    gap: 14px;
+    width: 100%;
+  }
+
+  .genre-list-action {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
   }
 }

@@ -424,6 +424,35 @@
 }
 
 /* Word of the Day (Lughat) Section */
+.static-notice-bar {
+  margin-bottom: 16px;
+}
+
+.static-notice-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid var(--border-gold-subtle);
+  color: var(--accent-gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  padding: 4px 16px;
+  border-radius: var(--radius-full);
+}
+
+.static-mini-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  margin-left: 8px;
+  font-weight: 500;
+}
+
 .lughat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
@@ -1262,12 +1291,14 @@
 /* ==========================================================================
    SELECTED GHAZALS CAROUSEL SECTION (Between Explore Authors and Word of the Day)
    ========================================================================== */
-.selected-ghazals-section {
+.selected-ghazals-section,
+.selected-nazms-section {
   position: relative;
   padding: 36px 0 24px 0;
 }
 
-.selected-ghazals-carousel-container {
+.selected-ghazals-carousel-container,
+.selected-nazms-carousel-container {
   position: relative;
   display: flex;
   align-items: center;
@@ -1276,27 +1307,32 @@
   width: 100%;
 }
 
-.selected-ghazal-card {
+.selected-ghazal-card,
+.selected-nazm-card {
   flex: 1;
   min-width: 0;
   margin: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.selected-ghazal-card:hover {
+.selected-ghazal-card:hover,
+.selected-nazm-card:hover {
   border-color: rgba(212, 175, 55, 0.45);
   box-shadow: 0 10px 30px rgba(212, 175, 55, 0.14);
 }
 
 @media (max-width: 768px) {
-  .selected-ghazals-carousel-container {
+  .selected-ghazals-carousel-container,
+  .selected-nazms-carousel-container {
     gap: 8px;
   }
-  .selected-ghazals-carousel-container .carousel-nav-btn {
+  .selected-ghazals-carousel-container .carousel-nav-btn,
+  .selected-nazms-carousel-container .carousel-nav-btn {
     width: 40px;
     height: 40px;
   }
-  .selected-ghazals-carousel-container .carousel-nav-btn .arrow-symbol {
+  .selected-ghazals-carousel-container .carousel-nav-btn .arrow-symbol,
+  .selected-nazms-carousel-container .carousel-nav-btn .arrow-symbol {
     font-size: 1.6rem;
   }
 }
