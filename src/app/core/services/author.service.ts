@@ -13,9 +13,20 @@ export class AuthorService {
   private readonly scriptService = inject(ScriptService);
 
   private cachedEnrichedAuthors: Record<string, Author[]> = {};
+  private cachedCarouselAuthors: Record<number, Author[]> = {};
 
   clearCache() {
     this.cachedEnrichedAuthors = {};
+    this.cachedCarouselAuthors = {};
+  }
+
+  getCachedCarouselAuthors(scriptId?: number): Author[] {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    return this.cachedCarouselAuthors[sId] || [];
+  }
+
+  setCachedCarouselAuthors(scriptId: number, authors: Author[]) {
+    this.cachedCarouselAuthors[scriptId] = authors;
   }
 
   getAuthorAvatar(author: Partial<Author> | null | undefined): string {

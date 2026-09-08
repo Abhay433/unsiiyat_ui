@@ -19,14 +19,42 @@ export class ContentService {
   private readonly scriptService = inject(ScriptService);
 
   private cachedTexts: ContentText[] | null = null;
+  private cachedGhazalOfTheDay: Record<number, Content> = {};
+  private cachedSelectedGhazals: Record<number, Content[]> = {};
+  private cachedSelectedNazms: Record<number, Content[]> = {};
 
   clearCache() {
     this.cachedTexts = null;
+    this.cachedGhazalOfTheDay = {};
+    this.cachedSelectedGhazals = {};
+    this.cachedSelectedNazms = {};
+  }
+
+  getCachedGhazalOfTheDay(scriptId?: number): Content | null {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    return this.cachedGhazalOfTheDay[sId] || null;
+  }
+
+  getCachedSelectedGhazals(scriptId?: number): Content[] {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    return this.cachedSelectedGhazals[sId] || [];
+  }
+
+  getCachedSelectedNazms(scriptId?: number): Content[] {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    return this.cachedSelectedNazms[sId] || [];
   }
 
   getGhazalOfTheDay(scriptId?: number): Observable<ApiResponse<Content>> {
-    const query = scriptId ? `?scriptId=${scriptId}` : '';
-    return this.api.get<ApiResponse<Content>>(`/api/home/ghazal-of-the-day${query}`);
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const query = sId ? `?scriptId=${sId}` : '';
+    return this.api.get<ApiResponse<Content>>(`/api/home/ghazal-of-the-day${query}`).pipe(
+      tap(res => {
+        if (res?.data) {
+          this.cachedGhazalOfTheDay[sId] = res.data;
+        }
+      })
+    );
   }
 
   getCuratedGenres(scriptId?: number): Observable<ApiResponse<GenreCuratedGroup[]>> {
@@ -38,13 +66,25 @@ export class ContentService {
   getSelectedGhazals(scriptId?: number): Observable<ApiResponse<Content[]>> {
     const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
     const query = sId ? `?scriptId=${sId}` : '';
-    return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-ghazals${query}`);
+    return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-ghazals${query}`).pipe(
+      tap(res => {
+        if (res?.data && res.data.length > 0) {
+          this.cachedSelectedGhazals[sId] = res.data;
+        }
+      })
+    );
   }
 
   getSelectedNazms(scriptId?: number): Observable<ApiResponse<Content[]>> {
     const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
     const query = sId ? `?scriptId=${sId}` : '';
-    return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-nazm${query}`);
+    return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-nazm${query}`).pipe(
+      tap(res => {
+        if (res?.data && res.data.length > 0) {
+          this.cachedSelectedNazms[sId] = res.data;
+        }
+      })
+    );
   }
 
   countSelectedByGenre(genreId: number): Observable<ApiResponse<number>> {

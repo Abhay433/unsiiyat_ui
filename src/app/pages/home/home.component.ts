@@ -62,9 +62,11 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  // Data signals
+  // Data signals - Initialized from cache to prevent layout shift / flash on navigation
   poets = signal<any[]>([]);
-  carouselAuthors = signal<any[]>([]);
+  carouselAuthors = signal<any[]>(
+    this.authorService.getCachedCarouselAuthors(this.scriptService.getScriptId(this.scriptService.activeScript()))
+  );
   authorCarouselPage = signal<number>(0);
   authorCarouselTotalPages = signal<number>(1);
   authorCarouselTotalElements = signal<number>(0);
@@ -75,7 +77,9 @@ export class HomeComponent implements OnInit {
   themes = signal<any[]>([]);
 
   // Selected Ghazals Carousel Section (Between Explore Authors and Word of the Day)
-  selectedGhazals = signal<Content[]>([]);
+  selectedGhazals = signal<Content[]>(
+    this.contentService.getCachedSelectedGhazals(this.scriptService.getScriptId(this.scriptService.activeScript()))
+  );
   selectedGhazalIndex = signal<number>(0);
   selectedGhazalLoading = signal<boolean>(false);
   selectedGhazalFontSize = signal<number>(28);
@@ -90,7 +94,9 @@ export class HomeComponent implements OnInit {
   });
 
   // Selected Nazms Carousel Section
-  selectedNazms = signal<Content[]>([]);
+  selectedNazms = signal<Content[]>(
+    this.contentService.getCachedSelectedNazms(this.scriptService.getScriptId(this.scriptService.activeScript()))
+  );
   selectedNazmIndex = signal<number>(0);
   selectedNazmLoading = signal<boolean>(false);
   selectedNazmFontSize = signal<number>(28);
@@ -103,8 +109,10 @@ export class HomeComponent implements OnInit {
     return list[idx] || list[0];
   });
   contents = signal<any[]>([]);
-  ghazalOfTheDay = signal<any>(null);
-  loading = signal(true);
+  ghazalOfTheDay = signal<any>(
+    this.contentService.getCachedGhazalOfTheDay(this.scriptService.getScriptId(this.scriptService.activeScript()))
+  );
+  loading = signal(false);
 
   // --- Combined Multi-Filter & Search Signals (Part B) ---
   searchKeyword = signal<string>('');
@@ -394,11 +402,18 @@ export class HomeComponent implements OnInit {
     return (id && this.viewCounts()[id]) ? this.viewCounts()[id] : 4200;
   }
 
+  private observedScriptCode: ScriptCode | null = null;
+
   constructor() {
-    // Re-evaluate localized text on script changes
+    // Only re-evaluate when user explicitly switches script AFTER component has mounted
     effect(() => {
-      this.scriptService.activeScript();
-      this.loadData();
+      const active = this.scriptService.activeScript();
+      if (this.observedScriptCode !== null && this.observedScriptCode !== active) {
+        this.observedScriptCode = active;
+        this.loadData();
+      } else {
+        this.observedScriptCode = active;
+      }
     });
   }
 
@@ -407,7 +422,12 @@ export class HomeComponent implements OnInit {
   }
 
   loadGhazalOfTheDay(scriptId?: number) {
-    this.contentService.getGhazalOfTheDay(scriptId).subscribe({
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const cached = this.contentService.getCachedGhazalOfTheDay(sId);
+    if (cached && !this.ghazalOfTheDay()) {
+      this.ghazalOfTheDay.set(cached);
+    }
+    this.contentService.getGhazalOfTheDay(sId).subscribe({
       next: (res) => {
         if (res && res.data) {
           this.ghazalOfTheDay.set(res.data);
@@ -418,7 +438,6 @@ export class HomeComponent implements OnInit {
   }
 
   loadData() {
-    this.loading.set(true);
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
     this.loadGhazalOfTheDay(scriptId);
     this.loadSelectedGhazals(scriptId);
@@ -437,22 +456,6 @@ export class HomeComponent implements OnInit {
         }
       },
       error: () => this.setFallbackPoets()
-    });
-
-    // Load contents
-    this.contentService.getEnrichedContents(scriptId).subscribe({
-      next: (data) => {
-        if (data && data.length > 0) {
-          this.contents.set(data);
-        } else {
-          this.setFallbackContents();
-        }
-        this.loading.set(false);
-      },
-      error: () => {
-        this.setFallbackContents();
-        this.loading.set(false);
-      }
     });
 
     // Load genres & themes
@@ -658,13 +661,17 @@ export class HomeComponent implements OnInit {
   }
   // --- Selected Ghazals Carousel Methods ---
   loadSelectedGhazals(scriptId?: number) {
-    this.selectedGhazalLoading.set(true);
+    if (this.selectedGhazals().length === 0) {
+      this.selectedGhazalLoading.set(true);
+    }
     const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
     this.contentService.getSelectedGhazals(sId).subscribe({
       next: (res) => {
         const list = res?.data || [];
-        this.selectedGhazals.set(list);
-        if (this.selectedGhazalIndex() >= list.length) {
+        if (list.length > 0) {
+          this.selectedGhazals.set(list);
+        }
+        if (this.selectedGhazalIndex() >= this.selectedGhazals().length) {
           this.selectedGhazalIndex.set(0);
         }
         this.selectedGhazalLoading.set(false);
@@ -746,14 +753,16 @@ export class HomeComponent implements OnInit {
 
   // --- Selected Nazms Carousel Methods ---
   loadSelectedNazms(scriptId?: number) {
-    this.selectedNazmLoading.set(true);
+    if (this.selectedNazms().length === 0) {
+      this.selectedNazmLoading.set(true);
+    }
     const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
     this.contentService.getSelectedNazms(sId).subscribe({
       next: (res) => {
         const list = res?.data || [];
         if (list.length > 0) {
           this.selectedNazms.set(list);
-        } else {
+        } else if (this.selectedNazms().length === 0) {
           this.setFallbackSelectedNazms();
         }
         if (this.selectedNazmIndex() >= this.selectedNazms().length) {
@@ -763,7 +772,9 @@ export class HomeComponent implements OnInit {
       },
       error: (err) => {
         console.error('Failed to load selected nazms:', err);
-        this.setFallbackSelectedNazms();
+        if (this.selectedNazms().length === 0) {
+          this.setFallbackSelectedNazms();
+        }
         this.selectedNazmLoading.set(false);
       }
     });
