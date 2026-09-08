@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 export class ApiService {
   private readonly http = inject(HttpClient);
   // Default to localhost:8080 Spring Boot backend
-  private readonly baseUrl = 'http://localhost:8080';
+  private readonly baseUrl = '/unsiiyat';
 
   get<T>(endpoint: string): Observable<T> {
     return this.http.get<T>(`${this.baseUrl}${endpoint}`);
