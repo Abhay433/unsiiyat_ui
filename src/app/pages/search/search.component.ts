@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { SearchService, SearchResultData, GenreSearchResultGroup } from '../../core/services/search.service';
+import { SearchService, SearchResultData, GenreSearchResultGroup, CoupletSearchResult, CoupletsSearchResponse } from '../../core/services/search.service';
 import { ScriptService } from '../../core/services/script.service';
 import { AuthorService } from '../../core/services/author.service';
 import { ContentService } from '../../core/services/content.service';
@@ -61,6 +61,16 @@ export class SearchComponent implements OnInit {
 
   // Pagination state for each Genre section
   genrePaginationState = signal<Record<number, GenrePaginationState>>({});
+
+  // Matching Ash'aar / Couplets State
+  coupletsData = signal<CoupletsSearchResponse | null>(null);
+  coupletsList = signal<CoupletSearchResult[]>([]);
+  coupletsPage = signal<number>(0);
+  coupletsLoading = signal<boolean>(false);
+  coupletsHasMore = signal<boolean>(false);
+  coupletsTotal = signal<number>(0);
+  copiedCoupletKey = signal<string | null>(null);
+  coupletScriptOverride = signal<Record<string, string>>({});
 
   // Static dictionary / word meaning section (as requested)
   readonly staticWordMeanings: StaticWordMeaning[] = [
@@ -146,6 +156,15 @@ export class SearchComponent implements OnInit {
     this.authorsLoading.set(false);
     this.authorsHasMore.set(true);
     this.genrePaginationState.set({});
+    this.coupletsPage.set(0);
+    this.coupletsLoading.set(false);
+    this.coupletsHasMore.set(false);
+    this.coupletsList.set([]);
+    this.coupletsData.set(null);
+    this.coupletsTotal.set(0);
+
+    // Fetch matching Ash'aar (Couplets across Ghazals)
+    this.loadCouplets(0, text);
 
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
 
@@ -554,5 +573,118 @@ export class SearchComponent implements OnInit {
     } else if (genreGroup) {
       this.loadMoreGenreContents(genreGroup);
     }
+  }
+
+  // --- Couplet / Ash'aar Search & Navigation ---
+  loadCouplets(page: number = 0, searchText?: string) {
+    this.coupletsLoading.set(true);
+    const q = (searchText !== undefined ? searchText : this.query()).trim();
+    if (!q) {
+      this.coupletsLoading.set(false);
+      return;
+    }
+    const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
+
+    this.searchService.searchCouplets(q, undefined, page, 5, scriptId).subscribe({
+      next: (res) => {
+        if (res && res.success && res.data) {
+          const data = res.data;
+          this.coupletsData.set(data);
+          this.coupletsPage.set(data.page ?? page);
+          this.coupletsTotal.set(data.totalCount ?? 0);
+          this.coupletsHasMore.set(data.hasMore ?? false);
+
+          if (page === 0) {
+            this.coupletsList.set(data.couplets || []);
+          } else {
+            this.coupletsList.update(prev => [...prev, ...(data.couplets || [])]);
+          }
+        }
+        this.coupletsLoading.set(false);
+      },
+      error: (err) => {
+        console.error('[SearchComponent] Error fetching couplets:', err);
+        this.coupletsLoading.set(false);
+      }
+    });
+  }
+
+  loadMoreCouplets() {
+    if (this.coupletsLoading() || !this.coupletsHasMore()) return;
+    this.loadCouplets(this.coupletsPage() + 1);
+  }
+
+  getActiveScriptForCouplet(couplet: CoupletSearchResult): string {
+    const key = `${couplet.contentId}-${couplet.coupletIndex}`;
+    const override = this.coupletScriptOverride()[key];
+    if (override) return override;
+
+    const activeAppScript = this.scriptService.activeScript();
+    if (couplet.linesByScript && couplet.linesByScript[activeAppScript] && couplet.linesByScript[activeAppScript].length > 0) {
+      return activeAppScript;
+    }
+    if (couplet.scriptCode) return couplet.scriptCode.toLowerCase();
+    return 'en';
+  }
+
+  setCoupletScript(couplet: CoupletSearchResult, scriptCode: string) {
+    const key = `${couplet.contentId}-${couplet.coupletIndex}`;
+    this.coupletScriptOverride.update(prev => ({
+      ...prev,
+      [key]: scriptCode
+    }));
+  }
+
+  getCoupletLines(couplet: CoupletSearchResult): string[] {
+    const script = this.getActiveScriptForCouplet(couplet);
+    if (couplet.linesByScript && couplet.linesByScript[script] && couplet.linesByScript[script].length > 0) {
+      return couplet.linesByScript[script];
+    }
+    return couplet.lines || [];
+  }
+
+  getCoupletFontClass(couplet: CoupletSearchResult): string {
+    const script = this.getActiveScriptForCouplet(couplet);
+    if (script === 'ur') return 'font-urdu';
+    if (script === 'hi') return 'font-hindi';
+    return 'font-display';
+  }
+
+  formatVerse(verse: string | undefined, query: string): string {
+    if (!verse) return '';
+    const q = query ? query.trim() : '';
+    if (!q) return this.escapeHtml(verse);
+    try {
+      const escapedQuery = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedQuery})`, 'gi');
+      return this.escapeHtml(verse).replace(regex, '<mark class="highlight-search-term">$1</mark>');
+    } catch {
+      return this.escapeHtml(verse);
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  copyCouplet(couplet: CoupletSearchResult) {
+    const lines = this.getCoupletLines(couplet);
+    const poet = couplet.authorName || (couplet.author ? (couplet.author.name || couplet.author.enName || '') : '');
+    const title = couplet.contentTitle || '';
+    const textToCopy = `${lines.join('\n')}\n\n— ${poet}${title ? ' (“' + title + '”)' : ''}\nvia Unsiiyat`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      const key = `${couplet.contentId}-${couplet.coupletIndex}`;
+      this.copiedCoupletKey.set(key);
+      setTimeout(() => {
+        if (this.copiedCoupletKey() === key) {
+          this.copiedCoupletKey.set(null);
+        }
+      }, 2500);
+    });
   }
 }

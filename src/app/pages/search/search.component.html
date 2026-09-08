@@ -15,27 +15,7 @@
       <p>{{ errorMessage() }}</p>
     </div>
 
-    <!-- No Results State -->
-    <div
-      *ngIf="hasSearched() && !loading() && searchData() && searchData()?.authors?.length === 0 && searchData()?.resultsByGenre?.length === 0"
-      class="search-empty-state poetic-card">
-      <div class="empty-emblem">📜</div>
-      <h3 class="empty-title font-display">No Matches Discovered</h3>
-      <p class="empty-desc">
-        We could not find any poets or poems matching <span class="empty-query">"{{ searchData()?.text }}"</span>.
-      </p>
-      <div class="empty-suggestions">
-        <span>Try searching for:</span>
-        <button type="button" class="btn btn-outline-gold btn-sm"
-          (click)="query.set('jaan'); onSearchSubmit()">jaan</button>
-        <button type="button" class="btn btn-outline-gold btn-sm"
-          (click)="query.set('farar'); onSearchSubmit()">farar</button>
-        <button type="button" class="btn btn-outline-gold btn-sm"
-          (click)="query.set('Zohaib'); onSearchSubmit()">Zohaib</button>
-        <button type="button" class="btn btn-outline-gold btn-sm"
-          (click)="query.set('Ghalib'); onSearchSubmit()">Ghalib</button>
-      </div>
-    </div>
+    
 
     <!-- 1. AUTHOR SECTION (Explore Authors Carousel - Size: 3 with Left & Right arrows) -->
     <section *ngIf="carouselAuthors().length > 0 || (searchData() && searchData()!.authors && searchData()!.authors.length > 0)"
@@ -124,7 +104,98 @@
       </div>
     </section>
 
-    <!-- 2. GENRE-WISE CONTENT SECTIONS (Alag Alag Section Hoga) -->
+    <!-- 2. MATCHING ASH'AAR / COUPLETS SECTION (Ghazal Couplets Search) -->
+    <section class="results-section couplets-section" *ngIf="coupletsList().length > 0 || coupletsLoading()">
+      <div class="section-header-block">
+        <div class="header-left">
+          <span class="section-icon-badge">✨</span>
+          <div>
+            <h2 class="section-heading font-display">
+              Muntakhab Ash'aar
+              <span class="font-urdu heading-native">منتخب اشعار / पसंदीदा अश'आर</span>
+            </h2>
+            <p class="section-subtext">Selected couplets featuring the word “{{ query() }}” (one couplet per Ghazal)</p>
+          </div>
+        </div>
+        <span class="count-pill">{{ coupletsTotal() }} Ash'aar Found</span>
+      </div>
+
+      <!-- Couplets Feed Grid -->
+      <div class="couplets-grid">
+        <article *ngFor="let couplet of coupletsList(); let cIdx = index" class="couplet-card poetic-card">
+          <!-- Card Header / Meta -->
+          <div class="couplet-card-top flex-between">
+            <div class="couplet-meta-tags">
+              <span class="sher-index-pill font-mono">Sher #{{ couplet.coupletIndex || (cIdx + 1) }}</span>
+              <span class="genre-tag-pill">{{ couplet.genreName || 'Ghazal' }}</span>
+            </div>
+
+            <!-- Script Switcher for this couplet -->
+            <div class="couplet-script-switcher" *ngIf="couplet.coupletByScript">
+              <button type="button" class="script-btn font-urdu"
+                      [class.active]="getActiveScriptForCouplet(couplet) === 'ur'"
+                      *ngIf="couplet.coupletByScript['ur']"
+                      (click)="setCoupletScript(couplet, 'ur')"
+                      title="Urdu Script">اردو</button>
+              <button type="button" class="script-btn font-hindi"
+                      [class.active]="getActiveScriptForCouplet(couplet) === 'hi'"
+                      *ngIf="couplet.coupletByScript['hi']"
+                      (click)="setCoupletScript(couplet, 'hi')"
+                      title="Hindi Script">हिन्दी</button>
+              <button type="button" class="script-btn font-sans"
+                      [class.active]="getActiveScriptForCouplet(couplet) === 'en'"
+                      *ngIf="couplet.coupletByScript['en']"
+                      (click)="setCoupletScript(couplet, 'en')"
+                      title="English / Latin">English</button>
+            </div>
+          </div>
+
+          <!-- Couplet Body Verses -->
+          <div class="couplet-verses-wrap" [ngClass]="getCoupletFontClass(couplet)">
+            <p class="verse-line misra-1">{{ getCoupletLines(couplet)[0] }}</p>
+            <p *ngIf="getCoupletLines(couplet).length > 1" class="verse-line misra-2">{{ getCoupletLines(couplet)[1] }}</p>
+          </div>
+
+          <!-- Couplet Footer / Provenance -->
+          <div class="couplet-card-footer flex-between">
+            <div class="couplet-poet-source">
+              <a *ngIf="couplet.authorId" [routerLink]="['/poet', couplet.authorId]" class="couplet-poet-link">
+                <span class="poet-pen-icon">✒️</span>
+                <span class="poet-name">{{ couplet.authorName || getAuthorName(couplet.author) }}</span>
+              </a>
+              <span class="byline-dot" *ngIf="couplet.authorId && couplet.contentTitle">·</span>
+              <a [routerLink]="['/content', couplet.contentId]" class="couplet-ghazal-link" title="Read Full Ghazal">
+                <span class="source-prefix">Ghazal:</span>
+                <span class="source-title">“{{ couplet.contentTitle }}”</span>
+              </a>
+            </div>
+
+            <div class="couplet-actions-wrap">
+              <button type="button" class="btn-copy-sher" (click)="copyCouplet(couplet)" title="Copy Sher to clipboard">
+                <span *ngIf="copiedCoupletKey() !== couplet.contentId + '-' + couplet.coupletIndex">📋 Copy</span>
+                <span *ngIf="copiedCoupletKey() === couplet.contentId + '-' + couplet.coupletIndex" class="copied-indicator">✓ Copied!</span>
+              </button>
+              <a [routerLink]="['/content', couplet.contentId]" class="btn-read-ghazal">
+                <span>Read Full</span>
+                <span class="arrow-icon">→</span>
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Load More Ash'aar Button -->
+      <div class="section-load-more-wrap" *ngIf="coupletsHasMore()">
+        <button type="button" class="btn btn-secondary-load" [disabled]="coupletsLoading()" (click)="loadMoreCouplets()">
+          <span *ngIf="!coupletsLoading()">Load More Ash'aar (5 More)</span>
+          <span *ngIf="coupletsLoading()">Loading Ash'aar...</span>
+          <span class="load-icon" *ngIf="!coupletsLoading()">▾</span>
+          <span class="loading-spin" *ngIf="coupletsLoading()">⏳</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. GENRE-WISE CONTENT SECTIONS (Alag Alag Section Hoga) -->
     <ng-container *ngIf="searchData() && searchData()!.resultsByGenre && searchData()!.resultsByGenre.length > 0">
       <section *ngFor="let genreGroup of searchData()!.resultsByGenre" class="results-section genre-content-section">
         <!-- Genre Header -->
@@ -201,7 +272,7 @@
       </section>
     </ng-container>
 
-    <!-- 3. WORD MEANING / DICTIONARY SECTION (Static for now at the end) -->
+    <!-- 4. WORD MEANING / DICTIONARY SECTION (Static for now at the end) -->
     <section class="results-section dictionary-section">
       <div class="section-header-block">
         <div class="header-left">
