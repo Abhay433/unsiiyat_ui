@@ -971,3 +971,332 @@
     padding: 16px;
   }
 }
+
+
+/* ==========================================================================
+   CURATED GENRE SHOWCASE CAROUSEL SECTION (Between Explore Authors and Word of the Day)
+   ========================================================================== */
+.curated-genre-section {
+  position: relative;
+  padding: 40px 0 20px 0;
+}
+
+.curated-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: var(--accent-gold, #d4af37);
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+.curated-badge-pill .badge-star {
+  font-size: 0.85rem;
+  color: #fbbf24;
+}
+
+/* Nav Controls */
+.curated-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.curated-nav-controls .carousel-page-indicator {
+  font-size: 0.84rem;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 600;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-card, rgba(226, 232, 240, 0.8));
+  padding: 5px 12px;
+  border-radius: var(--radius-full, 9999px);
+}
+
+/* Genre Switcher Tabs */
+.curated-genre-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 18px 2px;
+  margin-bottom: 20px;
+  scrollbar-width: thin;
+}
+
+.curated-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-full, 9999px);
+  color: var(--text-secondary, #475569);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+}
+
+.curated-tab-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.04);
+  transform: translateY(-1px);
+}
+
+.curated-tab-btn.active {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  border-color: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.curated-tab-btn .tab-count-pill {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.curated-tab-btn.active .tab-count-pill {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* 4 Cards Grid for 8 items Carousel */
+.curated-carousel-box {
+  position: relative;
+}
+
+.curated-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.curated-kalam-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: 16px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.curated-kalam-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2563eb, #d4af37);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.curated-kalam-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.curated-kalam-card:hover::before {
+  opacity: 1;
+}
+
+/* Header within Card */
+.kalam-card-header {
+  margin-bottom: 14px;
+}
+
+.kalam-genre-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.kalam-selected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.kalam-selected-badge .star-icon {
+  font-size: 0.8rem;
+  color: #f59e0b;
+}
+
+.kalam-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin-bottom: 14px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Verses preview */
+.kalam-verses-preview {
+  background: rgba(248, 250, 252, 0.85);
+  border-left: 3px solid rgba(212, 175, 55, 0.5);
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.kalam-verses-preview .verse-line {
+  font-size: 0.98rem;
+  color: var(--text-secondary, #334155);
+  line-height: 1.7;
+  margin: 0 0 4px 0;
+  font-style: italic;
+}
+
+.kalam-verses-preview .verse-line:last-child {
+  margin-bottom: 0;
+}
+
+/* Card Footer */
+.kalam-card-footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle, #f1f5f9);
+}
+
+.kalam-author-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.kalam-author-block .author-caption {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  letter-spacing: 0.6px;
+}
+
+.kalam-author-block .author-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+.kalam-read-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2563eb;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  transition: all 0.18s ease;
+}
+
+.kalam-read-link:hover {
+  background: #2563eb;
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.curated-dots-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+@media (max-width: 1200px) {
+  .curated-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .curated-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .curated-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ==========================================================================
+   SELECTED GHAZALS CAROUSEL SECTION (Between Explore Authors and Word of the Day)
+   ========================================================================== */
+.selected-ghazals-section {
+  position: relative;
+  padding: 36px 0 24px 0;
+}
+
+.selected-ghazals-carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 18px;
+  width: 100%;
+}
+
+.selected-ghazal-card {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.selected-ghazal-card:hover {
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: 0 10px 30px rgba(212, 175, 55, 0.14);
+}
+
+@media (max-width: 768px) {
+  .selected-ghazals-carousel-container {
+    gap: 8px;
+  }
+  .selected-ghazals-carousel-container .carousel-nav-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .selected-ghazals-carousel-container .carousel-nav-btn .arrow-symbol {
+    font-size: 1.6rem;
+  }
+}

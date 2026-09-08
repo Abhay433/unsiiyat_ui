@@ -89,6 +89,7 @@ export class StudioComponent implements OnInit, OnDestroy {
   contentTitleSearch = signal<string>('');
   contentAuthorSearch = signal<string>('');
   contentGenreFilter = signal<string | number>('');
+  contentSelectedFilter = signal<boolean>(false);
 
   // Modals & Forms Visibility
   showAddModal = signal(false);
@@ -162,6 +163,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     authorId: number;
     genreId: number;
     selectedThemeIds: number[];
+    isSelected?: boolean;
     urTitle: string;
     urBody: string;
     hiTitle: string;
@@ -173,6 +175,7 @@ export class StudioComponent implements OnInit, OnDestroy {
     authorId: 1,
     genreId: 1,
     selectedThemeIds: [1],
+    isSelected: false,
     urTitle: '',
     urBody: '',
     hiTitle: '',
@@ -401,10 +404,17 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.loadContents(undefined, 0);
   }
 
+  toggleSelectedFilter() {
+    this.contentSelectedFilter.update(v => !v);
+    this.contentPage.set(0);
+    this.loadContents(undefined, 0);
+  }
+
   resetContentFilters() {
     this.contentTitleSearch.set('');
     this.contentAuthorSearch.set('');
     this.contentGenreFilter.set('');
+    this.contentSelectedFilter.set(false);
     this.contentPage.set(0);
     this.loadContents(undefined, 0);
   }
@@ -469,6 +479,9 @@ export class StudioComponent implements OnInit, OnDestroy {
     const genreVal = this.contentGenreFilter();
     if (genreVal !== '' && genreVal !== null && genreVal !== undefined) {
       filterReq.genreId = Number(genreVal);
+    }
+    if (this.contentSelectedFilter()) {
+      filterReq.isSelected = true;
     }
     const titleVal = this.contentTitleSearch().trim();
     if (titleVal) {
@@ -1025,6 +1038,7 @@ export class StudioComponent implements OnInit, OnDestroy {
         authorId: this.authors()[0]?.id || 1,
         genreId: this.genres()[0]?.id || 1,
         selectedThemeIds: [this.themes()[0]?.id || 1],
+        isSelected: false,
         urTitle: '',
         urBody: '',
         hiTitle: '',
@@ -1258,6 +1272,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       authorId,
       genreId,
       selectedThemeIds: themeIds,
+      isSelected: !!item.isSelected,
       urTitle,
       urBody: ur?.body || '',
       hiTitle,
@@ -1384,6 +1399,85 @@ export class StudioComponent implements OnInit, OnDestroy {
     });
   }
 
+  // --- Toggle Selected Status (Max 8 Selected per Genre) ---
+  toggleContentSelected(item: Content, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const newSelected = input.checked;
+    const previous = item.isSelected;
+    const genreId = item.genreId || item.genre?.id;
+
+    if (newSelected && genreId) {
+      // Validate that no more than 8 items are selected for this genre
+      this.contentService.countSelectedByGenre(genreId).subscribe({
+        next: (res) => {
+          const count = res?.data ?? 0;
+          if (count >= 8) {
+            input.checked = false;
+            item.isSelected = false;
+            this.showStatus('error', 'Maximum 8 selected kalams allowed per genre (अधिकतम 8 चुनिंदा कलाम ही चुने जा सकते हैं). Please unmark an existing one first.');
+            return;
+          }
+          this.executeToggleSelected(item, newSelected, previous, input);
+        },
+        error: () => {
+          this.executeToggleSelected(item, newSelected, previous, input);
+        }
+      });
+      return;
+    }
+
+    this.executeToggleSelected(item, newSelected, previous, input);
+  }
+
+  private executeToggleSelected(item: Content, newSelected: boolean, previous: boolean | undefined, input: HTMLInputElement) {
+    item.isSelected = newSelected;
+
+    this.contentService.saveContent({
+      id: item.id,
+      title: item.title,
+      genreId: item.genreId || item.genre?.id,
+      authorId: item.authorId || item.author?.id,
+      themeIds: item.themeIds || (item.themes ? item.themes.map(t => t.id!).filter(Boolean) : []),
+      isSelected: newSelected
+    } as any).subscribe({
+      next: () => {
+        const title = this.getContentTitleForActiveScript(item) || item.title || 'Content';
+        this.showStatus('success', `"${title}" ${newSelected ? "marked as Selected" : "unmarked from Selected"}.`);
+      },
+      error: (err) => {
+        console.error('Failed to update isSelected status:', err);
+        item.isSelected = previous;
+        input.checked = !!previous;
+        this.showStatus('error', this.extractApiError(err, 'Failed to update selected status.'));
+      }
+    });
+  }
+
+  onFormSelectedChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const isChecked = input.checked;
+    const genreId = this.contentForm().genreId;
+    const editId = this.editingContentId();
+    const existingItem = editId ? this.contents().find(c => c.id === editId) : undefined;
+
+    if (isChecked && existingItem?.isSelected && existingItem?.genreId === genreId) {
+      return; // Already selected, no increase in count
+    }
+
+    if (isChecked && genreId) {
+      this.contentService.countSelectedByGenre(genreId).subscribe({
+        next: (res) => {
+          const count = res?.data ?? 0;
+          if (count >= 8) {
+            input.checked = false;
+            this.contentForm.update(f => ({ ...f, isSelected: false }));
+            this.showStatus('error', 'Maximum 8 selected kalams allowed for this genre (अधिकतम 8 चुनिंदा कलाम ही चुने जा सकते हैं).');
+          }
+        }
+      });
+    }
+  }
+
   // --- Delete Content ---
   deleteContent(item: Content) {
     const title = item.title || this.getContentTitleForActiveScript(item) || 'Untitled Kalam';
@@ -1467,7 +1561,8 @@ export class StudioComponent implements OnInit, OnDestroy {
         title: finalTitle,
         authorId,
         genreId,
-        themeIds
+        themeIds,
+        isSelected: f.isSelected || false
       },
       scriptTexts,
       existingTexts
@@ -1484,6 +1579,7 @@ export class StudioComponent implements OnInit, OnDestroy {
           authorId: this.authors()[0]?.id || 1,
           genreId: this.genres()[0]?.id || 1,
           selectedThemeIds: [this.themes()[0]?.id || 1],
+          isSelected: false,
           urTitle: '',
           urBody: '',
           hiTitle: '',
@@ -1499,7 +1595,7 @@ export class StudioComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.isSavingContent.set(false);
         console.error('Failed to save content:', err);
-        this.showStatus('error', err?.error?.message || err?.message || 'Failed to save content.');
+        this.showStatus('error', this.extractApiError(err, 'Failed to save content.'));
       }
     });
   }
@@ -1779,8 +1875,34 @@ export class StudioComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin/login']);
   }
 
-  private showStatus(type: 'success' | 'error', text: string) {
+  extractApiError(err: any, fallback: string = 'An error occurred'): string {
+    if (!err) return fallback;
+    if (typeof err === 'string') return err;
+    if (err.error) {
+      if (typeof err.error === 'string') {
+        try {
+          const parsed = JSON.parse(err.error);
+          if (parsed?.message) return parsed.message;
+          if (parsed?.error) return parsed.error;
+        } catch {
+          return err.error;
+        }
+      } else if (typeof err.error === 'object') {
+        if (err.error.message) return err.error.message;
+        if (err.error.error) return err.error.error;
+      }
+    }
+    if (err.message) return err.message;
+    return fallback;
+  }
+
+  showStatus(type: 'success' | 'error', text: string) {
     this.statusMsg.set({ type, text });
-    setTimeout(() => this.statusMsg.set(null), 4500);
+    const duration = type === 'error' ? 8000 : 4500;
+    setTimeout(() => {
+      if (this.statusMsg()?.text === text) {
+        this.statusMsg.set(null);
+      }
+    }, duration);
   }
 }

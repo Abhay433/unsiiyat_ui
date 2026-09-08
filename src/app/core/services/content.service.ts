@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map, of, catchError, switchMap, throwError, tap } from 'rxjs';
 import { ApiService } from './api.service';
-import { Content, ContentText, ContentFilterRequest, ContentTextFilterRequest } from '../models/content.models';
+import { Content, ContentText, ContentFilterRequest, ContentTextFilterRequest, GenreCuratedGroup } from '../models/content.models';
 import { Genre, Theme } from '../models/taxonomy.models';
 import { ApiResponse, PagedResponse } from '../models/api-response.models';
 import { TaxonomyService } from './taxonomy.service';
@@ -27,6 +27,22 @@ export class ContentService {
   getGhazalOfTheDay(scriptId?: number): Observable<ApiResponse<Content>> {
     const query = scriptId ? `?scriptId=${scriptId}` : '';
     return this.api.get<ApiResponse<Content>>(`/api/home/ghazal-of-the-day${query}`);
+  }
+
+  getCuratedGenres(scriptId?: number): Observable<ApiResponse<GenreCuratedGroup[]>> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const query = sId ? `?scriptId=${sId}` : '';
+    return this.api.get<ApiResponse<GenreCuratedGroup[]>>(`/api/home/curated-genres${query}`);
+  }
+
+  getSelectedGhazals(scriptId?: number): Observable<ApiResponse<Content[]>> {
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    const query = sId ? `?scriptId=${sId}` : '';
+    return this.api.get<ApiResponse<Content[]>>(`/api/home/selected-ghazals${query}`);
+  }
+
+  countSelectedByGenre(genreId: number): Observable<ApiResponse<number>> {
+    return this.api.get<ApiResponse<number>>(`/api/contents/count-selected?genreId=${genreId}`);
   }
 
   filterContents(request: ContentFilterRequest = {}): Observable<PagedResponse<Content>> {
@@ -87,7 +103,7 @@ export class ContentService {
   }
 
   saveCompleteContentWithTexts(
-    contentData: { id?: number; title: string; authorId?: number; genreId?: number; themeIds?: number[] },
+    contentData: { id?: number; title: string; authorId?: number; genreId?: number; themeIds?: number[]; isSelected?: boolean },
     scriptTexts: {
       ur?: { title: string; body: string };
       hi?: { title: string; body: string };
@@ -148,6 +164,7 @@ export class ContentService {
       authorId: contentData.authorId,
       genreId: contentData.genreId,
       themeIds: contentData.themeIds,
+      isSelected: contentData.isSelected,
       contentTexts
     };
 

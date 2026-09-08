@@ -8,6 +8,7 @@ import { AuthorService } from '../../core/services/author.service';
 import { TaxonomyService } from '../../core/services/taxonomy.service';
 import { SeedDataService, ClassicalPoet, ClassicalPoem } from '../../core/services/seed-data.service';
 import { DictionaryModalComponent } from '../../components/dictionary-modal/dictionary-modal.component';
+import { GenreCuratedGroup, Content } from '../../core/models/content.models';
 
 export interface WordOfTheDay {
   word: string;
@@ -72,6 +73,21 @@ export class HomeComponent implements OnInit {
 
   genres = signal<any[]>([]);
   themes = signal<any[]>([]);
+
+  // Selected Ghazals Carousel Section (Between Explore Authors and Word of the Day)
+  selectedGhazals = signal<Content[]>([]);
+  selectedGhazalIndex = signal<number>(0);
+  selectedGhazalLoading = signal<boolean>(false);
+  selectedGhazalFontSize = signal<number>(28);
+  copiedSelectedGhazal = signal<boolean>(false);
+  readonly selectedGhazalsLimit = 8; // Handled from UI (top 8 selected ghazals)
+
+  readonly currentSelectedGhazal = computed(() => {
+    const list = this.selectedGhazals();
+    if (list.length === 0) return null;
+    const idx = this.selectedGhazalIndex();
+    return list[idx] || list[0];
+  });
   contents = signal<any[]>([]);
   ghazalOfTheDay = signal<any>(null);
   loading = signal(true);
@@ -391,6 +407,7 @@ export class HomeComponent implements OnInit {
     this.loading.set(true);
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
     this.loadGhazalOfTheDay(scriptId);
+    this.loadSelectedGhazals(scriptId);
 
     // Load authors for carousel (strictly size: 3 for 3 cards per slide)
     this.loadCarouselAuthors(0);
@@ -623,5 +640,92 @@ export class HomeComponent implements OnInit {
     if (!body) return ['', ''];
     const lines = body.split('\n').filter(l => l.trim().length > 0);
     return [lines[0] || '', lines[1] || ''];
+  }
+  // --- Selected Ghazals Carousel Methods ---
+  loadSelectedGhazals(scriptId?: number) {
+    this.selectedGhazalLoading.set(true);
+    const sId = scriptId ?? this.scriptService.getScriptId(this.scriptService.activeScript());
+    this.contentService.getSelectedGhazals(sId).subscribe({
+      next: (res) => {
+        const list = res?.data || [];
+        this.selectedGhazals.set(list);
+        if (this.selectedGhazalIndex() >= list.length) {
+          this.selectedGhazalIndex.set(0);
+        }
+        this.selectedGhazalLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load selected ghazals:', err);
+        this.selectedGhazalLoading.set(false);
+      }
+    });
+  }
+
+  prevSelectedGhazal() {
+    if (this.selectedGhazalIndex() > 0) {
+      this.selectedGhazalIndex.update(i => i - 1);
+    }
+  }
+
+  nextSelectedGhazal() {
+    if (this.selectedGhazalIndex() < this.selectedGhazals().length - 1) {
+      this.selectedGhazalIndex.update(i => i + 1);
+    }
+  }
+
+  goToSelectedGhazal(index: number) {
+    if (index >= 0 && index < this.selectedGhazals().length) {
+      this.selectedGhazalIndex.set(index);
+    }
+  }
+
+  changeSelectedGhazalFontSize(delta: number) {
+    const newSize = this.selectedGhazalFontSize() + delta;
+    if (newSize >= 18 && newSize <= 42) {
+      this.selectedGhazalFontSize.set(newSize);
+    }
+  }
+
+  copySelectedGhazalCouplet() {
+    const ghazal = this.currentSelectedGhazal();
+    if (!ghazal) return;
+    const lines = this.getSelectedGhazalLines(ghazal);
+    const poet = this.getSelectedGhazalPoetName(ghazal);
+    const text = `${lines[0]}\n${lines[1]}\n\n— ${poet}\n(Via Unsiiyat Poetry - Rekhta Realm)`;
+    navigator.clipboard.writeText(text);
+    this.copiedSelectedGhazal.set(true);
+    setTimeout(() => this.copiedSelectedGhazal.set(false), 2200);
+  }
+
+  getSelectedGhazalLines(ghazal?: Content | null): [string, string] {
+    if (!ghazal) return ['', ''];
+    const body = ghazal.primaryText?.body || '';
+    const lines = body.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length >= 2) {
+      return [lines[0], lines[1]];
+    }
+    if (lines.length === 1) {
+      return [lines[0], ghazal.title && ghazal.title !== lines[0] ? ghazal.title : ''];
+    }
+    return [ghazal.title || 'Selected Ghazal', ''];
+  }
+
+  getSelectedGhazalPoetName(ghazal?: Content | null): string {
+    if (ghazal?.author) {
+      const activeScript = this.scriptService.activeScript();
+      if (activeScript === 'ur' && ghazal.author.urName) return ghazal.author.urName;
+      if (activeScript === 'hi' && ghazal.author.hiName) return ghazal.author.hiName;
+      if (ghazal.author.enName) return ghazal.author.enName;
+      if (ghazal.author.primaryName) return ghazal.author.primaryName;
+      if (ghazal.author.name) return ghazal.author.name;
+    }
+    return (ghazal as any)?.authorName || 'Master Shayar';
+  }
+
+  getSelectedGhazalPoetAvatar(ghazal?: Content | null): string {
+    if (ghazal?.author) {
+      return this.authorService.getAuthorAvatar(ghazal.author);
+    }
+    return 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100';
   }
 }

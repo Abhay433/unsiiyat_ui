@@ -42,7 +42,8 @@
         <div class="hero-footer flex-between">
           <div class="poet-citation">
             <div class="poet-citation-avatar">
-              <img [src]="currentHero().poetAvatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100'" [alt]="currentHero().poet" />
+              <img [src]="currentHero().poetAvatar || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100'"
+                [alt]="currentHero().poet" />
             </div>
             <div class="poet-citation-info">
               <span class="citation-label font-display">MASTER SHAYAR</span>
@@ -84,18 +85,16 @@
       <!-- Authors Carousel with Left and Right Arrows (Size: 3) -->
       <div class="authors-carousel-container">
         <!-- Left Arrow Button -->
-        <button type="button" 
-                class="carousel-nav-btn prev-arrow" 
-                [disabled]="authorCarouselPage() <= 0 || authorCarouselLoading()" 
-                (click)="prevAuthorPage()" 
-                title="Previous Authors"
-                aria-label="Previous Authors">
+        <button type="button" class="carousel-nav-btn prev-arrow"
+          [disabled]="authorCarouselPage() <= 0 || authorCarouselLoading()" (click)="prevAuthorPage()"
+          title="Previous Authors" aria-label="Previous Authors">
           <span class="arrow-symbol">&#8249;</span>
         </button>
 
         <!-- 3 Authors Cards Grid -->
         <div class="authors-carousel-track" [class.is-loading]="authorCarouselLoading()">
-          <a *ngFor="let poet of carouselAuthors()" [routerLink]="['/poet', poet.id]" class="poet-card poetic-card carousel-card">
+          <a *ngFor="let poet of carouselAuthors()" [routerLink]="['/poet', poet.id]"
+            class="poet-card poetic-card carousel-card">
             <div class="poet-portrait-ring">
               <img [src]="getPoetAvatar(poet)" [alt]="poet.primaryName" (error)="onImgError($event, poet)" />
             </div>
@@ -103,33 +102,146 @@
               <span class="poet-era-tag font-display">CLASSICAL SHAYAR</span>
               <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
               <span class="poet-dates font-english">
-                {{ poet.birthDate | date:'yyyy' }} <ng-container *ngIf="poet.deathDate">– {{ poet.deathDate | date:'yyyy' }}</ng-container>
+                {{ poet.birthDate | date:'yyyy' }} <ng-container *ngIf="poet.deathDate">– {{ poet.deathDate |
+                  date:'yyyy' }}</ng-container>
               </span>
-              <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ (poet.primaryBio || poet.biography || '') | slice:0:75 }}...</p>
+              <p class="poet-brief" [ngClass]="scriptService.fontClass()">{{ (poet.primaryBio || poet.biography || '') |
+                slice:0:75 }}...</p>
               <span class="poet-works-count">✦ 40+ Ghazals & Nazms</span>
             </div>
           </a>
         </div>
 
         <!-- Right Arrow Button -->
-        <button type="button" 
-                class="carousel-nav-btn next-arrow" 
-                [disabled]="authorCarouselIsLast() || authorCarouselLoading()" 
-                (click)="nextAuthorPage()" 
-                title="Next Authors"
-                aria-label="Next Authors">
+        <button type="button" class="carousel-nav-btn next-arrow"
+          [disabled]="authorCarouselIsLast() || authorCarouselLoading()" (click)="nextAuthorPage()" title="Next Authors"
+          aria-label="Next Authors">
           <span class="arrow-symbol">&#8250;</span>
         </button>
       </div>
 
       <!-- Carousel Pagination Dots -->
       <div class="carousel-dots-wrap" *ngIf="authorCarouselTotalPages() > 1">
-        <button *ngFor="let p of getCarouselPageArray(); let idx = index" 
-                type="button" 
-                class="carousel-dot-btn" 
-                [class.active]="idx === authorCarouselPage()" 
-                (click)="goToAuthorPage(idx)" 
-                [attr.aria-label]="'Go to page ' + (idx + 1)">
+        <button *ngFor="let p of getCarouselPageArray(); let idx = index" type="button" class="carousel-dot-btn"
+          [class.active]="idx === authorCarouselPage()" (click)="goToAuthorPage(idx)"
+          [attr.aria-label]="'Go to page ' + (idx + 1)">
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Selected Ghazals Carousel (شعر و غزلِ منتخب - Handpicked Selected Ghazals) -->
+  <section class="section-padding selected-ghazals-section" *ngIf="selectedGhazals().length > 0">
+    <div class="unsiiyat-container">
+      <!-- Section Header -->
+      <div class="section-header flex-between">
+        <div>
+          <div class="curated-badge-pill">
+            <span class="badge-star">★</span>
+            <span class="badge-label font-display">SELECTED MASTERPIECES</span>
+          </div>
+          <h2 class="section-title font-display">
+            {{ scriptService.translate('selected_ghazals') || 'Selected Ghazals' }}
+          </h2>
+          <p class="section-subtitle font-sans">
+            {{ scriptService.activeScript() === "ur" ? "اعلیٰ درجے کی منتخب غزلوں کا نایاب انتخاب" :
+            (scriptService.activeScript() === "hi" ? "शीर्ष आठ चुनिंदा ग़ज़लों का अद्वितीय संग्रह" : "Handpicked
+            collection of top 8 selected ghazals") }}
+          </p>
+        </div>
+
+        <div class="section-header-right">
+          <span class="carousel-count-indicator font-mono" *ngIf="selectedGhazals().length > 1">
+            Ghazal {{ selectedGhazalIndex() + 1 }} / {{ selectedGhazals().length }}
+          </span>
+          <a routerLink="/genres" class="view-all-link">
+            {{ scriptService.translate('all_ghazals') || 'All Ghazals' }} &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Carousel Container with Left/Right Arrows and Hero-style Ghazal Card -->
+      <div class="selected-ghazals-carousel-container">
+        <!-- Left Arrow Button -->
+        <button type="button" class="carousel-nav-btn prev-arrow"
+          [disabled]="selectedGhazalIndex() <= 0 || selectedGhazalLoading()" (click)="prevSelectedGhazal()"
+          title="Previous Ghazal" aria-label="Previous Ghazal">
+          <span class="arrow-symbol">&#8249;</span>
+        </button>
+
+        <!-- Ghazal Card: Modeled identically after Home Page First Section (Hero) Card -->
+        <div class="hero-card poetic-card selected-ghazal-card" *ngIf="currentSelectedGhazal() as ghazal">
+          <!-- Top Toolbar -->
+          <div class="hero-toolbar flex-between">
+            <div class="hero-badge">
+              <span class="badge-icon">✦</span>
+              <span class="badge-text">
+                {{ scriptService.translate('selected_ghazal') || 'Selected Ghazal' }} #{{ selectedGhazalIndex() + 1 }}
+              </span>
+            </div>
+
+            <div class="hero-controls">
+              <!-- Font Resizer -->
+              <div class="font-resizer-group">
+                <span class="control-label">{{ scriptService.translate('font_size') }}:</span>
+                <button class="tool-btn" (click)="changeSelectedGhazalFontSize(-2)"
+                  title="Decrease font size">A-</button>
+                <button class="tool-btn" (click)="changeSelectedGhazalFontSize(2)"
+                  title="Increase font size">A+</button>
+              </div>
+
+              <!-- Copy Button -->
+              <button class="tool-btn copy-btn" (click)="copySelectedGhazalCouplet()">
+                {{ copiedSelectedGhazal() ? '✓ ' + scriptService.translate('copied') : '📋 ' +
+                scriptService.translate('copy_sher') }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Couplet Text Presentation (Centered, Line 1 Dark, Line 2 Gold) -->
+          <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()"
+            [style.font-size.px]="selectedGhazalFontSize()">
+            <p class="couplet-line first-line">{{ getSelectedGhazalLines(ghazal)[0] }}</p>
+            <p class="couplet-line second-line">{{ getSelectedGhazalLines(ghazal)[1] }}</p>
+          </div>
+
+          <!-- Couplet Footer -->
+          <div class="hero-footer flex-between">
+            <div class="poet-citation">
+              <div class="poet-citation-avatar">
+                <img [src]="getSelectedGhazalPoetAvatar(ghazal)" [alt]="getSelectedGhazalPoetName(ghazal)" />
+              </div>
+              <div class="poet-citation-info">
+                <span class="citation-label font-display">MASTER SHAYAR</span>
+                <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ getSelectedGhazalPoetName(ghazal)
+                  }}</span>
+              </div>
+            </div>
+
+            <div class="hero-action-links">
+              <button class="btn btn-ghost btn-sm" (click)="openDictionaryWith('Khwahish')">
+                📖 Explore Words
+              </button>
+              <a [routerLink]="['/content', ghazal.id]" class="btn btn-gold btn-sm">
+                {{ scriptService.translate('read_more') }} &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Arrow Button -->
+        <button type="button" class="carousel-nav-btn next-arrow"
+          [disabled]="selectedGhazalIndex() >= selectedGhazals().length - 1 || selectedGhazalLoading()"
+          (click)="nextSelectedGhazal()" title="Next Ghazal" aria-label="Next Ghazal">
+          <span class="arrow-symbol">&#8250;</span>
+        </button>
+      </div>
+
+      <!-- Carousel Pagination Dots -->
+      <div class="carousel-dots-wrap" *ngIf="selectedGhazals().length > 1">
+        <button *ngFor="let g of selectedGhazals(); let idx = index" type="button" class="carousel-dot-btn"
+          [class.active]="idx === selectedGhazalIndex()" (click)="goToSelectedGhazal(idx)"
+          [attr.aria-label]="'Go to Ghazal ' + (idx + 1)">
         </button>
       </div>
     </div>
@@ -186,270 +298,6 @@
           <button class="btn btn-outline-gold btn-sm" (click)="openDictionaryWith(currentWord().word)">
             Open Full Lughat &rarr;
           </button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 3: Ghazals Treasury with Combined Multi-Filters (Part B) -->
-  <section class="section-padding feed-section" id="treasury">
-    <div class="unsiiyat-container">
-      <div class="section-header flex-between">
-        <div>
-          <div class="section-badge font-display">TREASURY OF VERSE</div>
-          <h2 class="section-title font-display">{{ scriptService.translate('recent_ghazals') }}</h2>
-          <p class="section-subtitle">Discover timeless poetry with combined filters across Shayars, Genres, Themes, and
-            popularity</p>
-        </div>
-
-        <!-- Live Results Count -->
-        <div class="results-counter-badge">
-          <span>📜 {{ filteredContents().length }} Ghazals / Kalam Found</span>
-        </div>
-      </div>
-
-      <!-- ===================================================================== -->
-      <!-- COMBINED MULTI-FILTER TOOLBAR                                         -->
-      <!-- ===================================================================== -->
-      <div class="combined-filter-bar poetic-card">
-        <div class="filter-controls-grid">
-          <!-- 1. Text Search Input -->
-          <div class="filter-control-item search-input-col">
-            <label class="filter-label font-display">🔍 KEYWORD SEARCH</label>
-            <div class="filter-input-wrap">
-              <input type="text" class="filter-input-field" placeholder="Search title, misra, or poet..."
-                [ngModel]="searchKeyword()" (ngModelChange)="searchKeyword.set($event)" />
-              <button *ngIf="searchKeyword()" class="filter-clear-btn" (click)="clearSearch()">✕</button>
-            </div>
-          </div>
-
-          <!-- 2. Shayar / Author Dropdown -->
-          <div class="filter-control-item">
-            <label class="filter-label font-display">👤 SHAYAR / POET</label>
-            <select class="filter-select-field" [ngModel]="selectedAuthorId()"
-              (ngModelChange)="selectedAuthorId.set($event)">
-              <option value="all">All Shayars (تمام شعراء)</option>
-              <option *ngFor="let p of poets()" [value]="p.id">
-                {{ p.primaryName }}
-              </option>
-            </select>
-          </div>
-
-          <!-- 3. Genre Dropdown -->
-          <div class="filter-control-item">
-            <label class="filter-label font-display">🏷️ POETIC GENRE</label>
-            <select class="filter-select-field" [ngModel]="selectedGenreId()"
-              (ngModelChange)="selectedGenreId.set($event)">
-              <option value="all">All Genres (تمام اصناف)</option>
-              <option *ngFor="let g of genres()" [value]="g.id">
-                {{ g.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- 4. Theme / Mood Dropdown -->
-          <div class="filter-control-item">
-            <label class="filter-label font-display">✦ THEMATIC MOOD</label>
-            <select class="filter-select-field" [ngModel]="selectedThemeId()"
-              (ngModelChange)="selectedThemeId.set($event)">
-              <option value="all">All Moods (تمام موضوعات)</option>
-              <option *ngFor="let t of themes()" [value]="t.id">
-                {{ t.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- 5. Sort By Selector -->
-          <div class="filter-control-item sort-col">
-            <label class="filter-label font-display">📊 SORT BY</label>
-            <select class="filter-select-field sort-select" [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
-              <option value="trending">🔥 Trending (Most Liked)</option>
-              <option value="popular">⭐ Most Popular (Views)</option>
-              <option value="newest">⏱️ Newest Heritage</option>
-              <option value="title">🔤 Title (A – Z)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Active Filter Pills & Reset Action -->
-        <div *ngIf="hasActiveFilters()" class="active-filters-row flex-between animate-fade-in">
-          <div class="active-pills-list">
-            <span class="active-filters-title font-display">Active Filters ({{ activeFiltersCount() }}):</span>
-
-            <!-- Search Pill -->
-            <button *ngIf="searchKeyword()" class="active-filter-pill" (click)="clearSearch()">
-              <span>Query: "{{ searchKeyword() }}"</span>
-              <span class="pill-remove">✕</span>
-            </button>
-
-            <!-- Shayar Pill -->
-            <button *ngIf="selectedAuthorId() !== 'all'" class="active-filter-pill" (click)="clearAuthor()">
-              <span>Shayar: {{ selectedAuthorName() }}</span>
-              <span class="pill-remove">✕</span>
-            </button>
-
-            <!-- Genre Pill -->
-            <button *ngIf="selectedGenreId() !== 'all'" class="active-filter-pill" (click)="clearGenre()">
-              <span>Genre: {{ selectedGenreName() }}</span>
-              <span class="pill-remove">✕</span>
-            </button>
-
-            <!-- Theme Pill -->
-            <button *ngIf="selectedThemeId() !== 'all'" class="active-filter-pill" (click)="clearTheme()">
-              <span>Mood: {{ selectedThemeName() }}</span>
-              <span class="pill-remove">✕</span>
-            </button>
-
-            <!-- Quick Category Pill -->
-            <button *ngIf="activeFeedCategory() !== 'all'" class="active-filter-pill" (click)="clearFeedCategory()">
-              <span>Category: {{ activeFeedCategory() | uppercase }}</span>
-              <span class="pill-remove">✕</span>
-            </button>
-          </div>
-
-          <!-- Reset All Button -->
-          <button class="reset-filters-btn" (click)="resetAllFilters()">
-            <span>🔄 Reset All Filters</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Quick Category Filter Pills -->
-      <div class="feed-tabs-row">
-        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'all'" (click)="setFeedCategory('all')">
-          All Ghazals (تمام کلام)
-        </button>
-        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'ishq'" (click)="setFeedCategory('ishq')">
-          💖 Ishq & Romance (عشق)
-        </button>
-        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'dard'" (click)="setFeedCategory('dard')">
-          💔 Dard & Longing (درد)
-        </button>
-        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'zindagi'"
-          (click)="setFeedCategory('zindagi')">
-          🌿 Life & Philosophy (زندگی)
-        </button>
-        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'sufi'" (click)="setFeedCategory('sufi')">
-          🕯️ Sufism & Mysticism (تصوف)
-        </button>
-        <button class="feed-tab-btn" [class.active]="activeFeedCategory() === 'inqilab'"
-          (click)="setFeedCategory('inqilab')">
-          🚩 Revolution & Hope (انقلاب)
-        </button>
-      </div>
-
-      <!-- Ghazals Feed Grid -->
-      <div *ngIf="filteredContents().length > 0" class="ghazals-feed-grid">
-        <div *ngFor="let item of filteredContents(); let idx = index" class="ghazal-card poetic-card">
-          <div class="ghazal-card-header flex-between">
-            <span class="ghazal-poet-badge font-english">
-              👤 {{ item.author?.primaryName || item.authorName || 'Classical Shayar' }}
-            </span>
-            <span class="badge">{{ item.genre?.name || 'Ghazal' }}</span>
-          </div>
-
-          <h3 class="ghazal-card-title" [ngClass]="scriptService.fontClass()">
-            {{ item.primaryText?.title || item.title }}
-          </h3>
-
-          <div class="ghazal-card-snippet" [ngClass]="scriptService.fontClass()">
-            <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)" class="snippet-line">{{ line }}</p>
-          </div>
-
-          <div class="ghazal-card-footer flex-between">
-            <div class="card-interaction-btns">
-              <button class="icon-action-btn" [class.liked]="likedItems()[item.id]" (click)="toggleLike(item.id)"
-                title="Like this ghazal">
-                {{ likedItems()[item.id] ? '❤️' : '🤍' }} {{ likeCounts()[item.id] || 120 }}
-              </button>
-              <button class="icon-action-btn"
-                (click)="copyFeedCouplet(idx, getFirstCouplet(item.primaryText?.body), item.author?.primaryName || item.authorName)"
-                title="Copy Couplet">
-                {{ copiedIndex() === idx ? '✓' : '📋' }}
-              </button>
-            </div>
-
-            <a [routerLink]="['/content', item.id]" class="btn btn-outline-gold btn-sm">
-              {{ scriptService.translate('read_more') }} &rarr;
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State when no results match -->
-      <div *ngIf="filteredContents().length === 0" class="empty-feed-card poetic-card animate-fade-in">
-        <div class="empty-icon">📜</div>
-        <h3 class="empty-title font-display">No Poetry Matches Your Filters</h3>
-        <p class="empty-desc">
-          Try loosening your search query, selecting different thematic moods, or clearing author/genre restrictions.
-        </p>
-        <button class="btn btn-gold btn-sm" (click)="resetAllFilters()">
-          🔄 Reset All Filters
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 4: Moods & Emotions Cloud -->
-  <section class="section-padding themes-section">
-    <div class="unsiiyat-container">
-      <div class="section-header">
-        <h2 class="section-title font-display">{{ scriptService.translate('explore_themes') }}</h2>
-        <p class="section-subtitle">Discover poetry resonant with your state of mind and emotions</p>
-      </div>
-
-      <div class="themes-chips-wrapper">
-        <a *ngFor="let theme of themes()" [routerLink]="['/themes']" class="theme-chip-card poetic-card">
-          <div class="theme-chip-icon">✦</div>
-          <div class="theme-chip-details">
-            <h4 class="theme-chip-name" [ngClass]="scriptService.fontClass()">{{ theme.name }}</h4>
-            <span class="theme-chip-slug font-display">#{{ theme.slug }}</span>
-          </div>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 5: Curated Audio Lounge & Collections Showcase -->
-  <section class="section-padding lounge-section">
-    <div class="unsiiyat-container">
-      <div class="section-header flex-between">
-        <div>
-          <h2 class="section-title font-display">{{ scriptService.translate('audio_lounge') }}</h2>
-          <p class="section-subtitle">Immerse yourself in acoustic recitations, mushaira recordings, and classical
-            tarannum</p>
-        </div>
-      </div>
-
-      <div class="lounge-grid">
-        <div class="lounge-card poetic-card">
-          <div class="lounge-banner-tag font-display">SPECIAL COLLECTION</div>
-          <h3 class="lounge-title font-urdu">دیوانِ غالب — مکمل شاہکار</h3>
-          <p class="lounge-desc font-hindi">मिर्ज़ा ग़ालिब की अमर ग़ज़लों का मुकम्मल संकलन एवं ऑडियो पाठ।</p>
-          <div class="lounge-footer flex-between">
-            <span class="audio-count">🎧 45 Recitations</span>
-            <a routerLink="/poet/1" class="btn btn-gold btn-sm">Listen Now &rarr;</a>
-          </div>
-        </div>
-
-        <div class="lounge-card poetic-card">
-          <div class="lounge-banner-tag font-display">TARANNUM SPECIAL</div>
-          <h3 class="lounge-title font-urdu">فیض احمد فیض — صدائے انقلاب</h3>
-          <p class="lounge-desc font-hindi">फ़ैज़ की पुरअसर नज़्में और रूहानी ग़ज़लें जो इतिहास का हिस्सा बनीं।</p>
-          <div class="lounge-footer flex-between">
-            <span class="audio-count">🎧 32 Recitations</span>
-            <a routerLink="/poet/2" class="btn btn-gold btn-sm">Listen Now &rarr;</a>
-          </div>
-        </div>
-
-        <div class="lounge-card poetic-card">
-          <div class="lounge-banner-tag font-display">CLASSICAL ESSENTIALS</div>
-          <h3 class="lounge-title font-urdu">جون ایلیا — نوحہ گری و فلسفہ</h3>
-          <p class="lounge-desc font-hindi">जौन एलिया का बागी अंदाज़-ए-बयाँ और अस्तित्ववादी शेर-ओ-सुख़न।</p>
-          <div class="lounge-footer flex-between">
-            <span class="audio-count">🎧 28 Recitations</span>
-            <a routerLink="/poet/3" class="btn btn-gold btn-sm">Listen Now &rarr;</a>
-          </div>
         </div>
       </div>
     </div>

@@ -109,11 +109,12 @@
   <!-- MAIN WORKSPACE                                                            -->
   <!-- ========================================================================= -->
   <main class="admin-main-workspace">
-    <!-- Status Alert Banner -->
+    <!-- Status Alert Floating Toast -->
     <div *ngIf="statusMsg()" class="status-toast-bar animate-fade-in"
       [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
       <span class="status-icon">{{ statusMsg()?.type === 'success' ? '✓' : '⚠️' }}</span>
       <span class="status-text">{{ statusMsg()?.text }}</span>
+      <button type="button" class="status-toast-close" (click)="statusMsg.set(null)" aria-label="Close">&times;</button>
     </div>
 
     <!-- Top Workspace Bar -->
@@ -205,8 +206,23 @@
         </div>
       </div>
 
+      <!-- 4. Is Selected Filter Button (Next to Poetic Genre) -->
+      <div class="filter-field-group">
+        <label class="filter-field-label">Curated Status</label>
+        <button 
+          type="button" 
+          class="content-selected-filter-btn" 
+          [class.active]="contentSelectedFilter()" 
+          (click)="toggleSelectedFilter()"
+          title="Filter only Selected / Featured kalams">
+          <span class="selected-btn-icon">{{ contentSelectedFilter() ? "★" : "☆" }}</span>
+          <span>{{ contentSelectedFilter() ? "Selected Only" : "Is Selected" }}</span>
+          <span class="selected-btn-badge" *ngIf="contentSelectedFilter()">Active</span>
+        </button>
+      </div>
+
       <!-- Clear All Filters Button -->
-      <div class="filter-field-group" *ngIf="contentTitleSearch() || contentAuthorSearch() || contentGenreFilter()">
+      <div class="filter-field-group" *ngIf="contentTitleSearch() || contentAuthorSearch() || contentGenreFilter() || contentSelectedFilter()">
         <label class="filter-field-label filter-label-spacer">&nbsp;</label>
         <button 
           type="button" 
@@ -241,6 +257,7 @@
                 <th>Author / Shayar</th>
                 <th>Genre</th>
                 <th>Status</th>
+                <th style="text-align: center;">Selected</th>
                 <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
@@ -270,6 +287,14 @@
                     'प्रकाशित' : 'Published') }}
                   </span>
                 </td>
+                <td style="text-align: center;">
+                  <label class="custom-table-checkbox" title="Mark / Unmark as Selected (منتخب کلام)">
+                    <input type="checkbox"
+                           [checked]="item.isSelected"
+                           (change)="toggleContentSelected(item, $event)" />
+                    <span class="checkbox-checkmark"></span>
+                  </label>
+                </td>
                 <td style="text-align: right;">
                   <div class="table-actions-wrapper">
                     <a [routerLink]="['/content', item.id]" class="table-action-btn" title="View in Reading Room">
@@ -288,7 +313,7 @@
                 </td>
               </tr>
               <tr *ngIf="filteredContents().length === 0">
-                <td colspan="5" class="empty-table-cell">
+                <td colspan="6" class="empty-table-cell">
                   No content records match the specified search filters.
                 </td>
               </tr>
@@ -915,6 +940,21 @@
             </div>
           </div>
 
+          <!-- Selected / Featured Checkbox -->
+          <div class="form-group-checkbox-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+            <label class="custom-table-checkbox" style="margin: 0;">
+              <input type="checkbox"
+                     [(ngModel)]="contentForm().isSelected"
+                     (change)="onFormSelectedChange($event)"
+                     name="isSelected" />
+              <span class="checkbox-checkmark"></span>
+            </label>
+            <label class="form-label" style="margin: 0; cursor: pointer; font-size: 0.92rem; font-weight: 600; display: flex; align-items: center; gap: 8px;" (click)="contentForm().isSelected = !contentForm().isSelected">
+              <span>Selected / Featured (منتخب کلام)</span>
+              <span class="pill-badge pill-genre" style="font-size: 0.72rem; padding: 2px 8px;">Featured</span>
+            </label>
+          </div>
+
           <!-- 4. Multi-Script Verse Editor Tabs -->
           <div class="form-group script-editor-card">
             <div class="script-tabs-header flex-between">
@@ -1017,6 +1057,12 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Inline Form Error Banner (Shows exact backend error) -->
+          <div *ngIf="statusMsg() && statusMsg()?.type === 'error'" class="form-error-banner animate-fade-in">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{{ statusMsg()?.text }}</span>
           </div>
 
           <!-- Submit Button -->

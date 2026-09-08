@@ -10,6 +10,7 @@ export interface Content {
   themeIds?: number[];
   createdAt?: string;
   updatedAt?: string;
+  isSelected?: boolean;
 
   // UI Enriched fields
   genre?: Genre;
@@ -38,6 +39,7 @@ export interface ContentFilterRequest extends BaseFilterRequest {
   authorName?: string;
   scriptId?: number;
   scriptCode?: string;
+  isSelected?: boolean;
 }
 
 export interface ContentTextFilterRequest extends BaseFilterRequest {
@@ -54,3 +56,11 @@ export interface Couplet {
 }
 
 export type ContentDto = Content;
+
+export interface GenreCuratedGroup {
+  genreId: number;
+  genreName: string;
+  genreSlug: string;
+  totalSelected: number;
+  contents: Content[];
+}
