@@ -120,23 +120,26 @@
 /* Couplet Text Body */
 .hero-couplet-body {
   text-align: center;
-  margin: 30px 0;
-  padding: 8px 0;
+  margin: 20px 0;
+  padding: 4px 0;
   color: var(--text-primary);
 }
 
 .couplet-line {
-  margin-bottom: 12px;
+  margin-bottom: 4px;
+  line-height: 1.4;
   font-weight: 700;
   transition: font-size var(--transition-fast);
 }
 
 .first-line {
   color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
 .second-line {
   color: var(--accent-gold);
+  margin-bottom: 0;
 }
 
 /* Meaning Box */
@@ -168,12 +171,21 @@
 .hero-footer {
   border-top: 1px solid var(--border-subtle);
   padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
 }
 
 .poet-citation {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  width: 100%;
 }
 
 .poet-citation-avatar {
@@ -194,6 +206,9 @@
 .poet-citation-info {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
 }
 
 .citation-label {
@@ -208,11 +223,13 @@
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-primary);
+  text-align: center;
 }
 
 .hero-action-links {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -1321,6 +1338,26 @@
   box-shadow: 0 10px 30px rgba(212, 175, 55, 0.14);
 }
 
+.nazm-card-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.nazm-preview-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nazm-line {
+  margin-bottom: 4px;
+}
+
 @media (max-width: 768px) {
   .selected-ghazals-carousel-container,
   .selected-nazms-carousel-container {
@@ -1336,3 +1373,194 @@
     font-size: 1.6rem;
   }
 }
+
+@media (max-width: 640px) {
+  /* Section Headers - Center title and hide extra detailing (subtitle) */
+  .section-header {
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .section-title-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .section-title {
+    text-align: center !important;
+    font-size: 1.35rem !important;
+  }
+
+  /* Remove extra detailing (subtitles) on mobile */
+  .section-subtitle {
+    display: none !important;
+  }
+
+  /* Hero, Ghazal, and Nazm Cards Mobile Compact Styling */
+  .hero-card,
+  .selected-ghazal-card,
+  .selected-nazm-card {
+    padding: 18px 14px;
+  }
+
+  .hero-toolbar {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .hero-badge {
+    font-size: 0.76rem;
+    padding: 4px 10px;
+  }
+
+  .tool-btn {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* Couplet Text Presentation inside boxes - Shrink fetched content text size on mobile so 1 line stays on 1 line */
+  .hero-couplet-body {
+    margin: 12px 0;
+    padding: 2px 0;
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .nazm-card-title {
+    font-size: 1.12rem !important;
+    margin-bottom: 8px;
+    text-align: center !important;
+  }
+
+  .hero-couplet-body .couplet-line,
+  .couplet-line {
+    font-size: clamp(11px, 3.4vw, 14.5px) !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4 !important;
+    margin-bottom: 4px !important;
+    text-align: center;
+  }
+
+  /* Meaning Box */
+  .hero-meaning-box {
+    padding: 10px 12px;
+    margin-bottom: 14px;
+  }
+
+  .meaning-tag {
+    font-size: 0.72rem;
+  }
+
+  .meaning-text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  /* Hero Footer - Centered and Bold Poet Name */
+  .hero-footer {
+    padding-top: 12px;
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 10px;
+  }
+
+  .poet-citation {
+    flex-direction: column;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100%;
+  }
+
+  .poet-citation-avatar {
+    display: none !important;
+  }
+
+  .poet-name {
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    width: 100%;
+    display: block;
+  }
+
+  .hero-action-links {
+    width: 100%;
+    justify-content: center !important;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hero-action-links .btn {
+    font-size: 0.8rem;
+    padding: 6px 16px;
+  }
+
+  /* Shayar Spotlight Cards */
+  .poet-card {
+    padding: 16px 12px;
+  }
+
+  .poet-card-name {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .poet-dates {
+    font-size: 0.74rem;
+  }
+
+  .poet-brief {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .poet-works-count {
+    font-size: 0.7rem;
+  }
+
+  /* Word of the Day (Lughat) Card */
+  .lughat-card {
+    padding: 18px 14px;
+  }
+
+  .lughat-word {
+    font-size: 1.4rem;
+  }
+
+  .lughat-pronounce {
+    font-size: 0.82rem;
+  }
+
+  .lughat-origin {
+    font-size: 0.7rem;
+  }
+
+  .meaning-val {
+    font-size: 0.84rem;
+  }
+
+  .lughat-couplet-line {
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+}
+

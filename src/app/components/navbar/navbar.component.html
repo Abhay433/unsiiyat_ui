@@ -96,11 +96,16 @@
         <a routerLink="/themes" routerLinkActive="active" (click)="closeMobileMenu()">
           {{ scriptService.translate('themes') }}
         </a>
-        <!-- <a routerLink="/studio" routerLinkActive="active" class="studio-link" (click)="closeMobileMenu()">
-          <span class="studio-icon">{{ authService.isAdmin() ? '⚙️' : '🔒' }}</span>
-          {{ scriptService.translate('studio') }}
-          <span *ngIf="authService.isAdmin()" class="nav-admin-badge">Admin</span>
-        </a> -->
+        <!-- Mobile Script / Language Selector -->
+        <div class="mobile-script-selector">
+          <span class="mobile-script-label">🌐 Language / زبان:</span>
+          <div class="script-switcher-pills">
+            <button *ngFor="let s of scriptService.scripts()" class="script-pill"
+              [class.active]="scriptService.activeScript() === s.code" (click)="switchScript(s); closeMobileMenu()">
+              {{ s.nativeName || s.name }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Action Controls -->

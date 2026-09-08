@@ -76,13 +76,24 @@ export class HomeComponent implements OnInit {
   genres = signal<any[]>([]);
   themes = signal<any[]>([]);
 
+  private detectMobileFontSize(defaultDesktop = 28): number {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth <= 480) {
+        return 17;
+      } else if (window.innerWidth <= 768) {
+        return 20;
+      }
+    }
+    return defaultDesktop;
+  }
+
   // Selected Ghazals Carousel Section (Between Explore Authors and Word of the Day)
   selectedGhazals = signal<Content[]>(
     this.contentService.getCachedSelectedGhazals(this.scriptService.getScriptId(this.scriptService.activeScript()))
   );
   selectedGhazalIndex = signal<number>(0);
   selectedGhazalLoading = signal<boolean>(false);
-  selectedGhazalFontSize = signal<number>(28);
+  selectedGhazalFontSize = signal<number>(this.detectMobileFontSize(28));
   copiedSelectedGhazal = signal<boolean>(false);
   readonly selectedGhazalsLimit = 8; // Handled from UI (top 8 selected ghazals)
 
@@ -99,7 +110,7 @@ export class HomeComponent implements OnInit {
   );
   selectedNazmIndex = signal<number>(0);
   selectedNazmLoading = signal<boolean>(false);
-  selectedNazmFontSize = signal<number>(28);
+  selectedNazmFontSize = signal<number>(this.detectMobileFontSize(28));
   copiedSelectedNazm = signal<boolean>(false);
 
   readonly currentSelectedNazm = computed(() => {
@@ -127,7 +138,7 @@ export class HomeComponent implements OnInit {
   copiedIndex = signal<number | null>(null);
   isPlayingAudio = signal(false);
   audioProgress = signal(0);
-  heroFontSize = signal(28); // px
+  heroFontSize = signal(this.detectMobileFontSize(28)); // px
 
   // Simulated engagement metrics for trending & popular sorting
   viewCounts = signal<Record<number, number>>({ 1: 14200, 2: 9800, 3: 8400, 4: 6100, 5: 5500 });
@@ -865,6 +876,18 @@ export class HomeComponent implements OnInit {
     navigator.clipboard.writeText(text);
     this.copiedSelectedNazm.set(true);
     setTimeout(() => this.copiedSelectedNazm.set(false), 2200);
+  }
+
+  getSelectedNazmTitle(nazm?: Content | null): string {
+    if (!nazm) return '';
+    return nazm.primaryText?.title || nazm.title || '';
+  }
+
+  getSelectedNazmPreviewLines(nazm?: Content | null, maxLines = 3): string[] {
+    if (!nazm) return [];
+    const body = nazm.primaryText?.body || (nazm as any).contentTexts?.[0]?.body || (nazm as any).texts?.[0]?.body || '';
+    const lines = body.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    return lines.slice(0, maxLines);
   }
 
   getSelectedNazmLines(nazm?: Content | null): [string, string] {

@@ -151,17 +151,19 @@
 
 .poem-line {
   font-size: 1.05rem;
-  line-height: 1.7;
+  line-height: 1.4;
   margin: 0;
 }
 
 .line-1 {
   color: var(--text-secondary);
+  margin-bottom: 4px;
 }
 
 .line-2 {
   color: var(--accent-gold);
   font-weight: 600;
+  margin-bottom: 0;
 }
 
 .poem-card-footer {

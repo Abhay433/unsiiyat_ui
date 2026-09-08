@@ -11,13 +11,6 @@
           </div>
 
           <div class="hero-controls">
-            <!-- Font Resizer -->
-            <div class="font-resizer-group">
-              <span class="control-label">{{ scriptService.translate('font_size') }}:</span>
-              <button class="tool-btn" (click)="changeFontSize(-2)" title="Decrease font size">A-</button>
-              <button class="tool-btn" (click)="changeFontSize(2)" title="Increase font size">A+</button>
-            </div>
-
             <!-- Copy Button -->
             <button class="tool-btn copy-btn" (click)="copyHeroCouplet()">
               {{ copiedHero() ? '✓ ' + scriptService.translate('copied') : '📋 ' + scriptService.translate('copy_sher')
@@ -27,7 +20,7 @@
         </div>
 
         <!-- Couplet Text Presentation -->
-        <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()" [style.font-size.px]="heroFontSize()">
+        <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()">
           <p class="couplet-line first-line">{{ currentHero().firstLine }}</p>
           <p class="couplet-line second-line">{{ currentHero().secondLine }}</p>
         </div>
@@ -46,15 +39,11 @@
                 [alt]="currentHero().poet" />
             </div>
             <div class="poet-citation-info">
-              <span class="citation-label font-display">MASTER SHAYAR</span>
               <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ currentHero().poet }}</span>
             </div>
           </div>
 
           <div class="hero-action-links">
-            <button class="btn btn-ghost btn-sm" (click)="openDictionaryWith('Khwahish')">
-              📖 Explore Words
-            </button>
             <a [routerLink]="['/content', currentHero().id]" class="btn btn-gold btn-sm">
               {{ scriptService.translate('read_more') }} &rarr;
             </a>
@@ -68,17 +57,9 @@
   <section class="section-padding poets-section">
     <div class="unsiiyat-container">
       <div class="section-header flex-between">
-        <div>
+        <div class="section-title-wrap">
           <h2 class="section-title font-display">{{ scriptService.translate('explore_poets') }}</h2>
           <p class="section-subtitle">Masters of timeless verse, classical gazals, and philosophical poetry</p>
-        </div>
-        <div class="section-header-right">
-          <span class="carousel-count-indicator font-mono" *ngIf="authorCarouselTotalPages() > 1">
-            Page {{ authorCarouselPage() + 1 }} / {{ authorCarouselTotalPages() }}
-          </span>
-          <a routerLink="/poets" class="view-all-link">
-            {{ scriptService.translate('all_poets') }} &rarr;
-          </a>
         </div>
       </div>
 
@@ -120,12 +101,11 @@
         </button>
       </div>
 
-      <!-- Carousel Pagination Dots -->
+      <!-- Carousel Pagination Dots & Page Indicator below Author Cards -->
       <div class="carousel-dots-wrap" *ngIf="authorCarouselTotalPages() > 1">
-        <button *ngFor="let p of getCarouselPageArray(); let idx = index" type="button" class="carousel-dot-btn"
-          [class.active]="idx === authorCarouselPage()" (click)="goToAuthorPage(idx)"
-          [attr.aria-label]="'Go to page ' + (idx + 1)">
-        </button>
+        <span class="carousel-count-indicator font-mono">
+          Page {{ authorCarouselPage() + 1 }} / {{ authorCarouselTotalPages() }}
+        </span>
       </div>
     </div>
   </section>
@@ -135,7 +115,7 @@
     <div class="unsiiyat-container">
       <!-- Section Header -->
       <div class="section-header flex-between">
-        <div>
+        <div class="section-title-wrap">
           <div class="curated-badge-pill">
             <span class="badge-star">★</span>
             <span class="badge-label font-display">SELECTED MASTERPIECES</span>
@@ -148,15 +128,6 @@
             (scriptService.activeScript() === "hi" ? "शीर्ष आठ चुनिंदा ग़ज़लों का अद्वितीय संग्रह" : "Handpicked
             collection of top 8 selected ghazals") }}
           </p>
-        </div>
-
-        <div class="section-header-right">
-          <span class="carousel-count-indicator font-mono" *ngIf="selectedGhazals().length > 1">
-            Ghazal {{ selectedGhazalIndex() + 1 }} / {{ selectedGhazals().length }}
-          </span>
-          <a [routerLink]="['/genre', 1]" class="view-all-link">
-            {{ scriptService.translate('all_ghazals') || 'All Ghazals' }} &rarr;
-          </a>
         </div>
       </div>
 
@@ -181,15 +152,6 @@
             </div>
 
             <div class="hero-controls">
-              <!-- Font Resizer -->
-              <div class="font-resizer-group">
-                <span class="control-label">{{ scriptService.translate('font_size') }}:</span>
-                <button class="tool-btn" (click)="changeSelectedGhazalFontSize(-2)"
-                  title="Decrease font size">A-</button>
-                <button class="tool-btn" (click)="changeSelectedGhazalFontSize(2)"
-                  title="Increase font size">A+</button>
-              </div>
-
               <!-- Copy Button -->
               <button class="tool-btn copy-btn" (click)="copySelectedGhazalCouplet()">
                 {{ copiedSelectedGhazal() ? '✓ ' + scriptService.translate('copied') : '📋 ' +
@@ -199,8 +161,7 @@
           </div>
 
           <!-- Couplet Text Presentation (Centered, Line 1 Dark, Line 2 Gold) -->
-          <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()"
-            [style.font-size.px]="selectedGhazalFontSize()">
+          <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()">
             <p class="couplet-line first-line">{{ getSelectedGhazalLines(ghazal)[0] }}</p>
             <p class="couplet-line second-line">{{ getSelectedGhazalLines(ghazal)[1] }}</p>
           </div>
@@ -212,16 +173,12 @@
                 <img [src]="getSelectedGhazalPoetAvatar(ghazal)" [alt]="getSelectedGhazalPoetName(ghazal)" />
               </div>
               <div class="poet-citation-info">
-                <span class="citation-label font-display">MASTER SHAYAR</span>
                 <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ getSelectedGhazalPoetName(ghazal)
                   }}</span>
               </div>
             </div>
 
             <div class="hero-action-links">
-              <button class="btn btn-ghost btn-sm" (click)="openDictionaryWith('Khwahish')">
-                📖 Explore Words
-              </button>
               <a [routerLink]="['/content', ghazal.id]" class="btn btn-gold btn-sm">
                 {{ scriptService.translate('read_more') }} &rarr;
               </a>
@@ -237,12 +194,11 @@
         </button>
       </div>
 
-      <!-- Carousel Pagination Dots -->
+      <!-- Carousel Pagination Dots & Count Indicator below Card -->
       <div class="carousel-dots-wrap" *ngIf="selectedGhazals().length > 1">
-        <button *ngFor="let g of selectedGhazals(); let idx = index" type="button" class="carousel-dot-btn"
-          [class.active]="idx === selectedGhazalIndex()" (click)="goToSelectedGhazal(idx)"
-          [attr.aria-label]="'Go to Ghazal ' + (idx + 1)">
-        </button>
+        <span class="carousel-count-indicator font-mono">
+          Ghazal {{ selectedGhazalIndex() + 1 }} / {{ selectedGhazals().length }}
+        </span>
       </div>
     </div>
   </section>
@@ -253,22 +209,14 @@
       <!-- Section Title & Navigation Indicator -->
       <div class="section-header flex-between">
         <div class="section-title-wrap">
-          <span class="section-tag font-display">{{ scriptService.translate('selected_nazms') || 'Selected Nazms' }}</span>
+          <!-- <span class="section-tag font-display">{{ scriptService.translate('selected_nazms') || 'Selected Nazms'
+            }}</span> -->
           <h2 class="section-title font-display">
             {{ scriptService.translate('selected_nazms') || 'Selected Nazms' }}
           </h2>
-          <p class="section-subtitle">
+          <!-- <p class="section-subtitle">
             Curated verses of modern rhythms, deep reflections, and evocative masterworks
-          </p>
-        </div>
-
-        <div class="section-header-right">
-          <span class="carousel-count-indicator font-mono" *ngIf="selectedNazms().length > 1">
-            Nazm {{ selectedNazmIndex() + 1 }} / {{ selectedNazms().length }}
-          </span>
-          <a [routerLink]="['/genre', 2]" class="view-all-link">
-            {{ scriptService.translate('all_nazms') || 'All Nazms' }} &rarr;
-          </a>
+          </p> -->
         </div>
       </div>
 
@@ -293,15 +241,6 @@
             </div>
 
             <div class="hero-controls">
-              <!-- Font Resizer -->
-              <div class="font-resizer-group">
-                <span class="control-label">{{ scriptService.translate('font_size') }}:</span>
-                <button class="tool-btn" (click)="changeSelectedNazmFontSize(-2)"
-                  title="Decrease font size">A-</button>
-                <button class="tool-btn" (click)="changeSelectedNazmFontSize(2)"
-                  title="Increase font size">A+</button>
-              </div>
-
               <!-- Copy Button -->
               <button class="tool-btn copy-btn" (click)="copySelectedNazmCouplet()">
                 {{ copiedSelectedNazm() ? '✓ ' + scriptService.translate('copied') : '📋 ' +
@@ -310,11 +249,16 @@
             </div>
           </div>
 
-          <!-- Couplet/Verse Text Presentation -->
-          <div class="hero-couplet-body" [ngClass]="scriptService.fontClass()"
-            [style.font-size.px]="selectedNazmFontSize()">
-            <p class="couplet-line first-line">{{ getSelectedNazmLines(nazm)[0] }}</p>
-            <p class="couplet-line second-line">{{ getSelectedNazmLines(nazm)[1] }}</p>
+          <!-- Nazm Text Presentation: Title First, then body lines preview -->
+          <div class="hero-couplet-body nazm-presentation-body" [ngClass]="scriptService.fontClass()">
+            <h3 class="nazm-card-title" [ngClass]="scriptService.fontClass()">
+              {{ getSelectedNazmTitle(nazm) }}
+            </h3>
+            <div class="nazm-preview-lines">
+              <p *ngFor="let line of getSelectedNazmPreviewLines(nazm, 3)" class="couplet-line nazm-line">
+                {{ line }}
+              </p>
+            </div>
           </div>
 
           <!-- Couplet Footer -->
@@ -324,15 +268,11 @@
                 <img [src]="getSelectedNazmPoetAvatar(nazm)" [alt]="getSelectedNazmPoetName(nazm)" />
               </div>
               <div class="poet-citation-info">
-                <span class="citation-label font-display">MASTER SHAYAR</span>
                 <span class="poet-name" [ngClass]="scriptService.fontClass()">{{ getSelectedNazmPoetName(nazm) }}</span>
               </div>
             </div>
 
             <div class="hero-action-links">
-              <button class="btn btn-ghost btn-sm" (click)="openDictionaryWith('Nazm')">
-                📖 Explore Words
-              </button>
               <a [routerLink]="['/content', nazm.id]" class="btn btn-gold btn-sm">
                 {{ scriptService.translate('read_more') }} &rarr;
               </a>
@@ -348,12 +288,11 @@
         </button>
       </div>
 
-      <!-- Carousel Pagination Dots -->
+      <!-- Carousel Pagination Dots & Count Indicator below Card -->
       <div class="carousel-dots-wrap" *ngIf="selectedNazms().length > 1">
-        <button *ngFor="let n of selectedNazms(); let idx = index" type="button" class="carousel-dot-btn"
-          [class.active]="idx === selectedNazmIndex()" (click)="goToSelectedNazm(idx)"
-          [attr.aria-label]="'Go to Nazm ' + (idx + 1)">
-        </button>
+        <span class="carousel-count-indicator font-mono">
+          Nazm {{ selectedNazmIndex() + 1 }} / {{ selectedNazms().length }}
+        </span>
       </div>
     </div>
   </section>

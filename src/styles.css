@@ -151,7 +151,7 @@ html, body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Scrollbar */
@@ -173,7 +173,7 @@ html, body {
 /* Typography Classes */
 .font-urdu {
   font-family: var(--font-urdu);
-  line-height: 2.45 !important;
+  line-height: 1.75;
   direction: rtl;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "curs" 1;
   -webkit-font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "curs" 1;
@@ -183,13 +183,13 @@ html, body {
 
 .font-urdu-title {
   font-family: var(--font-urdu-title);
-  line-height: 2.5 !important;
+  line-height: 1.8;
   direction: rtl;
 }
 
 .font-hindi {
   font-family: var(--font-hindi);
-  line-height: 2.05 !important;
+  line-height: 1.55;
   direction: ltr;
   letter-spacing: 0.015em;
   text-rendering: optimizeLegibility;
@@ -197,13 +197,13 @@ html, body {
 
 .font-hindi-title {
   font-family: var(--font-hindi-title);
-  line-height: 1.8 !important;
+  line-height: 1.5;
   direction: ltr;
 }
 
 .font-english {
   font-family: var(--font-english);
-  line-height: 1.85 !important;
+  line-height: 1.5;
   direction: ltr;
   letter-spacing: 0.015em;
   text-rendering: optimizeLegibility;
@@ -472,4 +472,77 @@ body.theme-light .blue-gradient-text {
   .unsiiyat-container {
     padding: 0 16px;
   }
+}
+
+/* Project-wide Responsive Couplet Line Auto-Shrink & Single Line Fitting */
+@media (max-width: 640px) {
+  .couplet-line,
+  .first-line,
+  .second-line,
+  .rekhta-couplet-line,
+  .lughat-couplet-line,
+  .couplet-text {
+    font-size: clamp(11px, 3.4vw, 14.5px) !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.45 !important;
+  }
+}
+
+/* Project-wide Couplet Line Halved Spacing Rules */
+.couplet-line,
+.rekhta-couplet-line,
+.lughat-couplet-line,
+.verse-line,
+.poem-line,
+.work-snippet-line,
+.snippet-line,
+.preview-misra {
+  line-height: 1.4 !important;
+}
+
+.font-urdu .couplet-line,
+.font-urdu .rekhta-couplet-line,
+.font-urdu .lughat-couplet-line,
+.font-urdu .verse-line,
+.font-urdu .poem-line,
+.font-urdu .work-snippet-line,
+.font-urdu .snippet-line,
+.font-urdu .preview-misra {
+  line-height: 1.55 !important;
+}
+
+.font-hindi .couplet-line,
+.font-hindi .rekhta-couplet-line,
+.font-hindi .lughat-couplet-line,
+.font-hindi .verse-line,
+.font-hindi .poem-line,
+.font-hindi .work-snippet-line,
+.font-hindi .snippet-line,
+.font-hindi .preview-misra {
+  line-height: 1.45 !important;
+}
+
+.font-english .couplet-line,
+.font-english .rekhta-couplet-line,
+.font-english .lughat-couplet-line,
+.font-english .verse-line,
+.font-english .poem-line,
+.font-english .work-snippet-line,
+.font-english .snippet-line,
+.font-english .preview-misra {
+  line-height: 1.4 !important;
+}
+
+.first-line,
+.misra-1,
+.line-1 {
+  margin-bottom: 4px !important;
+}
+
+.second-line,
+.misra-2,
+.line-2 {
+  margin-bottom: 0 !important;
 }
