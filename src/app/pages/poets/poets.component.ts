@@ -23,14 +23,20 @@ export class PoetsComponent implements OnInit {
   searchFilter = signal('');
   selectedLetter = signal('ALL');
   selectedEra = signal<'all' | 'classical' | 'progressive' | 'modern'>('all');
-  loading = signal(true);
+  loading = signal<boolean>(true);
+  // Pagination signals (size: 10)
+  currentPage = signal<number>(0);
+  totalPages = signal<number>(1);
+  totalElements = signal<number>(0);
+  isLastPage = signal<boolean>(false);
+  readonly pageSize = 10;
 
   readonly alphabet = ['ALL', 'A', 'B', 'F', 'G', 'I', 'J', 'M', 'P', 'R', 'S', 'Z'];
 
   constructor() {
     effect(() => {
       this.scriptService.activeScript();
-      this.loadPoets();
+      this.loadPoets(0);
     });
   }
 
@@ -40,11 +46,16 @@ export class PoetsComponent implements OnInit {
         this.searchFilter.set(params['q']);
       }
     });
-    this.loadPoets(true);
+    this.loadPoets(0);
   }
 
   getPoetAvatar(poet: any): string {
     return this.authorService.getAuthorAvatar(poet);
+  }
+
+  getPoetInitial(poet: any): string {
+    const name = poet?.primaryName || poet?.name || '';
+    return name ? name.charAt(0).toUpperCase() : '✒';
   }
 
   onImgError(event: Event, poet: any) {
@@ -55,24 +66,61 @@ export class PoetsComponent implements OnInit {
     }
   }
 
-  loadPoets(forceRefresh = false) {
+  loadPoets(page: number = 0) {
     this.loading.set(true);
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
 
-    this.authorService.getEnrichedAuthors(scriptId, forceRefresh).subscribe({
-      next: (data) => {
-        if (data && data.length > 0) {
-          this.poets.set(data);
+    this.authorService.getEnrichedAuthorsPaged(scriptId, {
+      page: page,
+      size: this.pageSize,
+      sortBy: 'id',
+      sortDirection: 'asc'
+    }).subscribe({
+      next: (res) => {
+        const list = res.data || [];
+        if (list.length > 0) {
+          this.poets.set(list);
+          this.currentPage.set(res.page ?? page);
+          const total = res.totalElements ?? list.length;
+          this.totalElements.set(total);
+          this.totalPages.set(res.totalPages || Math.ceil(total / this.pageSize) || 1);
+          this.isLastPage.set(res.last ?? (list.length < this.pageSize));
         } else {
-          this.setFallback();
+          if (page === 0) {
+            this.setFallback();
+          }
+          this.totalPages.set(1);
+          this.isLastPage.set(true);
         }
         this.loading.set(false);
       },
       error: () => {
-        this.setFallback();
+        if (page === 0) {
+          this.setFallback();
+        }
         this.loading.set(false);
+        this.totalPages.set(1);
+        this.isLastPage.set(true);
       }
     });
+  }
+
+  goToPage(page: number) {
+    if (page < 0 || page >= this.totalPages() || page === this.currentPage() || this.loading()) return;
+    this.loadPoets(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  getPageRange(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pages: number[] = [];
+    const start = Math.max(0, current - 2);
+    const end = Math.min(total, start + 5);
+    for (let i = start; i < end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   private setFallback() {

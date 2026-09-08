@@ -241,12 +241,12 @@ export class AuthorService {
     );
   }
 
-  getEnrichedAuthors(scriptId?: number, forceRefresh = false): Observable<Author[]> {
-    const key = scriptId ? String(scriptId) : 'default';
+  getEnrichedAuthors(scriptId?: number, forceRefresh = false, size = 10): Observable<Author[]> {
+    const key = `${scriptId ? String(scriptId) : 'default'}_${size}`;
     if (!forceRefresh && this.cachedEnrichedAuthors[key] && this.cachedEnrichedAuthors[key].length > 0) {
       return of(this.cachedEnrichedAuthors[key]);
     }
-    return this.getEnrichedAuthorsPaged(scriptId, { size: 100 }).pipe(
+    return this.getEnrichedAuthorsPaged(scriptId, { size }).pipe(
       map(res => {
         const list = res.data || [];
         this.cachedEnrichedAuthors[key] = list;

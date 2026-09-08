@@ -9,32 +9,120 @@
     </div>
   </div>
 
+  <!-- Search Filter Bar -->
+  <div class="poets-search-bar-wrap">
+    <div class="search-input-box">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        class="poets-search-input" 
+        placeholder="Search author by name, pen name, or biography..."
+        [ngModel]="searchFilter()" 
+        (ngModelChange)="searchFilter.set($event)" />
+      <button *ngIf="searchFilter()" class="clear-search-btn" (click)="searchFilter.set('')" title="Clear search">✕</button>
+    </div>
+  </div>
 
   <!-- Stats row -->
   <div class="poets-stats-row flex-between">
-    <span class="stats-text">Showing <strong>{{ filteredPoets().length }}</strong> legendary authors & shayars</span>
+    <span class="stats-text">
+      Showing <strong>{{ filteredPoets().length }}</strong> of <strong>{{ totalElements() || filteredPoets().length }}</strong> legendary authors & shayars
+      <span class="page-indicator-pill font-mono" *ngIf="totalPages() > 1">Page {{ currentPage() + 1 }} / {{ totalPages() }}</span>
+    </span>
     <span class="sort-text">Sorted by Literary Chronology</span>
   </div>
 
-  <!-- Poets Grid -->
-  <div class="poets-directory-grid">
+  <!-- Authors List View (Converted from Grid to List) -->
+  <div class="poets-list-container">
     <a 
       *ngFor="let poet of filteredPoets()" 
       [routerLink]="['/poet', poet.id]" 
-      class="poet-card poetic-card">
-      <div class="poet-portrait-ring">
-        <img [src]="getPoetAvatar(poet)" [alt]="poet.primaryName" (error)="onImgError($event, poet)" />
-      </div>
+      class="poet-list-card poetic-card">
       
-      <div class="poet-card-info">
-        <span class="poet-era-tag font-display">MASTER SHAYAR</span>
-        <h3 class="poet-card-name" [ngClass]="scriptService.fontClass()">{{ poet.primaryName }}</h3>
-        <span class="poet-dates font-english">{{ poet.birthDate | date:'yyyy' }} – {{ poet.deathDate | date:'yyyy' }}</span>
-        <p class="poet-bio-preview" [ngClass]="scriptService.fontClass()">{{ poet.primaryBio }}</p>
-        <div class="poet-card-action">
-          <span class="explore-btn font-display">Explore Portfolio &rarr;</span>
+      <div class="poet-list-main">
+        <!-- Avatar Ring -->
+        <div class="poet-list-avatar-wrap">
+          <img 
+            [src]="getPoetAvatar(poet)" 
+            [alt]="poet.primaryName" 
+            (error)="onImgError($event, poet)" 
+            class="poet-list-avatar" />
+        </div>
+
+        <!-- Poet Information -->
+        <div class="poet-list-info">
+          <div class="poet-list-title-row">
+            <h3 class="poet-list-name font-display" [ngClass]="scriptService.fontClass()">
+              {{ poet.primaryName }}
+            </h3>
+            <span class="poet-era-badge font-display">MASTER SHAYAR</span>
+            <span class="poet-dates-tag font-english" *ngIf="poet.birthDate">
+              {{ poet.birthDate | date:'yyyy' }} <ng-container *ngIf="poet.deathDate">– {{ poet.deathDate | date:'yyyy' }}</ng-container>
+            </span>
+          </div>
+
+          <!-- Multi-script Names Row (Urdu, Hindi, English) -->
+          <div class="poet-scripts-row" *ngIf="poet.urName || poet.hiName || poet.enName">
+            <span *ngIf="poet.urName" class="script-badge font-urdu" title="Urdu Script">{{ poet.urName }}</span>
+            <span *ngIf="poet.hiName" class="script-badge font-hindi" title="Hindi Script">{{ poet.hiName }}</span>
+            <span *ngIf="poet.enName" class="script-badge font-sans" title="English / Latin">{{ poet.enName }}</span>
+          </div>
+
+          <!-- Bio preview -->
+          <p class="poet-list-bio" *ngIf="poet.primaryBio" [ngClass]="scriptService.fontClass()">
+            {{ poet.primaryBio }}
+          </p>
         </div>
       </div>
+
+      <!-- Right Action -->
+      <div class="poet-list-action">
+        <span class="explore-btn font-display">
+          <span>Explore Portfolio</span>
+          <span class="action-arrow">&rarr;</span>
+        </span>
+      </div>
     </a>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredPoets().length === 0" class="empty-poets-card poetic-card text-center">
+      <div class="empty-icon">📜</div>
+      <h3 class="empty-title font-display">No Authors Found</h3>
+      <p class="empty-desc">No authors match your search criteria. Try a different name or clear the search.</p>
+      <button class="btn btn-outline-gold btn-sm" (click)="searchFilter.set('')">Reset Search</button>
+    </div>
+
+    <!-- Numbered Pagination Controls (Prev, 1, 2, 3... Next) -->
+    <div class="poets-pagination-bar flex-center" *ngIf="totalPages() > 1">
+      <!-- Previous Page Button -->
+      <button 
+        type="button" 
+        class="page-nav-btn prev-btn" 
+        [disabled]="currentPage() === 0 || loading()" 
+        (click)="goToPage(currentPage() - 1)">
+        &larr; {{ scriptService.activeScript() === 'ur' ? 'پچھلا' : (scriptService.activeScript() === 'hi' ? 'पिछला' : 'Prev') }}
+      </button>
+
+      <!-- Page Numbers List: 1, 2, 3... -->
+      <div class="page-numbers-list">
+        <button 
+          type="button" 
+          *ngFor="let p of getPageRange()" 
+          class="page-num-btn" 
+          [class.active]="p === currentPage()" 
+          (click)="goToPage(p)">
+          {{ p + 1 }}
+        </button>
+      </div>
+
+      <!-- Next Page Button -->
+      <button 
+        type="button" 
+        class="page-nav-btn next-btn" 
+        [disabled]="isLastPage() || currentPage() >= totalPages() - 1 || loading()" 
+        (click)="goToPage(currentPage() + 1)">
+        {{ scriptService.activeScript() === 'ur' ? 'اگلا' : (scriptService.activeScript() === 'hi' ? 'अगला' : 'Next') }} &rarr;
+      </button>
+    </div>
   </div>
 </div>
