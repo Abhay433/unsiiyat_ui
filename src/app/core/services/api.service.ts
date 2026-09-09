@@ -1,19 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  // Default to localhost:8080 Spring Boot backend
-
-  // for local
-  private readonly baseUrl = '/unsiiyat';
-
-  // for production
-  // private readonly baseUrl = '/unsiiyat-adab';
+  private readonly baseUrl = environment.baseUrl;
 
   get<T>(endpoint: string): Observable<T> {
     return this.http.get<T>(`${this.baseUrl}${endpoint}`);

@@ -17,11 +17,8 @@
     <!-- Search input inside dictionary -->
     <div class="dict-search-wrapper">
       <span class="search-icon">🔍</span>
-      <input 
-        type="text" 
-        class="dict-search-input"
-        placeholder="Type or search word (e.g. خلد, قفس, خودی, رنجش, Unsiiyat)..."
-        [ngModel]="searchQuery()"
+      <input type="text" class="dict-search-input"
+        placeholder="Type or search word (e.g. خلد, قفس, خودی, رنجش, Unsiiyat)..." [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)" />
       <button *ngIf="searchQuery()" type="button" class="dict-clear-btn" (click)="searchQuery.set('')">✕</button>
     </div>
@@ -30,7 +27,7 @@
     <div class="dict-list">
       <div *ngIf="wordList.length === 0" class="empty-dict-message">
         <p>No exact entry found for "<em>{{ searchQuery() }}</em>".</p>
-        <span>Explore related words by clearing the search box.</span>
+        <span>We are working on dictionary it will be soon available.</span>
       </div>
 
       <div *ngFor="let item of wordList" class="dict-item poetic-card">

@@ -585,7 +585,7 @@ export class SearchComponent implements OnInit {
     }
     const scriptId = this.scriptService.getScriptId(this.scriptService.activeScript());
 
-    this.searchService.searchCouplets(q, undefined, page, 5, scriptId).subscribe({
+    this.searchService.searchCouplets(q, undefined, page, 15, scriptId).subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
           const data = res.data;

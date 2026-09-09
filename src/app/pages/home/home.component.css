@@ -120,21 +120,21 @@
 /* Couplet Text Body */
 .hero-couplet-body {
   text-align: center;
-  margin: 20px 0;
-  padding: 4px 0;
+  margin: 24px 0;
+  padding: 6px 0;
   color: var(--text-primary);
 }
 
 .couplet-line {
-  margin-bottom: 4px;
-  line-height: 1.4;
+  margin-bottom: 8px;
+  line-height: 1.55;
   font-weight: 700;
   transition: font-size var(--transition-fast);
 }
 
 .first-line {
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .second-line {
@@ -1448,8 +1448,8 @@
     white-space: nowrap !important;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.4 !important;
-    margin-bottom: 4px !important;
+    line-height: 1.55 !important;
+    margin-bottom: 6px !important;
     text-align: center;
   }
 

@@ -33,8 +33,7 @@
 
     <!-- Case A: Content is available in active script -->
     <ng-container *ngIf="hasScriptContent()">
-      <!-- Couplets Stream: Clean, pure, spacious typography without card boxes -->
-      <div class="rekhta-couplets-stream" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()"
+      <div class="rekhta-couplets-stream" [class.is-ghazal-stream]="isGhazal()" [class.is-article-stream]="!isGhazal()" [ngClass]="getPoemFontClass()" [dir]="getPoemDirection()"
         [style.font-size.px]="readerFontSize()">
         <div *ngFor="let couplet of couplets(); let idx = index; trackBy: trackByIndex" class="rekhta-couplet-stanza">
           <div class="rekhta-couplet-lines">

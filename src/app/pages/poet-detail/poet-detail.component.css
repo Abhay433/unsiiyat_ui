@@ -83,32 +83,40 @@
   letter-spacing: 1.5px;
   color: var(--accent-gold);
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  display: block;
 }
 
 .poet-hero-title {
-  font-size: 2.3rem;
+  font-size: 2.1rem;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.3;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.poet-hero-title.font-urdu {
+  font-size: 2.3rem;
+  line-height: 1.6;
 }
 
 .poet-hero-lifespan {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .poet-hero-bio-short {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 18px;
+  line-height: 1.55;
+  margin-bottom: 14px;
 }
 
 .poet-stats-badges {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -362,26 +370,64 @@
   line-height: 1.6;
 }
 
-/* Works List Feed (Replaces Grid with Elegant Row List) */
+/* Works List Feed (Minimal Single-Line Row List like Image 2) */
+.works-single-line-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  margin: 16px 0 24px;
+}
+
+.work-single-row-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 1.02rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+  min-height: 44px;
+}
+
+.work-single-row-item:last-child {
+  border-bottom: none;
+}
+
+.work-single-row-item:hover {
+  background: var(--bg-secondary);
+  color: var(--accent-gold);
+  padding-left: 24px;
+}
+
+.work-title-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  width: 100%;
+}
+
+.work-single-row-item.font-urdu {
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 1.22rem;
+  line-height: 1.65;
+}
+
+.work-single-row-item.font-hindi {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  font-size: 1.05rem;
+}
+
 .works-list-feed {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.work-list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 18px 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-fast);
-  position: relative;
-  overflow: hidden;
 }
 
 .work-list-item::before {
@@ -583,23 +629,25 @@
     text-align: center;
   }
   .poet-hero-banner {
-    padding: 24px 18px;
+    padding: 20px 14px;
+    margin-bottom: 20px;
   }
   .poet-hero-title {
-    font-size: 1.8rem;
+    font-size: clamp(1.25rem, 4.2vw, 1.6rem) !important;
+    line-height: 1.5 !important;
   }
-  .work-list-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-    padding: 16px 18px;
+  .poet-hero-era {
+    font-size: 0.65rem !important;
   }
-  .item-serial-box {
-    width: 36px;
-    height: 36px;
+  .work-single-row-item {
+    padding: 10px 12px;
+    font-size: clamp(0.85rem, 3.2vw, 0.98rem) !important;
+    min-height: 40px;
   }
-  .btn-read-action {
-    width: 100%;
-    justify-content: center;
+  .work-single-row-item.font-urdu {
+    font-size: clamp(0.95rem, 3.8vw, 1.15rem) !important;
+  }
+  .work-single-row-item.font-hindi {
+    font-size: clamp(0.88rem, 3.4vw, 1.02rem) !important;
   }
 }

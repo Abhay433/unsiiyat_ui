@@ -53,7 +53,8 @@
           <input type="text" class="nav-search-input" [placeholder]="scriptService.translate('search_placeholder')"
             [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (focus)="onSearchFocus()" name="search"
             autocomplete="off" />
-          <button *ngIf="searchQuery()" type="button" class="search-clear-btn" (click)="searchQuery.set('')">✕</button>
+          <button *ngIf="searchQuery()" type="button" class="search-clear-btn" (click)="searchQuery.set('')" title="Clear search">✕</button>
+          <button type="submit" class="search-submit-btn" title="Search">🔍</button>
         </form>
 
         <!-- Live Search Dropdown -->

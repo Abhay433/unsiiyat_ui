@@ -474,12 +474,9 @@ body.theme-light .blue-gradient-text {
   }
 }
 
-/* Project-wide Responsive Couplet Line Auto-Shrink & Single Line Fitting */
+/* Project-wide Responsive Couplet Line Auto-Shrink & Single Line Fitting for Hero & Cards */
 @media (max-width: 640px) {
-  .couplet-line,
-  .first-line,
-  .second-line,
-  .rekhta-couplet-line,
+  .hero-couplet-body .couplet-line,
   .lughat-couplet-line,
   .couplet-text {
     font-size: clamp(11px, 3.4vw, 14.5px) !important;
@@ -490,7 +487,7 @@ body.theme-light .blue-gradient-text {
   }
 }
 
-/* Project-wide Couplet Line Halved Spacing Rules */
+/* Project-wide Couplet Line Spacing Rules */
 .couplet-line,
 .rekhta-couplet-line,
 .lughat-couplet-line,
@@ -499,7 +496,7 @@ body.theme-light .blue-gradient-text {
 .work-snippet-line,
 .snippet-line,
 .preview-misra {
-  line-height: 1.4 !important;
+  line-height: 1.55 !important;
 }
 
 .font-urdu .couplet-line,
@@ -510,7 +507,7 @@ body.theme-light .blue-gradient-text {
 .font-urdu .work-snippet-line,
 .font-urdu .snippet-line,
 .font-urdu .preview-misra {
-  line-height: 1.55 !important;
+  line-height: 1.85 !important;
 }
 
 .font-hindi .couplet-line,
@@ -521,7 +518,7 @@ body.theme-light .blue-gradient-text {
 .font-hindi .work-snippet-line,
 .font-hindi .snippet-line,
 .font-hindi .preview-misra {
-  line-height: 1.45 !important;
+  line-height: 1.6 !important;
 }
 
 .font-english .couplet-line,
@@ -532,13 +529,13 @@ body.theme-light .blue-gradient-text {
 .font-english .work-snippet-line,
 .font-english .snippet-line,
 .font-english .preview-misra {
-  line-height: 1.4 !important;
+  line-height: 1.55 !important;
 }
 
 .first-line,
 .misra-1,
 .line-1 {
-  margin-bottom: 4px !important;
+  margin-bottom: 8px !important;
 }
 
 .second-line,

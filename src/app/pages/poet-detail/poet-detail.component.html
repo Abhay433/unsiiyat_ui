@@ -85,47 +85,14 @@
       <span>Fetching works...</span>
     </div>
 
-    <!-- Works List View (10 items per page) -->
-    <div class="works-list-feed" *ngIf="!loadingContents() && poetContents().length > 0">
-      <div *ngFor="let item of poetContents(); let idx = index" class="work-list-item poetic-card">
-        <!-- Serial Index Circle -->
-        <div class="item-serial-box">
-          <span class="serial-num font-mono">{{ (currentPage() * pageSize()) + idx + 1 }}</span>
-        </div>
-
-        <!-- Main Info: Title, Poet, Meta, Couplet Excerpt -->
-        <div class="work-main-info">
-          <div class="work-header-line flex-between">
-            <h3 class="work-item-title" [ngClass]="scriptService.fontClass()">
-              <a [routerLink]="['/content', item.id]" class="work-title-link">
-                {{ item.primaryText?.title || item.title }}
-              </a>
-            </h3>
-            <span class="badge font-display">{{ getGenreBadge(item) }}</span>
-          </div>
-
-          <div class="work-meta-subline">
-            <span class="work-poet-byline">✒️ {{ poet()?.primaryName }}</span>
-            <span class="meta-dot">·</span>
-            <span class="work-genre-inline">✦ {{ getGenreBadge(item) }}</span>
-          </div>
-
-          <!-- Couplet Preview Snippet -->
-          <div class="work-snippet-box" [ngClass]="scriptService.fontClass()" *ngIf="getFirstCouplet(item.primaryText?.body)[0]">
-            <p *ngFor="let line of getFirstCouplet(item.primaryText?.body)" class="work-snippet-line">
-              {{ line }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Right Side Action Button -->
-        <div class="work-item-action">
-          <a [routerLink]="['/content', item.id]" class="btn btn-gold btn-read-action">
-            <span>{{ scriptService.translate('read_more') }}</span>
-            <span class="read-arrow">&rarr;</span>
-          </a>
-        </div>
-      </div>
+    <!-- Minimal Single-Line Works List (Clean 1-line clickable titles like Image 2) -->
+    <div class="works-single-line-list" *ngIf="!loadingContents() && poetContents().length > 0">
+      <a *ngFor="let item of poetContents()" 
+         [routerLink]="['/content', item.id]" 
+         class="work-single-row-item"
+         [ngClass]="scriptService.fontClass()">
+        <span class="work-title-text">{{ item.primaryText?.title || item.title }}</span>
+      </a>
     </div>
 
     <!-- Empty Genre State -->

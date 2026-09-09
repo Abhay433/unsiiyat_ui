@@ -135,6 +135,40 @@ export class ContentDetailComponent implements OnInit {
     return c?.title || (lang === 'ur' ? 'کلام' : (lang === 'hi' ? 'कलाम' : 'Poem'));
   }
 
+  readonly isGhazal = computed(() => {
+    const c = this.content();
+    if (!c) return false;
+
+    const gName = (c.genre?.name || c.genreName || c.genre || c.contentType || c.type || '').toString().toLowerCase();
+
+    if (gName.includes('article') || gName.includes('mazmoon') || gName.includes('essay') || gName.includes('prose') ||
+        gName.includes('nazm') || gName.includes('مضمون') || gName.includes('نظم') || gName.includes('نثر') ||
+        gName.includes('مقالہ') || gName.includes('شخصیت') || gName.includes('انشائیہ')) {
+      return false;
+    }
+
+    if (gName.includes('ghazal') || gName.includes('غزل') || gName.includes('گزل') || gName.includes('गज़ल')) {
+      return true;
+    }
+
+    const body = c.primaryText?.body || c.body || '';
+    if (body) {
+      const lines = body.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+      if (lines.length > 0) {
+        const totalChars = lines.reduce((acc: number, l: string) => acc + l.length, 0);
+        const totalWords = lines.reduce((acc: number, l: string) => acc + l.split(/\s+/).filter(w => w.length > 0).length, 0);
+        const avgChars = totalChars / lines.length;
+        const avgWords = totalWords / lines.length;
+
+        if (avgChars > 65 || avgWords > 11) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
   // Memoized couplets computed signal
   readonly couplets = computed(() => {
     const c = this.content();
