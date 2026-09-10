@@ -46,19 +46,5 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Build batch files
-buildlocal.bat
-buildprod.bat
-build*.bat
-
-# Application properties files
-application.properties
-application*.properties
-**/application*.properties
-
-# Environment files
-src/environments/environment.ts
-src/environments/environment*.ts
-**/environments/
-
-
+# Build scripts
+build.sh

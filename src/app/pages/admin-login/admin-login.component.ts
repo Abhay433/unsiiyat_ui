@@ -81,7 +81,7 @@ export class AdminLoginComponent implements OnInit {
         if (backendMessage) {
           this.errorMsg.set(backendMessage);
         } else if (err.status === 0) {
-          this.errorMsg.set('Cannot connect to backend server (http://localhost:8080). Please ensure Spring Boot is running.');
+          this.errorMsg.set('Cannot connect to backend server Please ensure Spring Boot is running.');
         } else {
           this.errorMsg.set('Authentication failed. Invalid administrator credentials or server error.');
         }
