@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy, computed, effect, untracked } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, effect, untracked, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -82,7 +82,11 @@ export class StudioComponent implements OnInit, OnDestroy {
 
   // Active Navigation Tab
   activeTab = signal<'content' | 'genres' | 'themes' | 'authors' | 'auth' | 'seed'>('content');
-  isSidebarCollapsed = signal(false);
+  isSidebarCollapsed = signal<boolean>(
+    typeof window !== 'undefined'
+      ? (localStorage.getItem('unsiiyat_studio_sidebar') === 'collapsed' || window.innerWidth < 1100)
+      : false
+  );
   searchQuery = signal('');
 
   // Content Tab Dedicated Filters (Poem Title, Author Search & Genre Dropdown)
@@ -149,6 +153,21 @@ export class StudioComponent implements OnInit, OnDestroy {
   readonly pagedAdmins = computed(() => {
     const start = this.adminPage() * this.pageSize;
     return this.filteredAdmins().slice(start, start + this.pageSize);
+  });
+
+  // Executive KPI Metrics
+  readonly totalContentsCount = computed(() => this.contentTotalElements() || this.contents().length);
+  readonly selectedContentsCount = computed(() => this.contents().filter(c => c.isSelected).length);
+  readonly totalAuthorsCount = computed(() => this.authorTotalElements() || this.authors().length);
+  readonly totalGenresCount = computed(() => this.genreTotalElements() || this.genres().length);
+  readonly totalThemesCount = computed(() => this.themeTotalElements() || this.themes().length);
+  readonly activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.contentTitleSearch()) count++;
+    if (this.contentAuthorSearch()) count++;
+    if (this.contentGenreFilter()) count++;
+    if (this.contentSelectedFilter()) count++;
+    return count;
   });
 
   editingContentId = signal<number | null>(null);
@@ -262,7 +281,22 @@ export class StudioComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar() {
-    this.isSidebarCollapsed.update(v => !v);
+    this.isSidebarCollapsed.update(v => {
+      const next = !v;
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('unsiiyat_studio_sidebar', next ? 'collapsed' : 'expanded');
+      }
+      return next;
+    });
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth < 1100 && !this.isSidebarCollapsed()) {
+        this.isSidebarCollapsed.set(true);
+      }
+    }
   }
 
   // --- Theme Selection Helpers ---

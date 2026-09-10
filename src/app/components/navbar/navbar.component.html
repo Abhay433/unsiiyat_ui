@@ -41,7 +41,8 @@
     <div class="unsiiyat-container flex-between nav-main-row">
       <!-- Brand Logo -->
       <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
-        <span class="brand-name gold-gradient-text" [ngClass]="scriptService.activeScript() === 'ur' ? 'font-urdu' : 'font-display'">
+        <span class="brand-name gold-gradient-text"
+          [ngClass]="scriptService.activeScript() === 'ur' ? 'font-urdu' : 'font-display'">
           {{ scriptService.translate('brand') }}
         </span>
       </a>
@@ -53,7 +54,8 @@
           <input type="text" class="nav-search-input" [placeholder]="scriptService.translate('search_placeholder')"
             [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (focus)="onSearchFocus()" name="search"
             autocomplete="off" />
-          <button *ngIf="searchQuery()" type="button" class="search-clear-btn" (click)="searchQuery.set('')" title="Clear search">✕</button>
+          <button *ngIf="searchQuery()" type="button" class="search-clear-btn" (click)="searchQuery.set('')"
+            title="Clear search">✕</button>
           <button type="submit" class="search-submit-btn" title="Search">🔍</button>
         </form>
 
@@ -98,7 +100,7 @@
           {{ scriptService.translate('themes') }}
         </a>
         <!-- Mobile Script / Language Selector -->
-        <div class="mobile-script-selector">
+        <!-- <div class="mobile-script-selector">
           <span class="mobile-script-label">🌐 Language / زبان:</span>
           <div class="script-switcher-pills">
             <button *ngFor="let s of scriptService.scripts()" class="script-pill"
@@ -106,7 +108,7 @@
               {{ s.nativeName || s.name }}
             </button>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Action Controls -->

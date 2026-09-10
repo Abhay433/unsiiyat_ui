@@ -5,73 +5,153 @@
   <aside class="admin-sidebar">
     <!-- Brand Header -->
     <div class="sidebar-header">
-      <div class="brand-badge-icon">
-        <span>✒️</span>
+      <div class="brand-badge-icon" title="Unsiiyat Studio">
+        <svg class="brand-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+          <line x1="16" y1="8" x2="2" y2="22" />
+          <line x1="17.5" y1="15" x2="9" y2="15" />
+        </svg>
       </div>
       <div class="brand-titles" *ngIf="!isSidebarCollapsed()">
         <h2 class="brand-title">Unsiiyat Studio</h2>
-        <span class="brand-subtitle">POETRY MANAGEMENT SYSTEM</span>
+        <span class="brand-subtitle">POETRY CMS & ADMIN</span>
       </div>
     </div>
 
     <!-- Collapse Toggle Button on Border -->
     <button class="sidebar-collapse-toggle" (click)="toggleSidebar()"
       [title]="isSidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
-      <span>{{ isSidebarCollapsed() ? '›' : '‹' }}</span>
+      <svg class="collapse-icon" [class.rotated]="isSidebarCollapsed()" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6" />
+      </svg>
     </button>
 
     <!-- Navigation Menu -->
     <div class="sidebar-menu-wrapper">
+      <!-- Section 1: Workspace -->
       <div class="menu-section-label" *ngIf="!isSidebarCollapsed()">
-        <span>MAIN MENU</span>
+        <span>WORKSPACE</span>
       </div>
 
       <nav class="sidebar-nav">
         <!-- 1. Content / Ghazals -->
-        <button class="nav-item-btn" [class.active]="activeTab() === 'content'"
-          (click)="switchTab('content')" title="Content (Ghazals & Poems)">
-          <span class="nav-icon">📜</span>
-          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Content</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && contentTotalElements() > 0">{{ contentTotalElements() }}</span>
+        <button class="nav-item-btn" [class.active]="activeTab() === 'content'" (click)="switchTab('content')"
+          title="Content (Ghazals & Poems)">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Content & Poems</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && totalContentsCount() > 0">{{ totalContentsCount()
+            }}</span>
         </button>
 
-        <!-- 2. Genres -->
-        <button class="nav-item-btn" [class.active]="activeTab() === 'genres'"
-          (click)="switchTab('genres')" title="Genres">
-          <span class="nav-icon">🏷️</span>
-          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Genres</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && genreTotalElements() > 0">{{ genreTotalElements() }}</span>
+        <!-- 2. Authors / Poets -->
+        <button class="nav-item-btn" [class.active]="activeTab() === 'authors'" (click)="switchTab('authors')"
+          title="Authors & Shayars">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Authors & Shayars</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && totalAuthorsCount() > 0">{{ totalAuthorsCount()
+            }}</span>
+        </button>
+      </nav>
+
+      <!-- Section 2: Taxonomy -->
+      <div class="menu-section-label" *ngIf="!isSidebarCollapsed()">
+        <span>TAXONOMY</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 3. Genres -->
+        <button class="nav-item-btn" [class.active]="activeTab() === 'genres'" (click)="switchTab('genres')"
+          title="Literary Genres">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Literary Genres</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && totalGenresCount() > 0">{{ totalGenresCount()
+            }}</span>
         </button>
 
-        <!-- 3. Themes -->
-        <button class="nav-item-btn" [class.active]="activeTab() === 'themes'"
-          (click)="switchTab('themes')" title="Themes">
-          <span class="nav-icon">✦</span>
-          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Themes</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && themeTotalElements() > 0">{{ themeTotalElements() }}</span>
+        <!-- 4. Themes -->
+        <button class="nav-item-btn" [class.active]="activeTab() === 'themes'" (click)="switchTab('themes')"
+          title="Thematic Moods">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Thematic Moods</span>
+          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && totalThemesCount() > 0">{{ totalThemesCount()
+            }}</span>
         </button>
+      </nav>
 
-        <!-- 4. Authors / Poets -->
-        <button class="nav-item-btn" [class.active]="activeTab() === 'authors'"
-          (click)="switchTab('authors')" title="Authors & Poets">
-          <span class="nav-icon">👤</span>
-          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Authors / Poets</span>
-          <span class="nav-counter" *ngIf="!isSidebarCollapsed() && authorTotalElements() > 0">{{ authorTotalElements() }}</span>
-        </button>
+      <!-- Section 3: System -->
+      <div class="menu-section-label" *ngIf="!isSidebarCollapsed()">
+        <span>ADMINISTRATION</span>
+      </div>
 
+      <nav class="sidebar-nav">
         <!-- 5. Auth / Platform Admins -->
-        <button class="nav-item-btn" [class.active]="activeTab() === 'auth'"
-          (click)="switchTab('auth')" title="Platform Admins">
-          <span class="nav-icon">🔐</span>
-          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Platform Admins</span>
+        <button class="nav-item-btn" [class.active]="activeTab() === 'auth'" (click)="switchTab('auth')"
+          title="Platform Administrators">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <polyline points="9 12 11 14 15 10" />
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Administrators</span>
           <span class="nav-counter" *ngIf="!isSidebarCollapsed()">{{ adminUsers().length }}</span>
         </button>
+
+        <!-- 6. Database Seed Engine -->
+        <!-- <button class="nav-item-btn" [class.active]="activeTab() === 'seed'"
+          (click)="switchTab('seed')" title="Database Engine">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </span>
+          <span class="nav-label" *ngIf="!isSidebarCollapsed()">Database Engine</span>
+        </button> -->
       </nav>
 
       <!-- Secondary Sanctuary Link -->
       <div class="sidebar-secondary-nav">
-        <a routerLink="/" class="nav-item-btn sanctuary-link" title="Return to Public Sanctuary">
-          <span class="nav-icon">🏛️</span>
+        <a routerLink="/" class="nav-item-btn sanctuary-link" title="Open Public Sanctuary">
+          <span class="nav-icon-wrap">
+            <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </span>
           <span class="nav-label" *ngIf="!isSidebarCollapsed()">Public Sanctuary</span>
         </a>
       </div>
@@ -79,14 +159,24 @@
 
     <!-- Sidebar Bottom User Profile -->
     <div class="sidebar-user-footer">
-      <div class="user-avatar-circle" (click)="triggerProfilePhotoUpload(profilePhotoInput)" title="Click to upload profile photo">
-        <img *ngIf="authService.currentUser()?.profilePictureUrl" 
-             [src]="authService.currentUser()?.profilePictureUrl" 
-             alt="Profile" 
-             class="user-avatar-img" />
-        <span *ngIf="!authService.currentUser()?.profilePictureUrl">👑</span>
+      <div class="user-avatar-circle" (click)="triggerProfilePhotoUpload(profilePhotoInput)"
+        title="Upload profile photo">
+        <img *ngIf="authService.currentUser()?.profilePictureUrl" [src]="authService.currentUser()?.profilePictureUrl"
+          alt="Profile" class="user-avatar-img" />
+        <span *ngIf="!authService.currentUser()?.profilePictureUrl" class="user-avatar-placeholder">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </span>
+        <span class="user-online-status-dot" title="Active"></span>
         <div class="user-avatar-overlay">
-          <span *ngIf="!isUploadingProfilePhoto()">📷</span>
+          <svg *ngIf="!isUploadingProfilePhoto()" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
           <span *ngIf="isUploadingProfilePhoto()" class="upload-spin">⏳</span>
         </div>
       </div>
@@ -94,13 +184,18 @@
 
       <div class="user-details-text" *ngIf="!isSidebarCollapsed()">
         <span class="user-profile-name">{{ authService.currentUser()?.name || 'Administrator' }}</span>
-        <span class="user-profile-role">
-          Platform Admin
-          <span class="change-photo-badge" (click)="triggerProfilePhotoUpload(profilePhotoInput)">• 📷 Photo</span>
-        </span>
+        <div class="user-profile-meta">
+          <span class="role-badge">Super Admin</span>
+          <span class="change-photo-badge" (click)="triggerProfilePhotoUpload(profilePhotoInput)">Photo</span>
+        </div>
       </div>
       <button *ngIf="!isSidebarCollapsed()" class="user-logout-icon-btn" (click)="logoutAdmin()" title="Sign Out Admin">
-        <span>🚪</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
       </button>
     </div>
   </aside>
@@ -112,7 +207,18 @@
     <!-- Status Alert Floating Toast -->
     <div *ngIf="statusMsg()" class="status-toast-bar animate-fade-in"
       [class.alert-success]="statusMsg()?.type === 'success'" [class.alert-error]="statusMsg()?.type === 'error'">
-      <span class="status-icon">{{ statusMsg()?.type === 'success' ? '✓' : '⚠️' }}</span>
+      <div class="toast-status-icon">
+        <svg *ngIf="statusMsg()?.type === 'success'" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        <svg *ngIf="statusMsg()?.type === 'error'" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
       <span class="status-text">{{ statusMsg()?.text }}</span>
       <button type="button" class="status-toast-close" (click)="statusMsg.set(null)" aria-label="Close">&times;</button>
     </div>
@@ -120,31 +226,53 @@
     <!-- Top Workspace Bar -->
     <div class="workspace-top-bar flex-between">
       <div class="workspace-titles">
+        <div class="workspace-breadcrumb">
+          <span class="crumb-root">Unsiiyat Studio</span>
+          <span class="crumb-separator">/</span>
+          <span class="crumb-active">
+            <ng-container [ngSwitch]="activeTab()">
+              <span *ngSwitchCase="'content'">Content Catalog</span>
+              <span *ngSwitchCase="'genres'">Genres</span>
+              <span *ngSwitchCase="'themes'">Themes</span>
+              <span *ngSwitchCase="'authors'">Authors & Shayars</span>
+              <span *ngSwitchCase="'auth'">Administration</span>
+              <span *ngSwitchCase="'seed'">Seed Engine</span>
+            </ng-container>
+          </span>
+        </div>
         <h1 class="section-main-title">
           <ng-container [ngSwitch]="activeTab()">
-            <span *ngSwitchCase="'content'">Content & Poetry</span>
-            <span *ngSwitchCase="'genres'">Genres (اصناف / शैलियाँ)</span>
-            <span *ngSwitchCase="'themes'">Themes & Moods (موضوعات)</span>
-            <span *ngSwitchCase="'authors'">Authors & Shayars (شعراء)</span>
-            <span *ngSwitchCase="'auth'">Platform Admins & Auth</span>
+            <span *ngSwitchCase="'content'">Content & Poetry Catalog</span>
+            <span *ngSwitchCase="'genres'">Literary Genres (اصناف)</span>
+            <span *ngSwitchCase="'themes'">Thematic Moods (موضوعات)</span>
+            <span *ngSwitchCase="'authors'">Authors & Legendary Shayars</span>
+            <span *ngSwitchCase="'auth'">Platform Administrators</span>
             <span *ngSwitchCase="'seed'">Database Seed Engine</span>
           </ng-container>
         </h1>
         <p class="section-subtitle-counter">
           <ng-container [ngSwitch]="activeTab()">
-            <span *ngSwitchCase="'content'">{{ contents().length }} poems & ghazals on the platform</span>
-            <span *ngSwitchCase="'genres'">{{ genres().length }} classical & modern poetic forms</span>
-            <span *ngSwitchCase="'themes'">{{ themes().length }} thematic moods curated</span>
-            <span *ngSwitchCase="'authors'">{{ authors().length }} legendary shayars archived</span>
-            <span *ngSwitchCase="'auth'">{{ adminUsers().length }} registered platform administrators</span>
-            <span *ngSwitchCase="'seed'">Spring Boot & PostgreSQL / H2 Database Sync</span>
+            <span *ngSwitchCase="'content'">Manage, publish, and curate multilingual kalams in Urdu, Hindi, and
+              English.</span>
+            <span *ngSwitchCase="'genres'">Define poetic structures and classical forms (Ghazals, Nazms,
+              Rubaiyats).</span>
+            <span *ngSwitchCase="'themes'">Curate evocative literary moods and thematic collections.</span>
+            <span *ngSwitchCase="'authors'">Preserve biographical archives and portraits of classical & modern
+              masters.</span>
+            <span *ngSwitchCase="'auth'">Manage administrative access, roles, and editorial privileges.</span>
+            <span *ngSwitchCase="'seed'">Synchronize backend database with curated classical poetry dataset.</span>
           </ng-container>
         </p>
       </div>
 
       <div class="workspace-actions-group">
         <button *ngIf="activeTab() !== 'seed'" class="btn btn-blue btn-add-primary" (click)="openAddModal()">
-          <span>+ Add</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Add</span>
           <span [ngSwitch]="activeTab()">
             <span *ngSwitchCase="'content'">Content</span>
             <span *ngSwitchCase="'genres'">Genre</span>
@@ -156,20 +284,109 @@
       </div>
     </div>
 
-    <!-- Dedicated Filter Bar for Content Tab: 2 Search Boxes + 1 Genre Dropdown -->
+    <!-- ========================================================================= -->
+    <!-- EXECUTIVE METRICS OVERVIEW STRIP (KPI CARDS)                               -->
+    <!-- ========================================================================= -->
+    <div class="executive-kpi-grid">
+      <!-- Card 1: Total Kalams -->
+      <div class="kpi-card" [class.kpi-active]="activeTab() === 'content'" (click)="switchTab('content')">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Total Poetry</span>
+          <div class="kpi-icon-badge kpi-badge-blue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value-row">
+          <span class="kpi-value">{{ totalContentsCount() }}</span>
+          <span class="kpi-tag kpi-tag-gold" *ngIf="selectedContentsCount() > 0">
+            ★ {{ selectedContentsCount() }} Featured
+          </span>
+        </div>
+        <span class="kpi-subtext">Multi-script published kalams</span>
+      </div>
+
+      <!-- Card 2: Shayars & Authors -->
+      <div class="kpi-card" [class.kpi-active]="activeTab() === 'authors'" (click)="switchTab('authors')">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Archived Shayars</span>
+          <div class="kpi-icon-badge kpi-badge-indigo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value-row">
+          <span class="kpi-value">{{ totalAuthorsCount() }}</span>
+          <span class="kpi-tag kpi-tag-neutral">Masters</span>
+        </div>
+        <span class="kpi-subtext">Classical & contemporary poets</span>
+      </div>
+
+      <!-- Card 3: Literary Genres -->
+      <div class="kpi-card" [class.kpi-active]="activeTab() === 'genres'" (click)="switchTab('genres')">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Literary Genres</span>
+          <div class="kpi-icon-badge kpi-badge-teal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value-row">
+          <span class="kpi-value">{{ totalGenresCount() }}</span>
+          <span class="kpi-tag kpi-tag-teal">Forms</span>
+        </div>
+        <span class="kpi-subtext">Ghazal, Nazm, Rubai & Marsiya</span>
+      </div>
+
+      <!-- Card 4: Thematic Moods -->
+      <div class="kpi-card" [class.kpi-active]="activeTab() === 'themes'" (click)="switchTab('themes')">
+        <div class="kpi-card-header">
+          <span class="kpi-label">Thematic Moods</span>
+          <div class="kpi-icon-badge kpi-badge-amber">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon
+                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-value-row">
+          <span class="kpi-value">{{ totalThemesCount() }}</span>
+          <span class="kpi-tag kpi-tag-amber">Curated</span>
+        </div>
+        <span class="kpi-subtext">Ishq, Hijr, Tasawwuf & Falsafa</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DEDICATED COMMAND FILTER BAR (CONTENT TAB)                                -->
+    <!-- ========================================================================= -->
     <div *ngIf="activeTab() === 'content'" class="content-filters-toolbar">
       <!-- 1. Search by Poem Title -->
       <div class="filter-field-group">
         <label class="filter-field-label">Poem Title</label>
         <div class="table-search-box content-filter-box">
-          <span class="search-lens">🔍</span>
-          <input 
-            type="text" 
-            class="table-search-input" 
-            placeholder="Search by poem title..."
-            [ngModel]="contentTitleSearch()" 
-            (ngModelChange)="onContentTitleSearchChange($event)" />
-          <button *ngIf="contentTitleSearch()" type="button" class="clear-search-btn" (click)="clearContentTitleSearch()">✕</button>
+          <span class="search-lens">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <input type="text" class="table-search-input" placeholder="Search poem or verse..."
+            [ngModel]="contentTitleSearch()" (ngModelChange)="onContentTitleSearchChange($event)" />
+          <button *ngIf="contentTitleSearch()" type="button" class="clear-search-btn"
+            (click)="clearContentTitleSearch()">✕</button>
         </div>
       </div>
 
@@ -177,14 +394,17 @@
       <div class="filter-field-group">
         <label class="filter-field-label">Author / Shayar</label>
         <div class="table-search-box content-filter-box">
-          <span class="search-lens">👤</span>
-          <input 
-            type="text" 
-            class="table-search-input" 
-            placeholder="Search by author / shayar..."
-            [ngModel]="contentAuthorSearch()" 
-            (ngModelChange)="onContentAuthorSearchChange($event)" />
-          <button *ngIf="contentAuthorSearch()" type="button" class="clear-search-btn" (click)="clearContentAuthorSearch()">✕</button>
+          <span class="search-lens">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <input type="text" class="table-search-input" placeholder="Search shayar name..."
+            [ngModel]="contentAuthorSearch()" (ngModelChange)="onContentAuthorSearchChange($event)" />
+          <button *ngIf="contentAuthorSearch()" type="button" class="clear-search-btn"
+            (click)="clearContentAuthorSearch()">✕</button>
         </div>
       </div>
 
@@ -192,44 +412,47 @@
       <div class="filter-field-group">
         <label class="filter-field-label">Poetic Genre</label>
         <div class="content-genre-select-wrap">
-          <span class="content-genre-icon">🏷️</span>
-          <select 
-            class="content-genre-select" 
-            [ngModel]="contentGenreFilter()" 
+          <span class="content-genre-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+          </span>
+          <select class="content-genre-select" [ngModel]="contentGenreFilter()"
             (ngModelChange)="onContentGenreFilterChange($event)">
-            <option value="">All Genres (سب اصناف)</option>
+            <option value="">All Genres (All forms)</option>
             <option *ngFor="let g of allAvailableGenres()" [value]="g.id">
               {{ getGenreNameForActiveScript(g.id, g) }} ({{ g.name }})
             </option>
           </select>
-          <span class="content-genre-arrow">▾</span>
+          <span class="content-genre-arrow">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
         </div>
       </div>
 
-      <!-- 4. Is Selected Filter Button (Next to Poetic Genre) -->
+      <!-- 4. Segmented Curated Status Button -->
       <div class="filter-field-group">
         <label class="filter-field-label">Curated Status</label>
-        <button 
-          type="button" 
-          class="content-selected-filter-btn" 
-          [class.active]="contentSelectedFilter()" 
-          (click)="toggleSelectedFilter()"
-          title="Filter only Selected / Featured kalams">
-          <span class="selected-btn-icon">{{ contentSelectedFilter() ? "★" : "☆" }}</span>
-          <span>{{ contentSelectedFilter() ? "Selected Only" : "Is Selected" }}</span>
+        <button type="button" class="content-selected-filter-btn" [class.active]="contentSelectedFilter()"
+          (click)="toggleSelectedFilter()" title="Filter only Featured / Selected kalams">
+          <span class="selected-btn-icon">★</span>
+          <span>{{ contentSelectedFilter() ? "Featured Only" : "Featured" }}</span>
           <span class="selected-btn-badge" *ngIf="contentSelectedFilter()">Active</span>
         </button>
       </div>
 
-      <!-- Clear All Filters Button -->
-      <div class="filter-field-group" *ngIf="contentTitleSearch() || contentAuthorSearch() || contentGenreFilter() || contentSelectedFilter()">
+      <!-- Reset Filters Button -->
+      <div class="filter-field-group filter-actions-group" *ngIf="activeFiltersCount() > 0">
         <label class="filter-field-label filter-label-spacer">&nbsp;</label>
-        <button 
-          type="button" 
-          class="content-reset-filters-btn" 
-          (click)="resetContentFilters()"
-          title="Reset all filters">
-          ✕ Clear Filters
+        <button type="button" class="content-reset-filters-btn" (click)="resetContentFilters()"
+          title="Reset active filters">
+          <span>✕ Reset</span>
+          <span class="filter-count-badge">{{ activeFiltersCount() }}</span>
         </button>
       </div>
     </div>
@@ -237,8 +460,14 @@
     <!-- Search Bar for Other Tabs (Genres, Themes, Authors, Admins) -->
     <div *ngIf="activeTab() !== 'content' && activeTab() !== 'seed'" class="table-search-bar-wrap">
       <div class="table-search-box">
-        <span class="search-lens">🔍</span>
-        <input type="text" class="table-search-input" placeholder="Search by name, title, or code..."
+        <span class="search-lens">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+        <input type="text" class="table-search-input" placeholder="Search records by name, title, or code..."
           [ngModel]="searchQuery()" (ngModelChange)="onGeneralSearchChange($event)" />
         <button *ngIf="searchQuery()" type="button" class="clear-search-btn" (click)="clearGeneralSearch()">✕</button>
       </div>
@@ -253,12 +482,12 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th>Poem Title</th>
-                <th>Author / Shayar</th>
-                <th>Genre</th>
-                <th>Status</th>
-                <th style="text-align: center;">Selected</th>
-                <th style="text-align: right;">Actions</th>
+                <th style="width: 44%;">Poem / Ghazal Title</th>
+                <th style="width: 22%;">Author / Shayar</th>
+                <th style="width: 14%;">Genre</th>
+                <th style="width: 8%;">Status</th>
+                <th style="width: 6%; text-align: center;">Featured</th>
+                <th style="width: 16%; text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -273,7 +502,7 @@
                 </td>
                 <td>
                   <span class="author-tag" [ngClass]="scriptService.fontClass()">
-                    👤 {{ getAuthorNameForActiveScript(item.author, item.authorId) }}
+                    {{ getAuthorNameForActiveScript(item.author, item.authorId) }}
                   </span>
                 </td>
                 <td>
@@ -283,38 +512,57 @@
                 </td>
                 <td>
                   <span class="status-pill status-active">
+                    <span class="status-pulse-dot"></span>
                     {{ scriptService.activeScript() === 'ur' ? 'شائع شدہ' : (scriptService.activeScript() === 'hi' ?
                     'प्रकाशित' : 'Published') }}
                   </span>
                 </td>
                 <td style="text-align: center;">
-                  <label class="custom-table-checkbox" title="Mark / Unmark as Selected (منتخب کلام)">
-                    <input type="checkbox"
-                           [checked]="item.isSelected"
-                           (change)="toggleContentSelected(item, $event)" />
+                  <label class="custom-table-checkbox" title="Toggle Curated / Featured">
+                    <input type="checkbox" [checked]="item.isSelected" (change)="toggleContentSelected(item, $event)" />
                     <span class="checkbox-checkmark"></span>
                   </label>
                 </td>
                 <td style="text-align: right;">
                   <div class="table-actions-wrapper">
-                    <a [routerLink]="['/content', item.id]" class="table-action-btn" title="View in Reading Room">
-                      👁️ {{ scriptService.activeScript() === 'ur' ? 'دیکھیں' : (scriptService.activeScript() === 'hi' ?
-                      'देखें' : 'View') }}
+                    <a [routerLink]="['/content', item.id]" class="table-action-icon-btn" title="View in Reading Room">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
                     </a>
-                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditContentModal(item)"
-                      title="Edit Kalam">
-                      ✏️
+                    <button type="button" class="table-action-icon-btn table-action-edit"
+                      (click)="openEditContentModal(item)" title="Edit Kalam">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                      </svg>
                     </button>
-                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteContent(item)"
-                      title="Delete Kalam">
-                      🗑️
+                    <button type="button" class="table-action-icon-btn table-action-delete"
+                      (click)="deleteContent(item)" title="Delete Kalam">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="filteredContents().length === 0">
                 <td colspan="6" class="empty-table-cell">
-                  No content records match the specified search filters.
+                  <div class="empty-table-wrap">
+                    <span class="empty-icon-wrap">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                    <p class="empty-title">No matching content found</p>
+                    <p class="empty-desc">Try clearing or adjusting your search filters above.</p>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -324,22 +572,22 @@
         <!-- Pagination Controls for Content -->
         <div class="table-pagination-footer" *ngIf="contentTotalElements() > pageSize">
           <div class="pagination-info">
-            Showing <span>{{ contentPage() * pageSize + 1 }}</span> – <span>{{ Math.min((contentPage() + 1) * pageSize, contentTotalElements()) }}</span> of <span>{{ contentTotalElements() }}</span> poems
+            Showing <span>{{ contentPage() * pageSize + 1 }}</span> – <span>{{ Math.min((contentPage() + 1) * pageSize,
+              contentTotalElements()) }}</span> of <span>{{ contentTotalElements() }}</span> poems
           </div>
           <div class="pagination-controls">
-            <button type="button" class="pagination-btn pagination-prev" [disabled]="contentPage() === 0" (click)="onContentPageChange(contentPage() - 1)">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="contentPage() === 0"
+              (click)="onContentPageChange(contentPage() - 1)">
               ‹ Prev
             </button>
             <div class="pagination-pages">
-              <button *ngFor="let p of getPageNumbers(contentPage(), contentTotalPages())" 
-                type="button" 
-                class="pagination-page-btn" 
-                [class.active]="p === contentPage()" 
-                (click)="onContentPageChange(p)">
+              <button *ngFor="let p of getPageNumbers(contentPage(), contentTotalPages())" type="button"
+                class="pagination-page-btn" [class.active]="p === contentPage()" (click)="onContentPageChange(p)">
                 {{ p + 1 }}
               </button>
             </div>
-            <button type="button" class="pagination-btn pagination-next" [disabled]="contentPage() >= contentTotalPages() - 1" (click)="onContentPageChange(contentPage() + 1)">
+            <button type="button" class="pagination-btn pagination-next"
+              [disabled]="contentPage() >= contentTotalPages() - 1" (click)="onContentPageChange(contentPage() + 1)">
               Next ›
             </button>
           </div>
@@ -356,10 +604,10 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th>Genre Name</th>
-                <th>Code / Slug</th>
-                <th>Description</th>
-                <th style="text-align: right;">Action</th>
+                <th style="width: 30%;">Genre Name</th>
+                <th style="width: 20%;">Code / Slug</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 15%; text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -375,22 +623,29 @@
                 </td>
                 <td style="text-align: right;">
                   <div class="table-actions-wrapper">
-                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditGenreModal(g)"
-                      title="Edit Genre">
-                      ✏️ {{ scriptService.activeScript() === 'ur' ? 'ترمیم' : (scriptService.activeScript() === 'hi' ?
-                      'संपादित' : 'Edit') }}
+                    <button type="button" class="table-action-icon-btn table-action-edit"
+                      (click)="openEditGenreModal(g)" title="Edit Genre">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                      </svg>
                     </button>
-                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteGenre(g)"
+                    <button type="button" class="table-action-icon-btn table-action-delete" (click)="deleteGenre(g)"
                       title="Delete Genre">
-                      🗑️ {{ scriptService.activeScript() === 'ur' ? 'حذف کریں' : (scriptService.activeScript() === 'hi' ?
-                      'हटाएं' : 'Delete') }}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="filteredGenres().length === 0">
                 <td colspan="4" class="empty-table-cell">
-                  No genres found matching "{{ searchQuery() }}".
+                  <div class="empty-table-wrap">
+                    <p class="empty-title">No genres found matching "{{ searchQuery() }}".</p>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -400,22 +655,22 @@
         <!-- Pagination Controls for Genres -->
         <div class="table-pagination-footer" *ngIf="genreTotalElements() > pageSize">
           <div class="pagination-info">
-            Showing <span>{{ genrePage() * pageSize + 1 }}</span> – <span>{{ Math.min((genrePage() + 1) * pageSize, genreTotalElements()) }}</span> of <span>{{ genreTotalElements() }}</span> genres
+            Showing <span>{{ genrePage() * pageSize + 1 }}</span> – <span>{{ Math.min((genrePage() + 1) * pageSize,
+              genreTotalElements()) }}</span> of <span>{{ genreTotalElements() }}</span> genres
           </div>
           <div class="pagination-controls">
-            <button type="button" class="pagination-btn pagination-prev" [disabled]="genrePage() === 0" (click)="onGenrePageChange(genrePage() - 1)">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="genrePage() === 0"
+              (click)="onGenrePageChange(genrePage() - 1)">
               ‹ Prev
             </button>
             <div class="pagination-pages">
-              <button *ngFor="let p of getPageNumbers(genrePage(), genreTotalPages())" 
-                type="button" 
-                class="pagination-page-btn" 
-                [class.active]="p === genrePage()" 
-                (click)="onGenrePageChange(p)">
+              <button *ngFor="let p of getPageNumbers(genrePage(), genreTotalPages())" type="button"
+                class="pagination-page-btn" [class.active]="p === genrePage()" (click)="onGenrePageChange(p)">
                 {{ p + 1 }}
               </button>
             </div>
-            <button type="button" class="pagination-btn pagination-next" [disabled]="genrePage() >= genreTotalPages() - 1" (click)="onGenrePageChange(genrePage() + 1)">
+            <button type="button" class="pagination-btn pagination-next"
+              [disabled]="genrePage() >= genreTotalPages() - 1" (click)="onGenrePageChange(genrePage() + 1)">
               Next ›
             </button>
           </div>
@@ -432,10 +687,10 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th>Theme / Mood Name</th>
-                <th>Slug Code</th>
-                <th>Heritage Category</th>
-                <th style="text-align: right;">Action</th>
+                <th style="width: 35%;">Theme / Mood Name</th>
+                <th style="width: 25%;">Slug Code</th>
+                <th style="width: 25%;">Heritage Category</th>
+                <th style="width: 15%; text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -447,26 +702,33 @@
                   <span class="pill-badge pill-code">#{{ t.slug }}</span>
                 </td>
                 <td>
-                  <span class="author-tag">✦ Rekhta Heritage Theme</span>
+                  <span class="heritage-tag">Rekhta Heritage</span>
                 </td>
                 <td style="text-align: right;">
                   <div class="table-actions-wrapper">
-                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditThemeModal(t)"
-                      title="Edit Theme">
-                      ✏️ {{ scriptService.activeScript() === 'ur' ? 'ترمیم' : (scriptService.activeScript() === 'hi' ?
-                      'संपादित' : 'Edit') }}
+                    <button type="button" class="table-action-icon-btn table-action-edit"
+                      (click)="openEditThemeModal(t)" title="Edit Theme">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                      </svg>
                     </button>
-                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteTheme(t)"
+                    <button type="button" class="table-action-icon-btn table-action-delete" (click)="deleteTheme(t)"
                       title="Delete Theme">
-                      🗑️ {{ scriptService.activeScript() === 'ur' ? 'حذف کریں' : (scriptService.activeScript() === 'hi' ?
-                      'हटाएं' : 'Delete') }}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="filteredThemes().length === 0">
                 <td colspan="4" class="empty-table-cell">
-                  No themes found matching "{{ searchQuery() }}".
+                  <div class="empty-table-wrap">
+                    <p class="empty-title">No themes found matching "{{ searchQuery() }}".</p>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -476,22 +738,22 @@
         <!-- Pagination Controls for Themes -->
         <div class="table-pagination-footer" *ngIf="themeTotalElements() > pageSize">
           <div class="pagination-info">
-            Showing <span>{{ themePage() * pageSize + 1 }}</span> – <span>{{ Math.min((themePage() + 1) * pageSize, themeTotalElements()) }}</span> of <span>{{ themeTotalElements() }}</span> themes
+            Showing <span>{{ themePage() * pageSize + 1 }}</span> – <span>{{ Math.min((themePage() + 1) * pageSize,
+              themeTotalElements()) }}</span> of <span>{{ themeTotalElements() }}</span> themes
           </div>
           <div class="pagination-controls">
-            <button type="button" class="pagination-btn pagination-prev" [disabled]="themePage() === 0" (click)="onThemePageChange(themePage() - 1)">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="themePage() === 0"
+              (click)="onThemePageChange(themePage() - 1)">
               ‹ Prev
             </button>
             <div class="pagination-pages">
-              <button *ngFor="let p of getPageNumbers(themePage(), themeTotalPages())" 
-                type="button" 
-                class="pagination-page-btn" 
-                [class.active]="p === themePage()" 
-                (click)="onThemePageChange(p)">
+              <button *ngFor="let p of getPageNumbers(themePage(), themeTotalPages())" type="button"
+                class="pagination-page-btn" [class.active]="p === themePage()" (click)="onThemePageChange(p)">
                 {{ p + 1 }}
               </button>
             </div>
-            <button type="button" class="pagination-btn pagination-next" [disabled]="themePage() >= themeTotalPages() - 1" (click)="onThemePageChange(themePage() + 1)">
+            <button type="button" class="pagination-btn pagination-next"
+              [disabled]="themePage() >= themeTotalPages() - 1" (click)="onThemePageChange(themePage() + 1)">
               Next ›
             </button>
           </div>
@@ -508,10 +770,10 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th>Shayar Name</th>
-                <th>Lifespan</th>
-                <th>Era / Tradition</th>
-                <th style="text-align: right;">Actions</th>
+                <th style="width: 45%;">Shayar Name</th>
+                <th style="width: 20%;">Lifespan</th>
+                <th style="width: 20%;">Era / Tradition</th>
+                <th style="width: 15%; text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -537,26 +799,36 @@
                 </td>
                 <td style="text-align: right;">
                   <div class="table-actions-wrapper">
-                    <a [routerLink]="['/poet', a.id]" class="table-action-btn" title="View Shayar Profile">
-                      👁️ {{ scriptService.activeScript() === 'ur' ? 'سوانح حیات' : (scriptService.activeScript() ===
-                      'hi'
-                      ? 'जीवनी देखें' : 'View Bio') }}
+                    <a [routerLink]="['/poet', a.id]" class="table-action-icon-btn" title="View Shayar Profile">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
                     </a>
-                    <button type="button" class="table-action-btn table-action-edit" (click)="openEditAuthorModal(a)"
-                      title="Edit Shayar">
-                      ✏️ {{ scriptService.activeScript() === 'ur' ? 'ترمیم' : (scriptService.activeScript() === 'hi' ?
-                      'संपादित' : 'Edit') }}
+                    <button type="button" class="table-action-icon-btn table-action-edit"
+                      (click)="openEditAuthorModal(a)" title="Edit Shayar">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                      </svg>
                     </button>
-                    <button type="button" class="table-action-btn table-action-delete" (click)="deleteAuthor(a)"
+                    <button type="button" class="table-action-icon-btn table-action-delete" (click)="deleteAuthor(a)"
                       title="Delete Shayar">
-                      🗑️
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="filteredAuthors().length === 0">
                 <td colspan="4" class="empty-table-cell">
-                  No authors found matching "{{ searchQuery() }}".
+                  <div class="empty-table-wrap">
+                    <p class="empty-title">No authors found matching "{{ searchQuery() }}".</p>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -566,22 +838,22 @@
         <!-- Pagination Controls for Authors -->
         <div class="table-pagination-footer" *ngIf="authorTotalElements() > pageSize">
           <div class="pagination-info">
-            Showing <span>{{ authorPage() * pageSize + 1 }}</span> – <span>{{ Math.min((authorPage() + 1) * pageSize, authorTotalElements()) }}</span> of <span>{{ authorTotalElements() }}</span> shayars
+            Showing <span>{{ authorPage() * pageSize + 1 }}</span> – <span>{{ Math.min((authorPage() + 1) * pageSize,
+              authorTotalElements()) }}</span> of <span>{{ authorTotalElements() }}</span> shayars
           </div>
           <div class="pagination-controls">
-            <button type="button" class="pagination-btn pagination-prev" [disabled]="authorPage() === 0" (click)="onAuthorPageChange(authorPage() - 1)">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="authorPage() === 0"
+              (click)="onAuthorPageChange(authorPage() - 1)">
               ‹ Prev
             </button>
             <div class="pagination-pages">
-              <button *ngFor="let p of getPageNumbers(authorPage(), authorTotalPages())" 
-                type="button" 
-                class="pagination-page-btn" 
-                [class.active]="p === authorPage()" 
-                (click)="onAuthorPageChange(p)">
+              <button *ngFor="let p of getPageNumbers(authorPage(), authorTotalPages())" type="button"
+                class="pagination-page-btn" [class.active]="p === authorPage()" (click)="onAuthorPageChange(p)">
                 {{ p + 1 }}
               </button>
             </div>
-            <button type="button" class="pagination-btn pagination-next" [disabled]="authorPage() >= authorTotalPages() - 1" (click)="onAuthorPageChange(authorPage() + 1)">
+            <button type="button" class="pagination-btn pagination-next"
+              [disabled]="authorPage() >= authorTotalPages() - 1" (click)="onAuthorPageChange(authorPage() + 1)">
               Next ›
             </button>
           </div>
@@ -593,18 +865,25 @@
     <!-- TAB 5: AUTH / PLATFORM ADMINS MANAGEMENT                                -->
     <!-- ======================================================================= -->
     <div *ngIf="activeTab() === 'auth'" class="tab-view-container animate-fade-in">
-      
       <!-- Current Admin Profile Card with Photo Upload -->
       <div class="admin-profile-banner-card">
         <div class="admin-banner-avatar-wrap">
-          <div class="admin-banner-avatar" (click)="triggerProfilePhotoUpload(profilePhotoInputAuth)" title="Click to upload profile photo">
-            <img *ngIf="authService.currentUser()?.profilePictureUrl" 
-                 [src]="authService.currentUser()?.profilePictureUrl" 
-                 alt="Profile" 
-                 class="admin-banner-avatar-img" />
-            <span *ngIf="!authService.currentUser()?.profilePictureUrl" class="admin-banner-crown">👑</span>
+          <div class="admin-banner-avatar" (click)="triggerProfilePhotoUpload(profilePhotoInputAuth)"
+            title="Click to upload profile photo">
+            <img *ngIf="authService.currentUser()?.profilePictureUrl"
+              [src]="authService.currentUser()?.profilePictureUrl" alt="Profile" class="admin-banner-avatar-img" />
+            <span *ngIf="!authService.currentUser()?.profilePictureUrl" class="admin-banner-crown">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </span>
             <div class="admin-banner-avatar-overlay">
-              <span *ngIf="!isUploadingProfilePhoto()">📷</span>
+              <svg *ngIf="!isUploadingProfilePhoto()" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
               <span *ngIf="isUploadingProfilePhoto()" class="upload-spin">⏳</span>
             </div>
           </div>
@@ -616,10 +895,16 @@
             <h2 class="admin-banner-name">{{ authService.currentUser()?.name || 'Platform Administrator' }}</h2>
             <span class="pill-badge pill-admin">Super Admin</span>
           </div>
-          <p class="admin-banner-email">📧 {{ authService.currentUser()?.email || 'admin@unsiiyat.org' }}</p>
+          <p class="admin-banner-email">{{ authService.currentUser()?.email || 'admin@unsiiyat.org' }}</p>
           <div class="admin-banner-actions">
-            <button type="button" class="btn btn-secondary btn-sm" (click)="triggerProfilePhotoUpload(profilePhotoInputAuth)" [disabled]="isUploadingProfilePhoto()">
-              <span>📷 {{ authService.currentUser()?.profilePictureUrl ? 'Change Profile Photo' : 'Upload Profile Photo' }}</span>
+            <button type="button" class="btn btn-secondary btn-sm"
+              (click)="triggerProfilePhotoUpload(profilePhotoInputAuth)" [disabled]="isUploadingProfilePhoto()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span>{{ authService.currentUser()?.profilePictureUrl ? 'Change Photo' : 'Upload Photo' }}</span>
             </button>
             <span class="admin-upload-note" *ngIf="isUploadingProfilePhoto()">Uploading to Cloudflare R2...</span>
           </div>
@@ -631,22 +916,29 @@
           <table class="quill-table">
             <thead>
               <tr>
-                <th>Administrator Name</th>
-                <th>Email Address</th>
-                <th>Role & Permissions</th>
-                <th>Status</th>
-                <th style="text-align: right;">Last Active</th>
+                <th style="width: 30%;">Administrator Name</th>
+                <th style="width: 25%;">Email Address</th>
+                <th style="width: 20%;">Role & Permissions</th>
+                <th style="width: 12%;">Status</th>
+                <th style="width: 13%; text-align: right;">Last Active</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let u of pagedAdmins()">
                 <td class="col-main">
                   <div class="admin-user-cell">
-                    <img *ngIf="authService.currentUser()?.profilePictureUrl && u.email === authService.currentUser()?.email" 
-                         [src]="authService.currentUser()?.profilePictureUrl" 
-                         alt="Profile" 
-                         class="admin-table-avatar-img" />
-                    <span *ngIf="!authService.currentUser()?.profilePictureUrl || u.email !== authService.currentUser()?.email" class="crown-icon">👑</span>
+                    <img
+                      *ngIf="authService.currentUser()?.profilePictureUrl && u.email === authService.currentUser()?.email"
+                      [src]="authService.currentUser()?.profilePictureUrl" alt="Profile"
+                      class="admin-table-avatar-img" />
+                    <span
+                      *ngIf="!authService.currentUser()?.profilePictureUrl || u.email !== authService.currentUser()?.email"
+                      class="crown-icon">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      </svg>
+                    </span>
                     <strong>{{ u.name }}</strong>
                   </div>
                 </td>
@@ -655,13 +947,18 @@
                   <span class="pill-badge pill-admin">{{ u.role }}</span>
                 </td>
                 <td>
-                  <span class="status-pill status-active">{{ u.status }}</span>
+                  <span class="status-pill status-active">
+                    <span class="status-pulse-dot"></span>
+                    {{ u.status }}
+                  </span>
                 </td>
                 <td style="text-align: right; color: var(--text-muted);">{{ u.lastActive }}</td>
               </tr>
               <tr *ngIf="filteredAdmins().length === 0">
                 <td colspan="5" class="empty-table-cell">
-                  No administrators found matching "{{ searchQuery() }}".
+                  <div class="empty-table-wrap">
+                    <p class="empty-title">No administrators found matching "{{ searchQuery() }}".</p>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -671,22 +968,22 @@
         <!-- Pagination Controls for Admins -->
         <div class="table-pagination-footer" *ngIf="filteredAdmins().length > pageSize">
           <div class="pagination-info">
-            Showing <span>{{ adminPage() * pageSize + 1 }}</span> – <span>{{ Math.min((adminPage() + 1) * pageSize, filteredAdmins().length) }}</span> of <span>{{ filteredAdmins().length }}</span> administrators
+            Showing <span>{{ adminPage() * pageSize + 1 }}</span> – <span>{{ Math.min((adminPage() + 1) * pageSize,
+              filteredAdmins().length) }}</span> of <span>{{ filteredAdmins().length }}</span> administrators
           </div>
           <div class="pagination-controls">
-            <button type="button" class="pagination-btn pagination-prev" [disabled]="adminPage() === 0" (click)="onAdminPageChange(adminPage() - 1)">
+            <button type="button" class="pagination-btn pagination-prev" [disabled]="adminPage() === 0"
+              (click)="onAdminPageChange(adminPage() - 1)">
               ‹ Prev
             </button>
             <div class="pagination-pages">
-              <button *ngFor="let p of getPageNumbers(adminPage(), adminTotalPages())" 
-                type="button" 
-                class="pagination-page-btn" 
-                [class.active]="p === adminPage()" 
-                (click)="onAdminPageChange(p)">
+              <button *ngFor="let p of getPageNumbers(adminPage(), adminTotalPages())" type="button"
+                class="pagination-page-btn" [class.active]="p === adminPage()" (click)="onAdminPageChange(p)">
                 {{ p + 1 }}
               </button>
             </div>
-            <button type="button" class="pagination-btn pagination-next" [disabled]="adminPage() >= adminTotalPages() - 1" (click)="onAdminPageChange(adminPage() + 1)">
+            <button type="button" class="pagination-btn pagination-next"
+              [disabled]="adminPage() >= adminTotalPages() - 1" (click)="onAdminPageChange(adminPage() + 1)">
               Next ›
             </button>
           </div>
@@ -700,15 +997,25 @@
     <div *ngIf="activeTab() === 'seed'" class="tab-view-container animate-fade-in">
       <div class="admin-data-card seed-engine-card">
         <div class="seed-engine-header">
-          <span class="seed-engine-emblem">⚡</span>
-          <h2 class="seed-title font-display">1-Click Rekhta Database Seeder</h2>
+          <div class="seed-engine-emblem">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          </div>
+          <h2 class="seed-title font-display">Rekhta Database Synchronization Engine</h2>
           <p class="seed-desc">
             Synchronize and populate your backend with classical Shayars (Mirza Ghalib, Faiz Ahmad Faiz, Jaun Elia,
             Allama Iqbal, Ahmad Faraz), Genres, Themes, and authentic poetry in Urdu Nastaliq, Hindi Devanagari, and
-            English.
+            English Roman scripts.
           </p>
           <button class="btn btn-blue btn-lg seed-execute-btn" (click)="runDatabaseSeed()" [disabled]="isSeeding()">
-            <span>{{ isSeeding() ? '⏳ Populating Backend Database...' : '🚀 Execute Rekhta Database Seed' }}</span>
+            <svg *ngIf="!isSeeding()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            <span>{{ isSeeding() ? 'Populating Backend Database...' : 'Execute Rekhta Database Seed' }}</span>
           </button>
         </div>
 
@@ -734,13 +1041,14 @@
         <h3 class="modal-heading font-display">
           <ng-container [ngSwitch]="activeTab()">
             <ng-container *ngSwitchCase="'content'">
-              <span *ngIf="contentCreationStep() === 'select-genre'">✨ Select Poetic Genre (صنف کا انتخاب)</span>
-              <span *ngIf="contentCreationStep() === 'editor'">📜 {{ editingContentId() ? 'Edit' : 'Publish' }} {{ getSelectedGenre()?.name || 'Ghazal / Poem' }}</span>
+              <span *ngIf="contentCreationStep() === 'select-genre'">Select Poetic Genre (صنف کا انتخاب)</span>
+              <span *ngIf="contentCreationStep() === 'editor'">{{ editingContentId() ? 'Edit' : 'Publish' }} {{
+                getSelectedGenre()?.name || 'Ghazal / Poem' }}</span>
             </ng-container>
-            <span *ngSwitchCase="'genres'">🏷️ {{ editingGenreId() ? 'Edit' : 'Create' }} Literary Genre</span>
-            <span *ngSwitchCase="'themes'">✦ {{ editingThemeId() ? 'Edit' : 'Create' }} Poetic Theme</span>
-            <span *ngSwitchCase="'authors'">👤 {{ editingAuthorId() ? 'Edit' : 'Add' }} Shayar / Poet Profile</span>
-            <span *ngSwitchCase="'auth'">🔐 Register Platform Administrator</span>
+            <span *ngSwitchCase="'genres'">{{ editingGenreId() ? 'Edit' : 'Create' }} Literary Genre</span>
+            <span *ngSwitchCase="'themes'">{{ editingThemeId() ? 'Edit' : 'Create' }} Poetic Theme</span>
+            <span *ngSwitchCase="'authors'">{{ editingAuthorId() ? 'Edit' : 'Add' }} Shayar / Poet Profile</span>
+            <span *ngSwitchCase="'auth'">Register Platform Administrator</span>
           </ng-container>
         </h3>
         <div class="modal-header-actions">
@@ -764,8 +1072,7 @@
               <span class="step-title-text">Select Poetic Genre (صنف کا انتخاب کریں)</span>
             </div>
             <p class="genre-step-subtitle">
-              Aap kis type ka genre create / write karna chahte hain? Dropdown se genre select karein aur continue
-              karein.
+              Choose the literary genre for your poem or ghazal to proceed to the multi-script verse composer.
             </p>
           </div>
 
@@ -779,7 +1086,7 @@
               <select class="form-select genre-large-select" [ngModel]="contentForm().genreId"
                 (ngModelChange)="onGenreDropdownChange($event)">
                 <option *ngFor="let g of genres()" [value]="g.id">
-                  {{ getGenreIcon(g.slug) }} {{ g.name }} ({{ g.slug | uppercase }})
+                  {{ g.name }} ({{ g.slug | uppercase }})
                 </option>
               </select>
             </div>
@@ -787,7 +1094,7 @@
             <!-- Proceed to Editor Button -->
             <button type="button" class="btn btn-blue btn-lg btn-block proceed-btn"
               (click)="proceedToEditorWithSelectedGenre()">
-              <span>Next: Continue to Verse Editor ➔ (آگے بڑھیں)</span>
+              <span>Next: Continue to Verse Editor ➔</span>
             </button>
           </div>
 
@@ -803,7 +1110,7 @@
             <!-- Inline Genre Creation Mini-Form -->
             <div *ngIf="showInlineGenreCreate()" class="inline-genre-creator-form animate-fade-in">
               <div class="inline-form-header flex-between">
-                <strong>✨ Add New Poetic Genre (نئی صنف بنائیں)</strong>
+                <strong>Add New Poetic Genre (نئی صنف بنائیں)</strong>
                 <button type="button" class="btn-cancel-mini" (click)="showInlineGenreCreate.set(false)">Cancel</button>
               </div>
               <div class="form-row">
@@ -826,7 +1133,7 @@
         </div>
 
         <!-- =================================================================== -->
-        <!-- CONTENT CREATION - STEP 2: VERSE & SCRIPT EDITOR (USUAL FORM)       -->
+        <!-- CONTENT CREATION - STEP 2: VERSE & SCRIPT EDITOR                    -->
         <!-- =================================================================== -->
         <form *ngIf="activeTab() === 'content' && contentCreationStep() === 'editor'" (submit)="saveContentWithTexts()"
           class="content-studio-form animate-fade-in">
@@ -834,7 +1141,13 @@
           <!-- Selected Genre Active Banner -->
           <div class="selected-genre-banner flex-between">
             <div class="genre-banner-left">
-              <span class="genre-banner-icon">{{ getGenreIcon(getSelectedGenre()?.slug) }}</span>
+              <div class="genre-banner-badge-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
+              </div>
               <div class="genre-banner-details">
                 <div class="genre-banner-badge-row">
                   <span class="step-mini-pill">Step 2 of 2</span>
@@ -846,66 +1159,49 @@
               </div>
             </div>
             <button type="button" class="btn-change-genre" (click)="backToGenreSelection()">
-              <span>🔄 Change Genre / صنف بدلیں</span>
+              <span>Change Genre / صنف بدلیں</span>
             </button>
           </div>
-
-          <!-- 1. General Identification -->
-          <!-- <div class="form-group">
-            <label class="form-label">Poem / Ghazal Master Identifier <span class="required-star">*</span></label>
-            <input 
-              type="text" 
-              class="form-input" 
-              placeholder="e.g. Hazaron Khwahishen Aisi / گلوں میں رنگ بھرے" 
-              [(ngModel)]="contentForm().title" 
-              name="title" 
-              required />
-          </div> -->
 
           <!-- 2. Author, Genre & Theme Dropdowns Row -->
           <div class="form-row form-row-3col">
             <div class="form-group author-search-group">
               <label class="form-label">Shayar / Author <span class="required-star">*</span></label>
-              
+
               <!-- Searchable Author Input Box -->
               <div class="author-search-box-wrap">
-                <input 
-                  type="text" 
-                  class="form-input author-search-input" 
-                  placeholder="Search Shayar / Author..."
-                  [value]="authorSearchQuery()"
-                  (input)="onAuthorSearchInput($event)"
-                  (focus)="openAuthorDropdown()"
-                  (click)="openAuthorDropdown()"
-                  autocomplete="off" />
-                
-                <button 
-                  *ngIf="authorSearchQuery()" 
-                  type="button" 
-                  class="author-search-clear-btn" 
-                  (click)="clearAuthorSearch($event)"
-                  title="Clear search">
+                <input type="text" class="form-input author-search-input" placeholder="Search Shayar / Author..."
+                  [value]="authorSearchQuery()" (input)="onAuthorSearchInput($event)" (focus)="openAuthorDropdown()"
+                  (click)="openAuthorDropdown()" autocomplete="off" />
+
+                <button *ngIf="authorSearchQuery()" type="button" class="author-search-clear-btn"
+                  (click)="clearAuthorSearch($event)" title="Clear search">
                   ✕
                 </button>
                 <span class="author-search-arrow" (click)="toggleAuthorDropdown($event)">▾</span>
               </div>
 
               <!-- Click outside backdrop -->
-              <div *ngIf="isAuthorDropdownOpen()" class="author-dropdown-backdrop" (click)="isAuthorDropdownOpen.set(false)"></div>
+              <div *ngIf="isAuthorDropdownOpen()" class="author-dropdown-backdrop"
+                (click)="isAuthorDropdownOpen.set(false)"></div>
 
               <!-- Dropdown Results Panel -->
               <div class="author-search-dropdown-panel animate-fade-in" *ngIf="isAuthorDropdownOpen()">
                 <div class="author-dropdown-header" *ngIf="filteredModalAuthors().length > 0">
-                  <span>{{ filteredModalAuthors().length }} Shayar{{ filteredModalAuthors().length === 1 ? '' : 's' }} found</span>
+                  <span>{{ filteredModalAuthors().length }} Shayar{{ filteredModalAuthors().length === 1 ? '' : 's' }}
+                    found</span>
                 </div>
-                
+
                 <div class="author-dropdown-list">
-                  <div 
-                    *ngFor="let a of filteredModalAuthors()" 
-                    class="author-dropdown-item" 
-                    [class.selected]="a.id === contentForm().authorId"
-                    (click)="selectAuthor(a)">
-                    <div class="author-item-avatar">👤</div>
+                  <div *ngFor="let a of filteredModalAuthors()" class="author-dropdown-item"
+                    [class.selected]="a.id === contentForm().authorId" (click)="selectAuthor(a)">
+                    <div class="author-item-avatar">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
                     <div class="author-item-info">
                       <span class="author-item-name">{{ a.primaryName || a.name }}</span>
                       <span class="author-item-urdu" *ngIf="getAuthorUrduName(a)">({{ getAuthorUrduName(a) }})</span>
@@ -941,17 +1237,15 @@
           </div>
 
           <!-- Selected / Featured Checkbox -->
-          <div class="form-group-checkbox-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
-            <label class="custom-table-checkbox" style="margin: 0;">
-              <input type="checkbox"
-                     [(ngModel)]="contentForm().isSelected"
-                     (change)="onFormSelectedChange($event)"
-                     name="isSelected" />
+          <div class="form-group-checkbox-row">
+            <label class="custom-table-checkbox">
+              <input type="checkbox" [(ngModel)]="contentForm().isSelected" (change)="onFormSelectedChange($event)"
+                name="isSelected" />
               <span class="checkbox-checkmark"></span>
             </label>
-            <label class="form-label" style="margin: 0; cursor: pointer; font-size: 0.92rem; font-weight: 600; display: flex; align-items: center; gap: 8px;" (click)="contentForm().isSelected = !contentForm().isSelected">
+            <label class="form-label checkbox-label" (click)="contentForm().isSelected = !contentForm().isSelected">
               <span>Selected / Featured (منتخب کلام)</span>
-              <span class="pill-badge pill-genre" style="font-size: 0.72rem; padding: 2px 8px;">Featured</span>
+              <span class="pill-badge pill-genre">Featured</span>
             </label>
           </div>
 
@@ -961,27 +1255,35 @@
               <div class="script-tab-btns">
                 <button type="button" class="script-tab-switch-btn" [class.active]="activeScriptEditorTab() === 'ur'"
                   (click)="activeScriptEditorTab.set('ur')">
-                  🇵🇰 اردو (Urdu Nastaliq)
+                  <span class="script-flag">🇵🇰</span>
+                  <span>اردو (Urdu Nastaliq)</span>
                 </button>
                 <button type="button" class="script-tab-switch-btn" [class.active]="activeScriptEditorTab() === 'hi'"
                   (click)="activeScriptEditorTab.set('hi')">
-                  🇮🇳 हिन्दी (Hindi Devanagari)
+                  <span class="script-flag">🇮🇳</span>
+                  <span>हिन्दी (Hindi Devanagari)</span>
                 </button>
                 <button type="button" class="script-tab-switch-btn" [class.active]="activeScriptEditorTab() === 'en'"
                   (click)="activeScriptEditorTab.set('en')">
-                  🌍 English (Roman Script)
+                  <span class="script-flag">🌐</span>
+                  <span>English (Roman)</span>
                 </button>
               </div>
 
               <!-- Couplet Metrics & Smart Splitter Trigger -->
               <div class="smart-splitter-toolbar">
                 <span class="couplet-counter-badge">
-                  📊 {{ getCoupletStats(getActiveScriptBody()).couplets }} Ash'ar ({{
+                  {{ getCoupletStats(getActiveScriptBody()).couplets }} Ash'ar ({{
                   getCoupletStats(getActiveScriptBody()).lines }} Misre)
                 </span>
                 <button type="button" class="btn-format-splitter" (click)="formatCoupletsForActiveScript()"
                   title="Auto-format couplets: remove empty lines and standardize 2-line misra spacing">
-                  🪄 Smart Split Couplets
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon
+                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span>Smart Split Couplets</span>
                 </button>
               </div>
             </div>
@@ -1040,7 +1342,7 @@
             <!-- 5. Live Couplet Preview Visualizer -->
             <div *ngIf="getParsedCouplets(getActiveScriptBody()).length > 0" class="couplet-live-preview-box">
               <div class="preview-header flex-between">
-                <span class="preview-label font-display">👁️ LIVE READER PREVIEW ({{ activeScriptEditorTab() | uppercase
+                <span class="preview-label font-display">LIVE READER PREVIEW ({{ activeScriptEditorTab() | uppercase
                   }})</span>
                 <button type="button" class="preview-toggle-btn" (click)="showCoupletPreview.update(v => !v)">
                   {{ showCoupletPreview() ? 'Collapse Preview' : 'Expand Preview' }}
@@ -1059,7 +1361,7 @@
             </div>
           </div>
 
-          <!-- Inline Form Error Banner (Shows exact backend error) -->
+          <!-- Inline Form Error Banner -->
           <div *ngIf="statusMsg() && statusMsg()?.type === 'error'" class="form-error-banner animate-fade-in">
             <span class="error-icon">⚠️</span>
             <span class="error-text">{{ statusMsg()?.text }}</span>
@@ -1067,8 +1369,7 @@
 
           <!-- Submit Button -->
           <button type="submit" class="btn btn-blue btn-block btn-lg" [disabled]="isSavingContent()">
-            <span>{{ isSavingContent() ? '⏳ Publishing across 3 Scripts...' : '🚀 Publish Ghazal in 3 Scripts
-              Simultaneously' }}</span>
+            <span>{{ isSavingContent() ? 'Publishing across 3 Scripts...' : 'Publish Ghazal across 3 Scripts' }}</span>
           </button>
         </form>
 
@@ -1084,7 +1385,8 @@
             <input type="text" class="form-input" placeholder="e.g. marsiya" [(ngModel)]="genreForm().slug" name="slug"
               required />
           </div>
-          <button type="submit" class="btn btn-blue btn-block">{{ editingGenreId() ? 'Update Genre' : 'Save Genre' }}</button>
+          <button type="submit" class="btn btn-blue btn-block">{{ editingGenreId() ? 'Update Genre' : 'Save Genre'
+            }}</button>
         </form>
 
         <!-- Add Theme Form -->
@@ -1099,31 +1401,47 @@
             <input type="text" class="form-input" placeholder="e.g. sufi" [(ngModel)]="themeForm().slug" name="slug"
               required />
           </div>
-          <button type="submit" class="btn btn-blue btn-block">{{ editingThemeId() ? 'Update Theme' : 'Save Theme' }}</button>
+          <button type="submit" class="btn btn-blue btn-block">{{ editingThemeId() ? 'Update Theme' : 'Save Theme'
+            }}</button>
         </form>
 
         <!-- Add Author Form -->
         <form *ngIf="activeTab() === 'authors'" (submit)="saveAuthorWithDetails()">
           <!-- Author Photo Section -->
           <div class="author-modal-photo-section">
-            <div class="author-modal-avatar-preview" (click)="triggerAuthorPhotoUpload(authorModalPhotoInput)" title="Click to upload/change photo">
-              <img *ngIf="poetForm().avatarUrl" [src]="poetForm().avatarUrl" alt="Shayar Portrait" class="author-modal-avatar-img" />
+            <div class="author-modal-avatar-preview" (click)="triggerAuthorPhotoUpload(authorModalPhotoInput)"
+              title="Upload portrait">
+              <img *ngIf="poetForm().avatarUrl" [src]="poetForm().avatarUrl" alt="Shayar Portrait"
+                class="author-modal-avatar-img" />
               <div *ngIf="!poetForm().avatarUrl" class="author-modal-avatar-placeholder">
-                <span>📷</span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
               </div>
               <div class="author-modal-avatar-overlay">
-                <span>{{ isUploadingAuthorPhoto() ? '⏳' : '📷' }}</span>
+                <svg *ngIf="!isUploadingAuthorPhoto()" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                <span *ngIf="isUploadingAuthorPhoto()" class="upload-spin">⏳</span>
               </div>
             </div>
             <div class="author-modal-photo-controls">
-              <input type="file" #authorModalPhotoInput hidden accept="image/*" (change)="onAuthorModalPhotoSelected($event)" />
+              <input type="file" #authorModalPhotoInput hidden accept="image/*"
+                (change)="onAuthorModalPhotoSelected($event)" />
               <div class="author-modal-photo-controls-row">
-                <button type="button" class="btn btn-outline btn-sm" (click)="triggerAuthorPhotoUpload(authorModalPhotoInput)" [disabled]="isUploadingAuthorPhoto()">
-                  {{ isUploadingAuthorPhoto() ? 'Uploading to R2...' : (poetForm().avatarUrl ? 'Change Photo' : 'Upload Photo') }}
+                <button type="button" class="btn btn-outline btn-sm"
+                  (click)="triggerAuthorPhotoUpload(authorModalPhotoInput)" [disabled]="isUploadingAuthorPhoto()">
+                  {{ isUploadingAuthorPhoto() ? 'Uploading to R2...' : (poetForm().avatarUrl ? 'Change Portrait' :
+                  'Upload Portrait') }}
                 </button>
-                <button type="button" *ngIf="poetForm().avatarUrl" class="btn-clear-photo" (click)="poetForm().avatarUrl = ''" title="Remove photo">✕</button>
+                <button type="button" *ngIf="poetForm().avatarUrl" class="btn-clear-photo"
+                  (click)="poetForm().avatarUrl = ''" title="Remove photo">✕</button>
               </div>
-              <span class="author-modal-photo-hint">Upload to Cloudflare R2 (PNG, JPG, WebP up to 5MB)</span>
+              <span class="author-modal-photo-hint">Stored securely on Cloudflare R2 (PNG, JPG, WebP)</span>
             </div>
           </div>
 
@@ -1152,7 +1470,8 @@
             <input type="text" class="form-input font-english" placeholder="e.g. Mirza Ghalib"
               [(ngModel)]="poetForm().enName" name="enName" />
           </div>
-          <button type="submit" class="btn btn-blue btn-block">{{ editingAuthorId() ? 'Update Shayar' : 'Save Shayar' }}</button>
+          <button type="submit" class="btn btn-blue btn-block">{{ editingAuthorId() ? 'Update Shayar' : 'Save Shayar'
+            }}</button>
         </form>
 
         <!-- Add Admin User Form -->
