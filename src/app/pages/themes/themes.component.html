@@ -18,15 +18,20 @@
       <span class="theme-icon">✦</span>
       <span>{{ t.name }}</span>
     </button>
+    <span *ngIf="themes().length === 0" class="theme-empty-state">No themes available</span>
   </div>
 
   <div class="poets-stats-row flex-between">
-    <span class="stats-text">Showing poetry curated for <strong>{{ getActiveThemeName() }}</strong></span>
+    <span class="stats-text">Showing <strong>{{ filteredContents.length }}</strong> poems curated for <strong>{{ getActiveThemeName() }}</strong></span>
     <span class="sort-text">✦ Rekhta Heritage Curation</span>
   </div>
 
   <!-- Content Grid for Selected Theme -->
-  <div class="themes-contents-grid">
+  <div *ngIf="isLoading()" class="themes-state-message poetic-card">
+    Loading themed poetry...
+  </div>
+
+  <div *ngIf="!isLoading() && filteredContents.length > 0" class="themes-contents-grid">
     <div *ngFor="let item of filteredContents" class="ghazal-card poetic-card">
       <div class="ghazal-card-header flex-between">
         <span class="poet-badge font-english">👤 {{ item.author?.primaryName || 'Legendary Poet' }}</span>
@@ -49,5 +54,9 @@
         </a>
       </div>
     </div>
+  </div>
+
+  <div *ngIf="!isLoading() && filteredContents.length === 0" class="themes-state-message poetic-card">
+    No poetry found for this theme yet.
   </div>
 </div>

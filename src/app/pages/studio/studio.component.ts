@@ -711,27 +711,29 @@ export class StudioComponent implements OnInit, OnDestroy {
   getContentTitleForActiveScript(item: Content): string {
     const currentScript = this.scriptService.activeScript();
     const allTexts = (item.texts || (item as any).contentTexts || []) as ContentText[];
+    const limitTitle = (title: string) => title.trim().split(/\s+/).slice(0, 5).join(' ');
 
     // 1. Dynamic check with ScriptService (DB ID + Unicode detection)
     if (allTexts.length > 0) {
       const match = allTexts.find(t => this.scriptService.isScriptMatch(t, currentScript));
       if (match?.title?.trim()) {
-        return match.title.trim();
+        return limitTitle(match.title);
       }
     }
 
     // 2. Check seed classical poems by content id
     const seedItem = this.seedService.classicalPoems.find(p => p.id === item.id);
     if (seedItem?.texts?.[currentScript]?.title?.trim()) {
-      return seedItem.texts[currentScript].title.trim();
+      return limitTitle(seedItem.texts[currentScript].title);
     }
 
     // 3. Fallback to primaryText if matches script
     if (item.primaryText?.title?.trim() && this.scriptService.isScriptMatch(item.primaryText, currentScript)) {
-      return item.primaryText.title.trim();
+      return limitTitle(item.primaryText.title);
     }
 
-    return item.primaryText?.title || item.title || 'Untitled Poem';
+    const title = item.primaryText?.title || item.title || 'Untitled Poem';
+    return limitTitle(title);
   }
 
   getContentBodySnippetForActiveScript(item: Content): string {

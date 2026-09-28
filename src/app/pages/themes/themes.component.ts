@@ -23,6 +23,7 @@ export class ThemesComponent implements OnInit {
   themes = signal<Theme[]>([]);
   contents = signal<any[]>([]);
   selectedThemeId = signal<number | null>(null);
+  isLoading = signal(true);
 
   constructor() {
     effect(() => {
@@ -32,7 +33,7 @@ export class ThemesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.taxonomyService.filterThemes().subscribe({
+    this.taxonomyService.filterThemes({ page: 0, size: 100 }).subscribe({
       next: (res) => {
         const list = res.data?.length ? res.data : this.seedService.initialThemes;
         this.themes.set(list);
@@ -50,10 +51,17 @@ export class ThemesComponent implements OnInit {
   }
 
   loadContents() {
+    this.isLoading.set(true);
     const sId = this.scriptService.getScriptId(this.scriptService.activeScript());
     this.contentService.getEnrichedContents(sId).subscribe({
-      next: (data) => this.contents.set(data),
-      error: () => this.setFallbackContents()
+      next: (data) => {
+        this.contents.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.setFallbackContents();
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -85,6 +93,8 @@ export class ThemesComponent implements OnInit {
   get filteredContents() {
     const tId = this.selectedThemeId();
     if (!tId) return this.contents();
-    return this.contents().filter(c => c.themeIds?.includes(tId));
+    return this.contents().filter(c =>
+      c.themeIds?.includes(tId) || c.themes?.some((theme: Theme) => theme.id === tId)
+    );
   }
 }

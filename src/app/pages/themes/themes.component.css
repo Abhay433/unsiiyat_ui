@@ -74,6 +74,17 @@
   border-color: var(--accent-blue);
 }
 
+.theme-empty-state,
+.themes-state-message {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.themes-state-message {
+  padding: 32px 24px;
+  text-align: center;
+}
+
 .poets-stats-row {
   margin-bottom: 22px;
   font-size: 0.88rem;
